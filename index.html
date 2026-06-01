@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MJSR Central Compliance Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0a0c0f;
+  --bg1:       #0f1217;
+  --bg2:       #141820;
+  --bg3:       #1c2230;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --amber:     #c9a227;
+  --amber2:    #e8bc3a;
+  --amber-dim: rgba(201,162,39,0.15);
+  --green:     #2ecc71;
+  --green-dim: rgba(46,204,113,0.12);
+  --yellow:    #f39c12;
+  --yellow-dim:rgba(243,156,18,0.12);
+  --red:       #e74c3c;
+  --red-dim:   rgba(231,76,60,0.12);
+  --grey:      #4a5568;
+  --grey-dim:  rgba(74,85,104,0.15);
+  --text:      #e2e8f0;
+  --text2:     #94a3b8;
+  --text3:     #64748b;
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'IBM Plex Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Header ─────────────────────────────────────── */
+header {
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--amber);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 13px;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.header-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.header-subtitle {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.btn-refresh {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-refresh:hover { background: var(--border2); color: var(--text); }
+
+/* ── Nav ─────────────────────────────────────────── */
+nav {
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  gap: 0;
+}
+
+.nav-tab {
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+  user-select: none;
+}
+
+.nav-tab:hover { color: var(--text2); }
+.nav-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+/* ── Main ────────────────────────────────────────── */
+main { padding: 24px 28px; max-width: 1600px; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Summary Bar ─────────────────────────────────── */
+.summary-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--amber);
+  opacity: 0.6;
+}
+
+.stat-card.green::before  { background: var(--green); }
+.stat-card.yellow::before { background: var(--yellow); }
+.stat-card.red::before    { background: var(--red); }
+
+.stat-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-value.amber  { color: var(--amber); }
+.stat-value.green  { color: var(--green); }
+.stat-value.yellow { color: var(--yellow); }
+.stat-value.red    { color: var(--red); }
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 6px;
+}
+
+/* ── Section header ──────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Portal Grid ─────────────────────────────────── */
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.portal-tile {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  position: relative;
+  transition: border-color 0.15s, transform 0.1s;
+  cursor: default;
+}
+
+.portal-tile:hover {
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+
+.portal-tile.status-green  { border-left: 3px solid var(--green); }
+.portal-tile.status-yellow { border-left: 3px solid var(--yellow); }
+.portal-tile.status-red    { border-left: 3px solid var(--red); }
+.portal-tile.status-grey   { border-left: 3px solid var(--grey); opacity: 0.6; }
+
+.tile-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tile-code {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: 0.08em;
+  background: var(--amber-dim);
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.tile-code.placeholder {
+  color: var(--grey);
+  background: var(--grey-dim);
+}
+
+.status-badge {
+  font-size: 9px;
+  font-family: var(--mono);
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.badge-green  { background: var(--green-dim);  color: var(--green); }
+.badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+.badge-red    { background: var(--red-dim);    color: var(--red); }
+.badge-grey   { background: var(--grey-dim);   color: var(--grey); }
+
+.tile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.tile-name.placeholder { color: var(--text3); }
+
+.tile-type {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: var(--mono);
+  margin-bottom: 12px;
+}
+
+.tile-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.tile-meta-item {
+  background: var(--bg3);
+  border-radius: 5px;
+  padding: 7px 9px;
+}
+
+.tile-meta-label {
+  font-size: 9px;
+  font-family: var(--mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 3px;
+}
+
+.tile-meta-value {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.tile-meta-value.green  { color: var(--green); }
+.tile-meta-value.yellow { color: var(--yellow); }
+.tile-meta-value.red    { color: var(--red); }
+.tile-meta-value.grey   { color: var(--text3); }
+
+.placeholder-notice {
+  grid-column: 1/-1;
+  text-align: center;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+  padding: 8px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Log Table ───────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-bar input,
+.filter-bar select {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 7px 11px;
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus { border-color: var(--amber); }
+
+.filter-bar input { min-width: 180px; }
+.filter-bar select { min-width: 140px; }
+
+.filter-bar option { background: var(--bg2); }
+
+.table-wrap {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+thead tr {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border2);
+}
+
+thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg3); }
+
+tbody td {
+  padding: 9px 14px;
+  color: var(--text2);
+  vertical-align: middle;
+}
+
+.td-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.td-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+.td-submitter {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.td-notes {
+  color: var(--text3);
+  font-size: 11px;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot-green  { color: var(--green); }
+.dot-yellow { color: var(--yellow); }
+.dot-red    { color: var(--red); }
+.dot-grey   { color: var(--grey); }
+
+/* ── Analytics ───────────────────────────────────── */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.analytics-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+}
+
+.analytics-card-title {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bar-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  width: 120px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--amber);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.bar-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  width: 30px;
+  text-align: right;
+}
+
+/* ── Loading / Error ─────────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-state {
+  background: var(--red-dim);
+  border: 1px solid rgba(231,76,60,0.3);
+  border-radius: 8px;
+  padding: 20px 24px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 900px) {
+  .summary-bar { grid-template-columns: repeat(3, 1fr); }
+  .analytics-grid { grid-template-columns: 1fr; }
+  main { padding: 16px; }
+}
+
+@media (max-width: 600px) {
+  .summary-bar { grid-template-columns: 1fr 1fr; }
+  .portal-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-mark">CR</div>
+    <div>
+      <div class="header-title">Central Compliance Register</div>
+      <div class="header-subtitle">SAMSONS GROUP / MJSR — OPERATIONS OVERSIGHT</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot" id="liveDot"></div>
+      <span id="lastRefresh">Loading...</span>
+    </div>
+    <button class="btn-refresh" onclick="loadData()">&#8635; Refresh</button>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</div>
+  <div class="nav-tab" onclick="switchTab('log')">Submission Log</div>
+  <div class="nav-tab" onclick="switchTab('analytics')">Analytics</div>
+</nav>
+
+<main>
+
+  <!-- ── DASHBOARD VIEW ────────────────────────────── -->
+  <div class="view active" id="view-dashboard">
+
+    <div id="dashError"></div>
+
+    <div class="summary-bar" id="summaryBar">
+      <div class="stat-card">
+        <div class="stat-label">Portals Active</div>
+        <div class="stat-value amber" id="statPortals">—</div>
+        <div class="stat-sub">of 22 in programme</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Submissions Today</div>
+        <div class="stat-value green" id="statToday">—</div>
+        <div class="stat-sub">across all portals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">This Week</div>
+        <div class="stat-value" id="statWeek">—</div>
+        <div class="stat-sub">last 7 days</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">On-Time Rate</div>
+        <div class="stat-value green" id="statOnTime">—</div>
+        <div class="stat-sub">scheduled submissions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Logged</div>
+        <div class="stat-value amber" id="statTotal">—</div>
+        <div class="stat-sub">all time</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Portal Status — Live</div>
+    </div>
+
+    <div class="portal-grid" id="portalGrid">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Loading compliance data...</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── LOG VIEW ──────────────────────────────────── -->
+  <div class="view" id="view-log">
+
+    <div class="filter-bar">
+      <input type="text" id="filterSearch" placeholder="Search portal, submitter, notes..." oninput="renderLog()">
+      <select id="filterPortal" onchange="renderLog()">
+        <option value="">All portals</option>
+      </select>
+      <select id="filterType" onchange="renderLog()">
+        <option value="">All types</option>
+        <option value="Daily">Daily</option>
+        <option value="Event">Event</option>
+      </select>
+      <select id="filterStatus" onchange="renderLog()">
+        <option value="">All statuses</option>
+        <option value="true">On Time</option>
+        <option value="false">Late</option>
+      </select>
+      <input type="date" id="filterDateFrom" onchange="renderLog()" title="From date">
+      <input type="date" id="filterDateTo" onchange="renderLog()" title="To date">
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Portal</th>
+            <th>Code</th>
+            <th>Submitted By</th>
+            <th>Type</th>
+            <th>Deadline</th>
+            <th>On Time</th>
+            <th>Dev (min)</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="logTableBody">
+          <tr><td colspan="9" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="logPagination" style="margin-top:12px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--text3);"></div>
+
+  </div>
+
+  <!-- ── ANALYTICS VIEW ────────────────────────────── -->
+  <div class="view" id="view-analytics">
+
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <div class="analytics-card-title">Submissions by Portal (All Time)</div>
+        <div id="chartByPortal"></div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-card-title">Submissions by Submitter (Last 30 Days)</div>
+        <div id="chartBySubmitter"></div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-card-title">Daily Volume — Last 14 Days</div>
+        <div id="chartDaily"></div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-card-title">On-Time Rate by Portal</div>
+        <div id="chartOnTime"></div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyP1rM-YRMsZyJiZzrnOKuIUNGa6M1tTYc_OxG3-XMRBIs19lnOtgfv_ri4eM4-eTLlnQ/exec';
+
+// Portal registry — all portals in the compliance programme
+const PORTAL_REGISTRY = [
+  { code:'CL-CHECKS',   name:'Chairlift Daily Checks',          type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'ADV-CHECKS',  name:'MJSR Adventure Checks',           type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'GV-CHECKS',   name:'GV Adventure Park Daily Checks',  type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'HM-CHECKS',   name:'Heavy Machinery Daily Checks',    type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'VH-FLEET',    name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'FIRE-EX',     name:'Fire Extinguisher Management',    type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'PR-FUND',     name:'PR Fund Tracker',                 type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'SNOW-MK',     name:'Snowmaking Master Portal',        type:'Daily',  deadline:'07:00', placeholder:false },
+  { code:'PISTENBULL',  name:'PistenBully Master Portal',       type:'Daily',  deadline:'07:00', placeholder:false },
+  { code:'GEN-CHECKS',  name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'SALES-CL',    name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'TVC-COUNT',   name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59', placeholder:false },
+  { code:'INN-TRACK',   name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'FB-STOCK',    name:'F&B Stock Control Portal',        type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'PROC-HUB',    name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'LEAVE-TRK',   name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'TOUR-OPS',    name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'LOYALTY',     name:'MJSR Loyalty Programme',          type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'GEN-MAINT',   name:'Generator Maintenance Portal',    type:'Daily',  deadline:'10:30', placeholder:false },
+  { code:'CLINIC-DP',   name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', placeholder:true  },
+  { code:'GRP-BOOK',    name:'Group Bookings Portal',           type:'Event',  deadline:'Variable', placeholder:true  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let allRows = [];
+let logPage = 1;
+const PAGE_SIZE = 100;
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+  document.getElementById('lastRefresh').textContent = 'Loading...';
+  document.getElementById('liveDot').style.background = 'var(--yellow)';
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getComplianceData' })
+    });
+    const json = await resp.json();
+    if (!json.ok) throw new Error(json.error || 'Unknown error');
+    allRows = json.rows || [];
+    document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('liveDot').style.background = 'var(--green)';
+    document.getElementById('dashError').innerHTML = '';
+    renderDashboard();
+    renderLog();
+    renderAnalytics();
+  } catch(err) {
+    document.getElementById('lastRefresh').textContent = 'Error';
+    document.getElementById('liveDot').style.background = 'var(--red)';
+    document.getElementById('dashError').innerHTML = '<div class="error-state">Failed to load data: ' + err.message + '<br><small>Check the GAS_URL is set correctly and the script is deployed.</small></div>';
+    document.getElementById('portalGrid').innerHTML = '';
+  }
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ['dashboard','log','analytics'][i] === tab));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function parseRow(r) {
+  // Sheet columns: 0=Timestamp 1=PortalName 2=PortalCode 3=SubmittedBy
+  // 4=Type 5=Deadline 6=OnTime 7=DeviationMins 8=_ 9=_ 10=Notes
+  return {
+    ts:        r[0],
+    portal:    r[1],
+    code:      r[2],
+    by:        r[3],
+    type:      r[4],
+    deadline:  r[5],
+    onTime:    r[6],
+    devMins:   r[7],
+    notes:     r[10] || ''
+  };
+}
+
+function fmtTs(ts) {
+  if (!ts) return '—';
+  try {
+    const d = new Date(ts);
+    if (isNaN(d)) return String(ts).substring(0,16);
+    const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60)   return Math.round(diff) + 's ago';
+    if (diff < 3600) return Math.round(diff/60) + 'm ago';
+    if (diff < 86400) return Math.round(diff/3600) + 'h ago';
+    return d.toLocaleDateString('en-PK', { day:'2-digit', month:'short' }) + ' ' + d.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+  } catch(e) { return String(ts).substring(0,16); }
+}
+
+function fmtTsFull(ts) {
+  if (!ts) return '—';
+  try {
+    const d = new Date(ts);
+    if (isNaN(d)) return String(ts).substring(0,19);
+    return d.toLocaleDateString('en-PK', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + d.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+  } catch(e) { return String(ts).substring(0,19); }
+}
+
+function isToday(ts) {
+  if (!ts) return false;
+  try {
+    const d = new Date(ts);
+    const now = new Date();
+    return d.toDateString() === now.toDateString();
+  } catch(e) { return false; }
+}
+
+function isThisWeek(ts) {
+  if (!ts) return false;
+  try {
+    const d = new Date(ts);
+    return (new Date() - d) < 7 * 86400000;
+  } catch(e) { return false; }
+}
+
+function isLast30(ts) {
+  if (!ts) return false;
+  try { return (new Date() - new Date(ts)) < 30 * 86400000; } catch(e) { return false; }
+}
+
+function hoursAgo(ts) {
+  if (!ts) return Infinity;
+  try { return (new Date() - new Date(ts)) / 3600000; } catch(e) { return Infinity; }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function renderDashboard() {
+  const rows = allRows.map(parseRow);
+
+  // Summary stats
+  const today = rows.filter(r => isToday(r.ts)).length;
+  const week  = rows.filter(r => isThisWeek(r.ts)).length;
+  const scheduled = rows.filter(r => r.deadline && r.deadline !== 'N/A' && r.deadline !== 'Variable' && r.onTime !== '');
+  const onTimeCount = scheduled.filter(r => String(r.onTime) === 'TRUE' || r.onTime === true).length;
+  const onTimePct = scheduled.length > 0 ? Math.round((onTimeCount / scheduled.length) * 100) : 100;
+  const activeCodes = new Set(rows.filter(r => isThisWeek(r.ts)).map(r => r.code)).size;
+
+  document.getElementById('statPortals').textContent = activeCodes;
+  document.getElementById('statToday').textContent   = today;
+  document.getElementById('statWeek').textContent    = week;
+  document.getElementById('statOnTime').textContent  = onTimePct + '%';
+  document.getElementById('statTotal').textContent   = rows.length.toLocaleString();
+
+  // Colour on-time stat
+  const otEl = document.getElementById('statOnTime');
+  otEl.className = 'stat-value ' + (onTimePct >= 85 ? 'green' : onTimePct >= 70 ? 'yellow' : 'red');
+
+  // Build portal tiles
+  const grid = document.getElementById('portalGrid');
+  grid.innerHTML = '';
+
+  // Index last submission per portal code
+  const lastSub = {};
+  const subCount = {};
+  const onTimeByCode = {};
+  const totalByCode  = {};
+  rows.forEach(r => {
+    if (!lastSub[r.code] || new Date(r.ts) > new Date(lastSub[r.code].ts)) lastSub[r.code] = r;
+    subCount[r.code] = (subCount[r.code] || 0) + 1;
+    if (r.deadline && r.deadline !== 'N/A' && r.deadline !== 'Variable' && r.onTime !== '') {
+      totalByCode[r.code]  = (totalByCode[r.code]  || 0) + 1;
+      if (String(r.onTime) === 'TRUE' || r.onTime === true) onTimeByCode[r.code] = (onTimeByCode[r.code] || 0) + 1;
+    }
+  });
+
+  PORTAL_REGISTRY.forEach(portal => {
+    const tile = document.createElement('div');
+    tile.className = 'portal-tile';
+
+    if (portal.placeholder) {
+      tile.classList.add('status-grey');
+      tile.innerHTML = `
+        <div class="tile-header">
+          <span class="tile-code placeholder">${portal.code}</span>
+          <span class="status-badge badge-grey">Pending</span>
+        </div>
+        <div class="tile-name placeholder">${portal.name}</div>
+        <div class="tile-type">${portal.type} &nbsp;·&nbsp; Deadline: ${portal.deadline}</div>
+        <div class="tile-meta">
+          <div class="placeholder-notice">Compliance write-back coming soon</div>
+        </div>`;
+      grid.appendChild(tile);
+      return;
+    }
+
+    const last = lastSub[portal.code];
+    const count = subCount[portal.code] || 0;
+    const ot    = onTimeByCode[portal.code] || 0;
+    const tot   = totalByCode[portal.code]  || 0;
+    const otPct = tot > 0 ? Math.round((ot/tot)*100) : null;
+
+    // Determine RAG status
+    let status = 'grey';
+    if (last) {
+      const h = hoursAgo(last.ts);
+      if (portal.type === 'Daily') {
+        status = h <= 26 ? 'green' : h <= 50 ? 'yellow' : 'red';
+      } else {
+        status = h <= 72 ? 'green' : h <= 168 ? 'yellow' : 'red';
+      }
+    }
+
+    const statusLabel = status === 'green' ? 'Active' : status === 'yellow' ? 'Due' : status === 'grey' ? 'No Data' : 'Overdue';
+    const badgeClass  = 'badge-' + status;
+    const lastStr     = last ? fmtTs(last.ts) : '—';
+    const lastBy      = last ? (last.by || '—') : '—';
+    const otStr       = otPct !== null ? otPct + '%' : '—';
+    const otClass     = otPct === null ? 'grey' : otPct >= 85 ? 'green' : otPct >= 70 ? 'yellow' : 'red';
+
+    tile.classList.add('status-' + status);
+    tile.innerHTML = `
+      <div class="tile-header">
+        <span class="tile-code">${portal.code}</span>
+        <span class="status-badge ${badgeClass}">${statusLabel}</span>
+      </div>
+      <div class="tile-name">${portal.name}</div>
+      <div class="tile-type">${portal.type} &nbsp;·&nbsp; Deadline: ${portal.deadline}</div>
+      <div class="tile-meta">
+        <div class="tile-meta-item">
+          <div class="tile-meta-label">Last Submission</div>
+          <div class="tile-meta-value">${lastStr}</div>
+        </div>
+        <div class="tile-meta-item">
+          <div class="tile-meta-label">Submitted By</div>
+          <div class="tile-meta-value">${lastBy}</div>
+        </div>
+        <div class="tile-meta-item">
+          <div class="tile-meta-label">Total Logged</div>
+          <div class="tile-meta-value">${count.toLocaleString()}</div>
+        </div>
+        <div class="tile-meta-item">
+          <div class="tile-meta-label">On-Time Rate</div>
+          <div class="tile-meta-value ${otClass}">${otStr}</div>
+        </div>
+      </div>`;
+
+    grid.appendChild(tile);
+  });
+}
+
+// ── LOG TABLE ─────────────────────────────────────────────────
+function populatePortalFilter() {
+  const sel = document.getElementById('filterPortal');
+  if (sel.options.length > 1) return;
+  const codes = [...new Set(allRows.map(r => r[2]).filter(Boolean))].sort();
+  codes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+function renderLog() {
+  populatePortalFilter();
+  const search    = document.getElementById('filterSearch').value.toLowerCase();
+  const portal    = document.getElementById('filterPortal').value;
+  const type      = document.getElementById('filterType').value;
+  const status    = document.getElementById('filterStatus').value;
+  const dateFrom  = document.getElementById('filterDateFrom').value;
+  const dateTo    = document.getElementById('filterDateTo').value;
+
+  let filtered = allRows.map(parseRow).filter(r => {
+    if (portal && r.code    !== portal) return false;
+    if (type   && r.type    !== type)   return false;
+    if (status !== '') {
+      const ot = String(r.onTime) === 'TRUE' || r.onTime === true;
+      if (status === 'true'  && !ot) return false;
+      if (status === 'false' &&  ot) return false;
+    }
+    if (dateFrom) { try { if (new Date(r.ts) < new Date(dateFrom)) return false; } catch(e){} }
+    if (dateTo)   { try { if (new Date(r.ts) > new Date(dateTo + 'T23:59:59')) return false; } catch(e){} }
+    if (search) {
+      const hay = [r.portal, r.code, r.by, r.notes, r.type].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  }).reverse();
+
+  const total = filtered.length;
+  const start = (logPage - 1) * PAGE_SIZE;
+  const page  = filtered.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('logTableBody');
+
+  if (page.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No submissions match the current filters.</td></tr>';
+    document.getElementById('logPagination').textContent = '';
+    return;
+  }
+
+  tbody.innerHTML = page.map(r => {
+    const onTime = String(r.onTime) === 'TRUE' || r.onTime === true;
+    const onTimeStr  = (r.deadline === 'N/A' || r.deadline === 'Variable' || !r.deadline)
+      ? '<span class="dot-grey">—</span>'
+      : onTime
+        ? '<span class="dot-green">&#10003; On Time</span>'
+        : '<span class="dot-red">&#10007; Late</span>';
+    const devStr = (r.devMins && r.devMins !== 0 && r.deadline !== 'N/A' && r.deadline !== 'Variable')
+      ? `<span class="${Number(r.devMins) > 0 ? 'dot-red' : 'dot-green'}">${Number(r.devMins) > 0 ? '+' : ''}${r.devMins}</span>`
+      : '<span class="dot-grey">—</span>';
+    return `<tr>
+      <td class="td-time">${fmtTsFull(r.ts)}</td>
+      <td style="color:var(--text);font-size:12px;">${r.portal || '—'}</td>
+      <td class="td-code">${r.code || '—'}</td>
+      <td class="td-submitter">${r.by || '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${r.type || '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${r.deadline || '—'}</td>
+      <td style="font-size:12px;">${onTimeStr}</td>
+      <td style="font-size:12px;">${devStr}</td>
+      <td class="td-notes" title="${(r.notes||'').replace(/"/g,'&quot;')}">${r.notes || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const pages = Math.ceil(total / PAGE_SIZE);
+  document.getElementById('logPagination').textContent =
+    pages > 1 ? `Page ${logPage} of ${pages} (${total.toLocaleString()} rows)` : `${total.toLocaleString()} rows`;
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────
+function renderAnalytics() {
+  const rows = allRows.map(parseRow);
+
+  // By portal (all time)
+  const byPortal = {};
+  rows.forEach(r => { byPortal[r.code] = (byPortal[r.code] || 0) + 1; });
+  const portalEntries = Object.entries(byPortal).sort((a,b) => b[1]-a[1]).slice(0,12);
+  const maxP = portalEntries[0]?.[1] || 1;
+  document.getElementById('chartByPortal').innerHTML = portalEntries.map(([code,count]) =>
+    `<div class="bar-row">
+      <div class="bar-label">${code}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxP)*100)}%"></div></div>
+      <div class="bar-count">${count}</div>
+    </div>`
+  ).join('');
+
+  // By submitter (last 30 days)
+  const bySubmitter = {};
+  rows.filter(r => isLast30(r.ts)).forEach(r => { if(r.by) bySubmitter[r.by] = (bySubmitter[r.by] || 0) + 1; });
+  const subEntries = Object.entries(bySubmitter).sort((a,b) => b[1]-a[1]).slice(0,12);
+  const maxS = subEntries[0]?.[1] || 1;
+  document.getElementById('chartBySubmitter').innerHTML = subEntries.length > 0
+    ? subEntries.map(([name,count]) =>
+        `<div class="bar-row">
+          <div class="bar-label">${name}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxS)*100)}%;background:var(--green)"></div></div>
+          <div class="bar-count">${count}</div>
+        </div>`
+      ).join('')
+    : '<div class="empty-state" style="padding:20px">No data for last 30 days</div>';
+
+  // Daily volume — last 14 days
+  const dailyMap = {};
+  const today = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000);
+    const key = d.toLocaleDateString('en-PK', { day:'2-digit', month:'short' });
+    dailyMap[key] = 0;
+  }
+  rows.forEach(r => {
+    try {
+      const d = new Date(r.ts);
+      if ((today - d) <= 14 * 86400000) {
+        const key = d.toLocaleDateString('en-PK', { day:'2-digit', month:'short' });
+        if (dailyMap[key] !== undefined) dailyMap[key]++;
+      }
+    } catch(e) {}
+  });
+  const dailyEntries = Object.entries(dailyMap);
+  const maxD = Math.max(...dailyEntries.map(([,v]) => v), 1);
+  document.getElementById('chartDaily').innerHTML = dailyEntries.map(([date,count]) =>
+    `<div class="bar-row">
+      <div class="bar-label">${date}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxD)*100)}%;background:var(--amber)"></div></div>
+      <div class="bar-count">${count}</div>
+    </div>`
+  ).join('');
+
+  // On-time rate by portal
+  const otByPortal = {};
+  const totByPortal = {};
+  rows.forEach(r => {
+    if (!r.code || r.deadline === 'N/A' || r.deadline === 'Variable' || !r.deadline || r.onTime === '') return;
+    totByPortal[r.code] = (totByPortal[r.code] || 0) + 1;
+    if (String(r.onTime) === 'TRUE' || r.onTime === true) otByPortal[r.code] = (otByPortal[r.code] || 0) + 1;
+  });
+  const otEntries = Object.entries(totByPortal)
+    .map(([code, tot]) => [code, Math.round(((otByPortal[code]||0)/tot)*100)])
+    .sort((a,b) => a[1]-b[1]);
+  document.getElementById('chartOnTime').innerHTML = otEntries.length > 0
+    ? otEntries.map(([code, pct]) =>
+        `<div class="bar-row">
+          <div class="bar-label">${code}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=85?'var(--green)':pct>=70?'var(--yellow)':'var(--red)'}"></div></div>
+          <div class="bar-count">${pct}%</div>
+        </div>`
+      ).join('')
+    : '<div class="empty-state" style="padding:20px">No scheduled submission data</div>';
+}
+</script>
+</body>
+</html>
