@@ -948,7 +948,19 @@ function renderDashboard() {
     let status = 'grey';
     if (last) {
       const h = hoursAgo(last.ts);
-      if (portal.type === 'Daily') {
+      if (portal.code === 'CL-CHECKS') {
+        // Two submissions required per day: Start (by 10:30) and Close (by 23:59)
+        // Get today's date string for comparison
+        const todayStr = new Date().toDateString();
+        const portalRows = rows.filter(r => r.code === 'CL-CHECKS');
+        const todayRows  = portalRows.filter(r => { try { return new Date(r.ts).toDateString() === todayStr; } catch(e) { return false; } });
+        const hasStart   = todayRows.some(r => (r.notes || '').toLowerCase().includes('start of day'));
+        const hasClose   = todayRows.some(r => (r.notes || '').toLowerCase().includes('end of day'));
+        if (hasStart && hasClose)       status = 'green';
+        else if (hasStart || hasClose)  status = 'yellow';
+        else if (h <= 26)               status = 'yellow';
+        else                            status = 'red';
+      } else if (portal.type === 'Daily') {
         status = h <= 26 ? 'green' : h <= 50 ? 'yellow' : 'red';
       } else {
         status = h <= 72 ? 'green' : h <= 168 ? 'yellow' : 'red';
