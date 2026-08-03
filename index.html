@@ -815,7 +815,7 @@ function loadData() {
           name:      String(r['Portal Name'] || '').trim(),
           custodian: String(r['Primary Custodian'] || '').trim(),
           freq:      String(r['Submission Frequency'] || 'Event').trim(),
-          deadline:  String(r['Deadline Time'] || 'Variable').trim(),
+          deadline:  fmtDeadline(r['Deadline Time']),
           season:    String(r['Season'] || 'All-year').trim(),
           active:    String(r['Active']).toUpperCase() === 'TRUE' || r['Active'] === true
         };
@@ -901,10 +901,32 @@ function parseRow(r) {
     by:       r[3],
     type:     r[4],
     deadline: r[5],
+    deadlineTxt: fmtDeadline(r[5]),
     onTime:   r[6],
     devMins:  r[7],
     notes:    r[10] || ''
   };
+}
+
+// Sheets stores a time-only cell as a Date on the 1899 epoch, which Apps Script
+// serialises to ISO. Rendering it against Asia/Karachi recovers the intended clock
+// time, since Intl applies the historical local mean time offset for that date.
+function fmtDeadline(v) {
+  var s = String(v === null || v === undefined ? '' : v).trim();
+  if (!s) return 'Variable';
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
+    var d = new Date(s);
+    if (!isNaN(d)) {
+      try {
+        var t = d.toLocaleTimeString('en-GB', {
+          timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: false
+        });
+        if (/^\d{2}:\d{2}$/.test(t)) return t;
+      } catch (e) {}
+      return s.substring(11, 16);
+    }
+  }
+  return s;
 }
 
 function esc(v) {
@@ -1254,7 +1276,7 @@ function renderLog() {
       '<td class="td-code">' + esc(r.code || '\u2014') + '</td>' +
       '<td class="td-submitter">' + esc(r.by || '\u2014') + '</td>' +
       '<td style="font-family:var(--mono);font-size:11px;color:var(--text3);">' + esc(r.type || '\u2014') + '</td>' +
-      '<td style="font-family:var(--mono);font-size:11px;color:var(--text3);">' + esc(r.deadline || '\u2014') + '</td>' +
+      '<td style="font-family:var(--mono);font-size:11px;color:var(--text3);">' + esc(r.deadlineTxt || '\u2014') + '</td>' +
       '<td style="font-size:12px;">' + onTimeStr + '</td>' +
       '<td style="font-size:12px;">' + devStr + '</td>' +
       '<td class="td-notes" title="' + esc(r.notes || '') + '">' + esc(r.notes || '\u2014') + '</td>' +
