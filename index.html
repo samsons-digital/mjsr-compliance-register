@@ -756,16 +756,25 @@ function callGas(payload) {
 
 function diagnose(text, resp) {
   var lower = (text || '').toLowerCase();
-  if (!text) return 'The endpoint returned an empty response.';
-  if (lower.indexOf('accounts.google.com') > -1 || lower.indexOf('sign in') > -1 || lower.indexOf('signin') > -1) {
-    return 'ACCESS';
-  }
+  if (!text) return 'EMPTY';
+  if (lower.indexOf('accounts.google.com') > -1 || lower.indexOf('sign in') > -1 || lower.indexOf('signin') > -1) return 'ACCESS';
   if (lower.indexOf('script function not found') > -1) return 'NOFUNC';
+  if (lower.indexOf('too many times') > -1 || lower.indexOf('rate') > -1 && lower.indexOf('limit') > -1) return 'BUSY';
   if (lower.indexOf('moved temporarily') > -1 || lower.indexOf('temporary redirect') > -1) return 'ACCESS';
-  if (lower.indexOf('sorry, unable to open the file') > -1 || lower.indexOf('page not found') > -1) return 'STALE';
-  if (lower.indexOf('exception') > -1 || lower.indexOf('error') > -1) return 'THREW';
+  if (lower.indexOf('sorry, unable to open the file') > -1 || lower.indexOf('page not found') > -1) return 'BUSY';
+  if (lower.indexOf('exception') > -1) return 'THREW';
   if (text.charAt(0) === '<') return 'HTML';
-  return 'Unrecognised response from the endpoint.';
+  return 'HTML';
+}
+
+// One retry with a pause, since a transient Google page is far more common
+// than a genuine configuration fault once the endpoint has worked before.
+function callGasRetry(payload) {
+  return callGas(payload).catch(function(first) {
+    return new Promise(function(resolve) { setTimeout(resolve, 1800); })
+      .then(function() { return callGas(payload); })
+      .catch(function() { throw first; });
+  });
 }
 
 function errorHtml(code) {
@@ -774,10 +783,14 @@ function errorHtml(code) {
     head = 'The web app is not published for anonymous access, so Google served a sign-in page instead of data.';
     steps = ['Open the Apps Script project', 'Deploy, then Manage deployments', 'Click the edit pencil on the active deployment',
              'Set Who has access to Anyone', 'Click Deploy, keeping the same version chain so the URL does not change'];
-  } else if (code === 'STALE') {
-    head = 'The deployment behind this URL no longer exists.';
-    steps = ['Open the Apps Script project', 'Deploy, then Manage deployments', 'Copy the current Web app URL',
-             'Send it to me and I will reissue this file with the new URL hardcoded'];
+  } else if (code === 'BUSY') {
+    head = 'Google returned a holding page instead of data. This is normally transient, caused by the script being redeployed, a burst of requests, or a short quota pause.';
+    steps = ['Wait around a minute, then press Refresh',
+             'If it persists past a few minutes, open the Apps Script project and check Executions for failures',
+             'Only if it never recovers, check Manage deployments and confirm the Web app URL still matches'];
+  } else if (code === 'EMPTY') {
+    head = 'The endpoint accepted the request but returned nothing.';
+    steps = ['Press Refresh once', 'If it repeats, run getComplianceData from the Apps Script editor and read the log'];
   } else if (code === 'NOFUNC') {
     head = 'The deployment is live but does not contain doPost, so the request had nowhere to land.';
     steps = ['Confirm the compliance script is the one deployed at this URL',
@@ -787,8 +800,9 @@ function errorHtml(code) {
     steps = ['Open the Apps Script project', 'Run getComplianceData from the editor',
              'Read the execution log and send me the error text'];
   } else if (code === 'HTML') {
-    head = 'The endpoint returned a web page rather than data, which usually means the deployment is not public.';
-    steps = ['Deploy, Manage deployments, edit pencil, Who has access, Anyone, Deploy'];
+    head = 'The endpoint returned a web page rather than data. Most often this is a transient Google response, otherwise the deployment is not published for anonymous access.';
+    steps = ['Press Refresh once, since a single retry has already been attempted',
+             'If it persists, Deploy, Manage deployments, edit pencil, Who has access, Anyone, Deploy'];
   } else {
     head = code;
     steps = ['Run getComplianceData from the Apps Script editor and check the execution log'];
@@ -806,40 +820,9 @@ function loadData() {
 
   var failure = null;
 
-  var registryPromise = callGas({ action: 'getPortalRegistry' })
-    .then(function(json) {
-      if (!json || !json.ok || !Array.isArray(json.data)) throw new Error('bad registry payload');
-      var mapped = json.data.map(function(r) {
-        return {
-          code:      String(r['Portal Code'] || '').trim(),
-          name:      String(r['Portal Name'] || '').trim(),
-          custodian: String(r['Primary Custodian'] || '').trim(),
-          freq:      String(r['Submission Frequency'] || 'Event').trim(),
-          deadline:  fmtDeadline(r['Deadline Time']),
-          season:    String(r['Season'] || 'All-year').trim(),
-          active:    String(r['Active']).toUpperCase() === 'TRUE' || r['Active'] === true
-        };
-      }).filter(function(p) { return p.code; });
-      if (!mapped.length) throw new Error('registry empty');
-      registry = mapped;
-      registryLive = true;
-    })
-    .catch(function(err) {
-      registry = FALLBACK_REGISTRY.slice();
-      registryLive = false;
-      if (!failure && err && err.diagnosed) failure = err.message;
-    });
-
-  var seasonPromise = callGas({ action: 'getResortStatus' })
-    .then(function(json) {
-      if (json && json.ok && json.data) {
-        currentSeason = String(json.data.season || '');
-        resortOpen = json.data.open !== false;
-      }
-    })
-    .catch(function() { currentSeason = ''; });
-
-  var dataPromise = callGas({ action: 'getComplianceData' })
+  // Calls run one after another. Apps Script web apps handle concurrent
+  // invocations from the same client poorly and answer the surplus with HTML.
+  callGasRetry({ action: 'getComplianceData' })
     .then(function(json) {
       if (!json || !json.ok) throw new Error((json && json.error) || 'The script returned an error.');
       allRows = json.rows || [];
@@ -848,34 +831,74 @@ function loadData() {
     .catch(function(err) {
       allRows = [];
       dataLive = false;
-      if (!failure) failure = (err && err.diagnosed) ? err.message : ('THREW');
+      failure = (err && err.diagnosed) ? err.message : 'THREW';
+    })
+
+    .then(function() {
+      if (!dataLive) return null;
+      return callGasRetry({ action: 'getPortalRegistry' })
+        .then(function(json) {
+          if (!json || !json.ok || !Array.isArray(json.data)) throw new Error('bad registry payload');
+          var mapped = json.data.map(function(r) {
+            return {
+              code:      String(r['Portal Code'] || '').trim(),
+              name:      String(r['Portal Name'] || '').trim(),
+              custodian: String(r['Primary Custodian'] || '').trim(),
+              freq:      String(r['Submission Frequency'] || 'Event').trim(),
+              deadline:  fmtDeadline(r['Deadline Time']),
+              season:    String(r['Season'] || 'All-year').trim(),
+              active:    String(r['Active']).toUpperCase() === 'TRUE' || r['Active'] === true
+            };
+          }).filter(function(p) { return p.code; });
+          if (!mapped.length) throw new Error('registry empty');
+          registry = mapped;
+          registryLive = true;
+        })
+        .catch(function() {
+          registry = FALLBACK_REGISTRY.slice();
+          registryLive = false;
+        });
+    })
+
+    .then(function() {
+      if (!dataLive) return null;
+      return callGasRetry({ action: 'getResortStatus' })
+        .then(function(json) {
+          if (json && json.ok && json.data) {
+            currentSeason = String(json.data.season || '');
+            resortOpen = json.data.open !== false;
+          }
+        })
+        .catch(function() { currentSeason = ''; });
+    })
+
+    .then(function() {
+      if (dataLive) {
+        document.getElementById('lastRefresh').textContent = 'Updated ' +
+          new Date().toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('liveDot').style.background = 'var(--green)';
+      } else {
+        document.getElementById('lastRefresh').textContent = 'No live data';
+        document.getElementById('liveDot').style.background = 'var(--red)';
+        document.getElementById('dashError').innerHTML = errorHtml(failure || 'HTML');
+        registry = FALLBACK_REGISTRY.slice();
+        registryLive = false;
+      }
+
+      document.getElementById('seasonChip').innerHTML = currentSeason
+        ? ('Season ' + currentSeason + (resortOpen ? '' : ' &middot; Closed'))
+        : 'Season &mdash;';
+
+      if (!registryLive && dataLive) {
+        document.getElementById('registryWarning').innerHTML =
+          '<div class="warn-state">Portal registry could not be read from the sheet. Showing the built-in fallback list, which may be out of date.</div>';
+      }
+
+      logPage = 1;
+      renderDashboard();
+      renderLog();
+      renderAnalytics();
     });
-
-  Promise.all([registryPromise, seasonPromise, dataPromise]).then(function() {
-    if (dataLive) {
-      document.getElementById('lastRefresh').textContent = 'Updated ' +
-        new Date().toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
-      document.getElementById('liveDot').style.background = 'var(--green)';
-    } else {
-      document.getElementById('lastRefresh').textContent = 'No live data';
-      document.getElementById('liveDot').style.background = 'var(--red)';
-      document.getElementById('dashError').innerHTML = errorHtml(failure || 'HTML');
-    }
-
-    document.getElementById('seasonChip').innerHTML = currentSeason
-      ? ('Season ' + currentSeason + (resortOpen ? '' : ' &middot; Closed'))
-      : 'Season &mdash;';
-
-    if (!registryLive && dataLive) {
-      document.getElementById('registryWarning').innerHTML =
-        '<div class="warn-state">Portal registry could not be read from the sheet. Showing the built-in fallback list, which may be out of date.</div>';
-    }
-
-    logPage = 1;
-    renderDashboard();
-    renderLog();
-    renderAnalytics();
-  });
 }
 
 // ── TAB SWITCHING ─────────────────────────────────────────────
