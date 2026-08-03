@@ -723,6 +723,8 @@ var STATUS_ORDER = { red: 0, yellow: 1, grey: 2, green: 3 };
 var allRows = [];
 var registry = FALLBACK_REGISTRY.slice();
 var registryLive = false;
+var registrySource = 'fallback';
+var registryCachedAt = 0;
 var dataLive = false;
 var currentSeason = '';
 var resortOpen = true;
@@ -767,14 +769,42 @@ function diagnose(text, resp) {
   return 'HTML';
 }
 
-// One retry with a pause, since a transient Google page is far more common
+// Two retries with backoff. A transient Google holding page is far more common
 // than a genuine configuration fault once the endpoint has worked before.
-function callGasRetry(payload) {
-  return callGas(payload).catch(function(first) {
-    return new Promise(function(resolve) { setTimeout(resolve, 1800); })
+function callGasRetry(payload, attempts) {
+  var max = attempts || 3;
+  var delays = [0, 1500, 3500];
+  function attempt(n) {
+    var wait = (n < delays.length) ? delays[n] : 3500;
+    return new Promise(function(resolve) { setTimeout(resolve, wait); })
       .then(function() { return callGas(payload); })
-      .catch(function() { throw first; });
-  });
+      .catch(function(err) {
+        if (n + 1 >= max) throw err;
+        return attempt(n + 1);
+      });
+  }
+  return attempt(0);
+}
+
+// The registry changes rarely, so the last good copy is kept locally.
+// A transient miss then costs nothing instead of silently downgrading
+// the whole dashboard to the built-in list.
+var REG_CACHE_KEY = 'mjsr_cr_registry_v1';
+
+function saveRegistryCache(list) {
+  try {
+    localStorage.setItem(REG_CACHE_KEY, JSON.stringify({ at: Date.now(), list: list }));
+  } catch (e) {}
+}
+
+function loadRegistryCache() {
+  try {
+    var raw = localStorage.getItem(REG_CACHE_KEY);
+    if (!raw) return null;
+    var obj = JSON.parse(raw);
+    if (!obj || !Array.isArray(obj.list) || !obj.list.length) return null;
+    return obj;
+  } catch (e) { return null; }
 }
 
 function errorHtml(code) {
@@ -853,9 +883,19 @@ function loadData() {
           if (!mapped.length) throw new Error('registry empty');
           registry = mapped;
           registryLive = true;
+          registrySource = 'live';
+          saveRegistryCache(mapped);
         })
         .catch(function() {
-          registry = FALLBACK_REGISTRY.slice();
+          var cached = loadRegistryCache();
+          if (cached) {
+            registry = cached.list;
+            registryCachedAt = cached.at;
+            registrySource = 'cache';
+          } else {
+            registry = FALLBACK_REGISTRY.slice();
+            registrySource = 'fallback';
+          }
           registryLive = false;
         });
     })
@@ -881,7 +921,9 @@ function loadData() {
         document.getElementById('lastRefresh').textContent = 'No live data';
         document.getElementById('liveDot').style.background = 'var(--red)';
         document.getElementById('dashError').innerHTML = errorHtml(failure || 'HTML');
-        registry = FALLBACK_REGISTRY.slice();
+        var c = loadRegistryCache();
+        if (c) { registry = c.list; registryCachedAt = c.at; registrySource = 'cache'; }
+        else { registry = FALLBACK_REGISTRY.slice(); registrySource = 'fallback'; }
         registryLive = false;
       }
 
@@ -890,8 +932,18 @@ function loadData() {
         : 'Season &mdash;';
 
       if (!registryLive && dataLive) {
-        document.getElementById('registryWarning').innerHTML =
-          '<div class="warn-state">Portal registry could not be read from the sheet. Showing the built-in fallback list, which may be out of date.</div>';
+        var msg;
+        if (registrySource === 'cache') {
+          var when = new Date(registryCachedAt).toLocaleString('en-PK', {
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+          });
+          msg = 'Registry call did not respond, so the copy cached on ' + when +
+                ' is in use. Submission data below is live. Press Refresh to try again.';
+        } else {
+          msg = 'Portal registry could not be read from the sheet and no cached copy exists yet. ' +
+                'Showing the built-in fallback list, which may be out of date.';
+        }
+        document.getElementById('registryWarning').innerHTML = '<div class="warn-state">' + msg + '</div>';
       }
 
       logPage = 1;
@@ -1121,7 +1173,8 @@ function renderDashboard() {
   var dormant = evaluated.length - expected.length;
   document.getElementById('gridNote').textContent =
     registry.length + ' portals' + (dormant > 0 ? ', ' + dormant + ' dormant or off season' : '') +
-    (registryLive ? ' \u00b7 live registry' : ' \u00b7 fallback registry');
+    (registryLive ? ' \u00b7 live registry'
+      : registrySource === 'cache' ? ' \u00b7 cached registry' : ' \u00b7 fallback registry');
 
   // ── Attention strip
   var needsAction = evaluated.filter(function(e) {
