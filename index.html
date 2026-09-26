@@ -63,10 +63,10 @@ main{padding:24px 28px;max-width:1700px;}
 .missed-label{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}
 .missed-items{font-size:12px;color:var(--red);flex:1;}
 
-/* seasonal note */
 .seasonal-note{background:var(--amber-dim);border:1px solid rgba(217,119,6,.25);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:16px;font-size:11px;color:var(--warn);font-weight:500;}
 
-.dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:28px;}
+/* Department grid */
+.dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin-bottom:28px;}
 .dept-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
 .dept-head{padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border);}
 .dept-name-group{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;}
@@ -76,6 +76,7 @@ main{padding:24px 28px;max-width:1700px;}
 .dept-accent-bar.near-fail{background:var(--orange);}
 .dept-accent-bar.failed{background:var(--red);}
 .dept-accent-bar.event{background:var(--teal);}
+.dept-accent-bar.pending{background:var(--text3);}
 .dept-name{font-size:13px;font-weight:700;color:var(--slate);}
 .dept-custs{font-size:11px;color:var(--text3);margin-top:3px;}
 .score-side{text-align:right;flex-shrink:0;margin-left:12px;}
@@ -85,16 +86,46 @@ main{padding:24px 28px;max-width:1700px;}
 .dept-score.near-fail{color:var(--orange);}
 .dept-score.failed{color:var(--red);}
 .dept-score.event{color:var(--teal);}
+.dept-score.pending{color:var(--text3);}
 .grade-chip{font-size:10px;font-weight:600;padding:3px 9px;border-radius:999px;margin-top:5px;display:inline-block;}
 .grade-chip.on-track{background:var(--green-dim);color:var(--green);}
 .grade-chip.needs-att{background:var(--warn-dim);color:var(--warn);}
 .grade-chip.near-fail{background:var(--orange-dim);color:var(--orange);}
 .grade-chip.failed{background:var(--red-dim);color:var(--red);}
 .grade-chip.event{background:var(--teal-dim);color:var(--teal);}
+.grade-chip.pending{background:var(--slate3);color:var(--text3);}
+
 .dept-bar-row{padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border);}
 .dept-bar{height:4px;background:var(--border2);border-radius:2px;overflow:hidden;}
 .dept-bar-fill{height:100%;border-radius:2px;transition:width .4s ease;}
 .dept-missed{font-size:11px;color:var(--red);margin-top:4px;font-weight:500;}
+
+/* Sub-sections inside dept cards */
+.sub-sections{display:grid;border-bottom:1px solid var(--border);}
+.sub-sections.two-col{grid-template-columns:1fr 1fr;}
+.sub-sections.three-col{grid-template-columns:1fr 1fr 1fr;}
+.sub-section{padding:10px 14px;border-right:1px solid var(--border);}
+.sub-section:last-child{border-right:none;}
+.sub-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px;}
+.sub-score{font-size:22px;font-weight:700;font-family:var(--mono);line-height:1;}
+.sub-score.on-track{color:var(--green);}
+.sub-score.needs-att{color:var(--warn);}
+.sub-score.near-fail{color:var(--orange);}
+.sub-score.failed{color:var(--red);}
+.sub-score.event{color:var(--teal);}
+.sub-score.pending{color:var(--text3);}
+.sub-grade{font-size:9px;font-weight:600;padding:2px 7px;border-radius:999px;margin-top:4px;display:inline-block;}
+.sub-grade.on-track{background:var(--green-dim);color:var(--green);}
+.sub-grade.needs-att{background:var(--warn-dim);color:var(--warn);}
+.sub-grade.near-fail{background:var(--orange-dim);color:var(--orange);}
+.sub-grade.failed{background:var(--red-dim);color:var(--red);}
+.sub-grade.event{background:var(--teal-dim);color:var(--teal);}
+.sub-grade.pending{background:var(--slate3);color:var(--text3);}
+.sub-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;margin-top:6px;}
+.sub-bar-fill{height:100%;border-radius:2px;}
+.sub-missed{font-size:10px;color:var(--red);margin-top:4px;font-weight:500;}
+
+/* Portal rows inside dept cards */
 .dept-portals{padding:4px 0;}
 .portal-row{display:flex;align-items:center;gap:8px;padding:7px 16px;border-bottom:1px solid var(--surface2);}
 .portal-row:last-child{border-bottom:none;}
@@ -113,7 +144,9 @@ main{padding:24px 28px;max-width:1700px;}
 .s-nodata{background:var(--slate3);color:var(--text3);}
 .s-pending{background:var(--slate3);color:var(--text3);}
 .s-seasonal{background:var(--amber-dim);color:var(--warn);}
+.s-excluded{background:var(--slate3);color:var(--text3);}
 
+/* All portals grid */
 .portal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px;margin-bottom:28px;}
 .portal-tile{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--border2);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);transition:box-shadow .12s;}
 .portal-tile:hover{box-shadow:var(--shadow-md);}
@@ -143,10 +176,10 @@ main{padding:24px 28px;max-width:1700px;}
 .tile-meta-value.grey{color:var(--text3);}
 .placeholder-note{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px;}
 
+/* Log */
 .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
 .filter-bar input,.filter-bar select{font-family:var(--sans);font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);padding:7px 11px;border-radius:var(--radius-sm);outline:none;min-width:150px;}
 .filter-bar input:focus,.filter-bar select:focus{border-color:var(--amber);}
-
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 thead tr{background:var(--surface2);border-bottom:1px solid var(--border);}
@@ -164,6 +197,7 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
 .dot-red{color:var(--red);}
 .dot-grey{color:var(--text3);}
 
+/* Analytics */
 .analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;}
 .analytics-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
 .analytics-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:16px;}
@@ -182,7 +216,7 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
 #logPagination{margin-top:12px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);}
 
 @media(max-width:1100px){.summary-strip{grid-template-columns:repeat(3,1fr);}.analytics-grid{grid-template-columns:1fr;}main{padding:16px;}}
-@media(max-width:600px){.summary-strip{grid-template-columns:1fr 1fr;}.dept-grid,.portal-grid{grid-template-columns:1fr;}}
+@media(max-width:600px){.summary-strip{grid-template-columns:1fr 1fr;}.dept-grid,.portal-grid{grid-template-columns:1fr;}.sub-sections.two-col,.sub-sections.three-col{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -214,7 +248,7 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
   <div class="view active" id="view-departments">
     <div id="dashError"></div>
     <div class="summary-strip">
-      <div class="stat-card"><div class="stat-label">Portals Active</div><div class="stat-value teal" id="statPortals">—</div><div class="stat-sub">of 21 in programme</div></div>
+      <div class="stat-card"><div class="stat-label">Portals Active</div><div class="stat-value teal" id="statPortals">—</div><div class="stat-sub">of 19 in programme</div></div>
       <div class="stat-card"><div class="stat-label">Submissions Today</div><div class="stat-value" id="statToday">—</div><div class="stat-sub">across all portals</div></div>
       <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="statWeek">—</div><div class="stat-sub">last 7 days</div></div>
       <div class="stat-card"><div class="stat-label">On-Time Rate</div><div class="stat-value green" id="statOnTime">—</div><div class="stat-sub">scheduled submissions</div></div>
@@ -238,25 +272,14 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
     <div class="filter-bar">
       <input type="text" id="filterSearch" placeholder="Search portal, submitter, notes..." oninput="renderLog()">
       <select id="filterPortal" onchange="renderLog()"><option value="">All portals</option></select>
-      <select id="filterType" onchange="renderLog()">
-        <option value="">All types</option>
-        <option value="Daily">Daily</option>
-        <option value="Event">Event</option>
-      </select>
-      <select id="filterStatus" onchange="renderLog()">
-        <option value="">All statuses</option>
-        <option value="true">On Time</option>
-        <option value="false">Late</option>
-      </select>
+      <select id="filterType" onchange="renderLog()"><option value="">All types</option><option value="Daily">Daily</option><option value="Event">Event</option></select>
+      <select id="filterStatus" onchange="renderLog()"><option value="">All statuses</option><option value="true">On Time</option><option value="false">Late</option></select>
       <input type="date" id="filterDateFrom" onchange="renderLog()" title="From">
       <input type="date" id="filterDateTo" onchange="renderLog()" title="To">
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr>
-          <th>Timestamp</th><th>Portal</th><th>Code</th><th>Submitted By</th>
-          <th>Type</th><th>Deadline</th><th>On Time</th><th>Dev (min)</th><th>Notes</th>
-        </tr></thead>
+        <thead><tr><th>Timestamp</th><th>Portal</th><th>Code</th><th>Submitted By</th><th>Type</th><th>Deadline</th><th>On Time</th><th>Dev (min)</th><th>Notes</th></tr></thead>
         <tbody id="logTableBody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
       </table>
     </div>
@@ -268,94 +291,89 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
       <div class="analytics-card"><div class="analytics-title">Submissions by Portal (All Time)</div><div id="chartByPortal"></div></div>
       <div class="analytics-card"><div class="analytics-title">Submissions by Submitter (Last 30 Days)</div><div id="chartBySubmitter"></div></div>
       <div class="analytics-card"><div class="analytics-title">Daily Volume &mdash; Last 14 Days</div><div id="chartDaily"></div></div>
-      <div class="analytics-card"><div class="analytics-title">On-Time Rate by Portal (FY 2026-27, In-Season Only)</div><div id="chartOnTime"></div></div>
+      <div class="analytics-card"><div class="analytics-title">On-Time Rate by Portal (FY 2026-27)</div><div id="chartOnTime"></div></div>
     </div>
   </div>
 
 </main>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────
 const GAS_URL  = 'https://script.google.com/macros/s/AKfycbyP1rM-YRMsZyJiZzrnOKuIUNGa6M1tTYc_OxG3-XMRBIs19lnOtgfv_ri4eM4-eTLlnQ/exec';
 const FY_START = new Date('2026-07-01T00:00:00+05:00');
 
-// ── SEASONAL RULES ──────────────────────────────────────────────────────
-// For each day in the FY, is a given portal expected to have submitted?
-// Returns true = day counts toward score, false = day is excluded (off-season)
-
-function isWinterDay(d) {
-  // 15 Dec to 15 Mar (any year)
-  const m = d.getMonth() + 1; // 1-12
-  const day = d.getDate();
-  if (m === 12 && day >= 15) return true;
-  if (m === 1 || m === 2) return true;
-  if (m === 3 && day <= 15) return true;
-  return false;
-}
-
-// HM-CHECKS: scored as ONE pass/fail check per year before 31 Oct.
-// During winter (15 Dec - 15 Mar) scored daily like other daily portals.
-// TVC-COUNT: excluded from all FY scoring.
-// SNOW-MK, PISTENBULL: winter only (15 Dec - 15 Mar).
-
-const PORTAL_SEASON = {
-  'SNOW-MK':    'winter',   // only 15 Dec - 15 Mar
-  'PISTENBULL': 'winter',   // only 15 Dec - 15 Mar
-  'HM-CHECKS':  'hm',       // pre-winter check + winter daily
-  'TVC-COUNT':  'exclude',  // excluded from scoring entirely
-};
-
-function isPortalActiveDay(code, d) {
-  const rule = PORTAL_SEASON[code];
-  if (!rule) return true;              // all other portals: always active
-  if (rule === 'exclude') return false;
-  if (rule === 'winter') return isWinterDay(d);
-  if (rule === 'hm') {
-    // During winter window: scored daily
-    if (isWinterDay(d)) return true;
-    // Outside winter: not scored daily (pre-winter check handled separately)
-    return false;
-  }
-  return true;
-}
-
-const DEPARTMENTS = [
-  { id:'technical',   name:'Technical',           custodians:'Bilal Tariq, Engr Ishtiaq, Engr Akram, Gohar, Engr Asif',  portals:['CL-CHECKS','HM-CHECKS','GEN-CHECKS','GEN-MAINT','FIRE-EX','SNOW-MK','PISTENBULL'] },
-  { id:'adventure',   name:'Adventure',           custodians:'Nasir Khan, Mutasim, Rahim Ullah',                          portals:['ADV-CHECKS','GV-CHECKS'] },
-  { id:'commercial',  name:'Commercial',          custodians:'Shahzad Alam, Muhammad Saeed, Sales Team',                  portals:['SALES-CL','TVC-COUNT','LOYALTY','TOUR-OPS'] },
-  { id:'hospitality', name:'Hospitality',         custodians:'Bawar Hussain, Abcar',                                      portals:['INN-TRACK','FB-STOCK'] },
-  { id:'admin',       name:'Admin',               custodians:'Ashfaq, Abid Nawaz',                                        portals:['VH-FLEET','PR-FUND','PROC-HUB','LEAVE-TRK'] },
-  { id:'pending',     name:'Pending Integration', custodians:'Dr Rahim',                                                  portals:['CLINIC-DP','GRP-BOOK'] },
-];
-
+// ── PORTAL REGISTRY ──────────────────────────────────────────────────
 const PORTAL_REGISTRY = [
-  { code:'CL-CHECKS',  name:'Chairlift Daily Checks',          type:'Daily',  deadline:'10:30',    ph:false },
-  { code:'ADV-CHECKS', name:'MJSR Adventure Checks',           type:'Daily',  deadline:'10:30',    ph:false },
-  { code:'GV-CHECKS',  name:'GV Adventure Park Daily Checks',  type:'Daily',  deadline:'10:30',    ph:false },
-  { code:'HM-CHECKS',  name:'Heavy Machinery Daily Checks',    type:'Daily',  deadline:'10:30',    ph:false, seasonal:'Winter + Pre-Oct check' },
-  { code:'VH-FLEET',   name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', ph:false },
-  { code:'FIRE-EX',    name:'Fire Extinguisher Management',    type:'Event',  deadline:'Variable', ph:false },
-  { code:'PR-FUND',    name:'PR Fund Tracker',                 type:'Event',  deadline:'Variable', ph:false },
-  { code:'SNOW-MK',    name:'Snowmaking Master Portal',        type:'Daily',  deadline:'07:00',    ph:false, seasonal:'Winter (15 Dec - 15 Mar)' },
-  { code:'PISTENBULL', name:'PistenBully Master Portal',       type:'Daily',  deadline:'07:00',    ph:false, seasonal:'Winter (15 Dec - 15 Mar)' },
-  { code:'GEN-CHECKS', name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30',    ph:false },
-  { code:'SALES-CL',   name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    ph:false },
-  { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    ph:false, seasonal:'Not scored (seasonal)' },
-  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    ph:false },
-  { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Event',  deadline:'Variable', ph:false },
-  { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', ph:false },
-  { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', ph:false },
-  { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', ph:false },
-  { code:'LOYALTY',    name:'MJSR Loyalty Programme',          type:'Event',  deadline:'Variable', ph:false },
-  { code:'GEN-MAINT',  name:'Generator Maintenance Portal',    type:'Daily',  deadline:'10:30',    ph:false },
-  { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', ph:true  },
-  { code:'GRP-BOOK',   name:'Group Bookings Portal',           type:'Event',  deadline:'Variable', ph:true  },
+  { code:'CL-CHECKS',  name:'Chairlift Daily Checks',          type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'ADV-CHECKS', name:'MJSR Adventure Checks',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'GV-CHECKS',  name:'GV Adventure Park Daily Checks',  type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'HM-CHECKS',  name:'Heavy Machinery Daily Checks',    type:'Daily',  deadline:'10:30',    season:'hm',      scoring:'hm'           },
+  { code:'VH-FLEET',   name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'FIRE-EX',    name:'Fire Extinguisher Management',    type:'Event',  deadline:'Monthly',  season:'all',     scoring:'monthly-fire' },
+  { code:'PR-FUND',    name:'PR Fund Tracker',                 type:'Event',  deadline:'Same day', season:'all',     scoring:'weekly'       },
+  { code:'SNOW-MK',    name:'Snowmaking Master Portal',        type:'Daily',  deadline:'07:00',    season:'winter',  scoring:'daily-winter' },
+  { code:'PISTENBULL', name:'PistenBully Master Portal',       type:'Daily',  deadline:'07:00',    season:'winter',  scoring:'daily-winter' },
+  { code:'GEN-MAINT',  name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily'        },
+  { code:'SALES-CL',   name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    season:'exclude', scoring:'exclude'      },
+  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    season:'all',     scoring:'daily'        },
+  { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
+  { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
+  { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'LOYALTY',    name:'MJSR Loyalty Programme',          type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'GEN-CHECKS', name:'Generator Daily Checks (Legacy)', type:'Daily',  deadline:'10:30',    season:'exclude', scoring:'exclude'      },
+  { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', season:'pending', scoring:'pending'      },
 ];
 
-// Daily portals that participate in FY scoring (TVC-COUNT excluded)
-const SCORED_DAILY = PORTAL_REGISTRY.filter(p => p.type === 'Daily' && !p.ph && PORTAL_SEASON[p.code] !== 'exclude').map(p => p.code);
+// ── DEPARTMENT DEFINITIONS ───────────────────────────────────────────
+const DEPARTMENTS = [
+  {
+    id:'technical', name:'Technical', custodians:'Bilal Tariq, Engr Ishtiaq, Engr Akram, Gohar, Engr Asif',
+    portals:['CL-CHECKS','GEN-MAINT','HM-CHECKS','FIRE-EX','SNOW-MK','PISTENBULL'],
+    split: null
+  },
+  {
+    id:'adventure', name:'Adventure', custodians:'Nasir Khan, Mutasim, Rahim Ullah',
+    portals:['ADV-CHECKS','GV-CHECKS'],
+    split:[
+      { label:'MJSR Adventure', portals:['ADV-CHECKS'] },
+      { label:'Green Valley',   portals:['GV-CHECKS']  }
+    ]
+  },
+  {
+    id:'commercial', name:'Commercial', custodians:'Shahzad Alam, Muhammad Saeed, Sales Team',
+    portals:['SALES-CL','LOYALTY','TOUR-OPS'],
+    split: null
+  },
+  {
+    id:'hospitality', name:'Hospitality', custodians:'Bawar Hussain, Abcar',
+    portals:['INN-TRACK','FB-STOCK'],
+    split:[
+      { label:'Samsons Inn', portals:['INN-TRACK'] },
+      { label:'F&B',         portals:['FB-STOCK']  }
+    ]
+  },
+  {
+    id:'admin', name:'Admin', custodians:'Ashfaq, Abid Nawaz',
+    portals:['VH-FLEET','PR-FUND','PROC-HUB'],
+    split:[
+      { label:'Vehicle Fleet', portals:['VH-FLEET']  },
+      { label:'PR Fund',       portals:['PR-FUND']   },
+      { label:'Procurement',   portals:['PROC-HUB']  }
+    ]
+  },
+  {
+    id:'clinic', name:'Clinic', custodians:'Dr Rahim',
+    portals:['CLINIC-DP'],
+    split: null
+  }
+];
 
-// ── STATE ────────────────────────────────────────────────────────────────
+// Portals used as closed-day anchors
+const CLOSED_DAY_ANCHORS = ['CL-CHECKS','ADV-CHECKS'];
+// Portals that use closed-day exclusion
+const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL'];
+
 let allRows = [];
 let logPage = 1;
 const PAGE_SIZE = 100;
@@ -366,14 +384,11 @@ async function loadData() {
   document.getElementById('lastRefresh').textContent = 'Loading...';
   document.querySelector('.live-dot').style.background = '#f59e0b';
   try {
-    const resp = await fetch(GAS_URL, {
-      method:'POST', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({ action:'getComplianceData' })
-    });
+    const resp = await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getComplianceData'})});
     const json = await resp.json();
-    if (!json.ok) throw new Error(json.error || 'Unknown error');
-    allRows = json.rows || [];
-    document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+    if (!json.ok) throw new Error(json.error||'Unknown error');
+    allRows = json.rows||[];
+    document.getElementById('lastRefresh').textContent = 'Updated '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
     document.querySelector('.live-dot').style.background = '#0d9488';
     document.getElementById('dashError').innerHTML = '';
     renderDepartments();
@@ -383,325 +398,394 @@ async function loadData() {
   } catch(err) {
     document.getElementById('lastRefresh').textContent = 'Error';
     document.querySelector('.live-dot').style.background = '#b91c1c';
-    document.getElementById('dashError').innerHTML = '<div class="error-state">Failed to load data: ' + err.message + '</div>';
+    document.getElementById('dashError').innerHTML = '<div class="error-state">Failed to load data: '+err.message+'</div>';
   }
 }
 
 function switchTab(tab) {
-  const tabs = ['departments','portals','log','analytics'];
-  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === tab));
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + tab).classList.add('active');
+  const tabs=['departments','portals','log','analytics'];
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
 }
 
-// ── HELPERS ──────────────────────────────────────────────────────────────
-function parseRow(r) {
-  return { ts:r[0], portal:r[1], code:r[2], by:r[3], type:r[4], deadline:r[5], onTime:r[6], devMins:r[7], notes:r[10]||'' };
-}
-function isToday(ts)    { try { return new Date(ts).toDateString() === new Date().toDateString(); } catch(e) { return false; } }
-function isThisWeek(ts) { try { return (new Date() - new Date(ts)) < 7*86400000; } catch(e) { return false; } }
-function isLast30(ts)   { try { return (new Date() - new Date(ts)) < 30*86400000; } catch(e) { return false; } }
-function isInFY(ts)     { try { return new Date(ts) >= FY_START; } catch(e) { return false; } }
-function hoursAgo(ts)   { try { return (new Date() - new Date(ts)) / 3600000; } catch(e) { return Infinity; } }
+// ── HELPERS ──────────────────────────────────────────────────────────
+function parseRow(r){return{ts:r[0],portal:r[1],code:r[2],by:r[3],type:r[4],deadline:r[5],onTime:r[6],devMins:r[7],notes:r[10]||''};}
+function isToday(ts){try{return new Date(ts).toDateString()===new Date().toDateString();}catch(e){return false;}}
+function isThisWeek(ts){try{return(new Date()-new Date(ts))<7*86400000;}catch(e){return false;}}
+function isLast30(ts){try{return(new Date()-new Date(ts))<30*86400000;}catch(e){return false;}}
+function isInFY(ts){try{return new Date(ts)>=FY_START;}catch(e){return false;}}
+function hoursAgo(ts){try{return(new Date()-new Date(ts))/3600000;}catch(e){return Infinity;}}
+function isWinterDay(d){const m=d.getMonth()+1,day=d.getDate();return(m===12&&day>=15)||(m===1||m===2)||(m===3&&day<=15);}
 
-function fmtTs(ts) {
-  if (!ts) return '—';
-  try {
-    const d = new Date(ts); if (isNaN(d)) return '—';
-    const diff = (new Date() - d) / 1000;
-    if (diff < 60)    return Math.round(diff) + 's ago';
-    if (diff < 3600)  return Math.round(diff/60) + 'm ago';
-    if (diff < 86400) return Math.round(diff/3600) + 'h ago';
-    return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  } catch(e) { return '—'; }
-}
-
-function fmtTsFull(ts) {
-  if (!ts) return '—';
-  try {
-    const d = new Date(ts); if (isNaN(d)) return '—';
-    return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  } catch(e) { return '—'; }
+function fmtTs(ts){
+  if(!ts)return'—';
+  try{
+    const d=new Date(ts);if(isNaN(d))return'—';
+    const diff=(new Date()-d)/1000;
+    if(diff<60)return Math.round(diff)+'s ago';
+    if(diff<3600)return Math.round(diff/60)+'m ago';
+    if(diff<86400)return Math.round(diff/3600)+'h ago';
+    return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){return'—';}
 }
 
-function kpiGrade(pct) {
-  if (pct >= 95) return { cls:'on-track',  label:'On Track' };
-  if (pct >= 85) return { cls:'needs-att', label:'Needs Attention' };
-  if (pct >= 75) return { cls:'near-fail', label:'Near Failure' };
-  return              { cls:'failed',    label:'Failed' };
+function fmtTsFull(ts){
+  if(!ts)return'—';
+  try{const d=new Date(ts);if(isNaN(d))return'—';return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});}catch(e){return'—';}
 }
 
-function barColor(cls) {
-  return { 'on-track':'var(--green)', 'needs-att':'var(--warn)', 'near-fail':'var(--orange)', 'failed':'var(--red)', 'event':'var(--teal)' }[cls] || 'var(--border2)';
+function kpiGrade(pct){
+  if(pct>=95)return{cls:'on-track',label:'On Track'};
+  if(pct>=85)return{cls:'needs-att',label:'Needs Attention'};
+  if(pct>=75)return{cls:'near-fail',label:'Near Failure'};
+  return{cls:'failed',label:'Failed'};
 }
 
-function portalRag(code, rows) {
-  const reg = PORTAL_REGISTRY.find(p => p.code === code);
-  if (!reg || reg.ph) return 'grey';
-  const sorted = rows.filter(r => r.code === code).sort((a,b) => new Date(b.ts)-new Date(a.ts));
-  const last = sorted[0];
-  if (!last) return 'grey';
-  const h = hoursAgo(last.ts);
-  // Seasonal portals — show grey with seasonal note if out of season
-  if (code === 'SNOW-MK' || code === 'PISTENBULL') {
-    if (!isWinterDay(new Date())) return 'grey';
-  }
-  if (code === 'CL-CHECKS') {
-    const todayStr = new Date().toDateString();
-    const tr = rows.filter(r => r.code === 'CL-CHECKS' && new Date(r.ts).toDateString() === todayStr);
-    const hs = tr.some(r => (r.notes||'').toLowerCase().includes('start of day'));
-    const hc = tr.some(r => (r.notes||'').toLowerCase().includes('end of day'));
-    if (hs && hc) return 'green';
-    if (hs || hc) return 'yellow';
-    return h <= 26 ? 'yellow' : 'red';
-  }
-  if (reg.type === 'Daily') return h <= 26 ? 'green' : h <= 50 ? 'yellow' : 'red';
-  return h <= 72 ? 'green' : h <= 168 ? 'yellow' : 'red';
+function barColor(cls){
+  return{'on-track':'var(--green)','needs-att':'var(--warn)','near-fail':'var(--orange)','failed':'var(--red)','event':'var(--teal)','pending':'var(--text3)'}[cls]||'var(--border2)';
 }
 
-// ── FY SCORE CALCULATION ─────────────────────────────────────────────────
-// Seasonal-aware: only counts days when portal is in season
-// HM-CHECKS gets special pre-winter pass/fail bonus
-function calcFyScore(codes, rows) {
-  const fyRows  = rows.filter(r => isInFY(r.ts));
-  const daily   = codes.filter(c => {
-    const r = PORTAL_REGISTRY.find(p => p.code === c);
-    return r && r.type === 'Daily' && !r.ph && PORTAL_SEASON[c] !== 'exclude';
+function portalReg(code){return PORTAL_REGISTRY.find(p=>p.code===code);}
+
+// Build set of closed days from FY start to now
+function buildClosedDays(rows){
+  const byDate={};
+  rows.forEach(r=>{
+    if(!isInFY(r.ts))return;
+    const ds=new Date(r.ts).toDateString();
+    if(!byDate[ds])byDate[ds]={};
+    CLOSED_DAY_ANCHORS.forEach(a=>{if(r.code===a)byDate[ds][a]=true;});
   });
-  if (!daily.length) return null;
+  const closed=new Set();
+  const now=new Date();const start=new Date(FY_START);
+  const days=Math.floor((now-start)/86400000);
+  for(let i=0;i<days;i++){
+    const d=new Date(start.getTime()+i*86400000);
+    const ds=d.toDateString();
+    const anchors=byDate[ds]||{};
+    if(!CLOSED_DAY_ANCHORS.some(a=>anchors[a]))closed.add(ds);
+  }
+  return closed;
+}
 
-  // Build submitted map: code|dateStr -> onTime bool
-  const submitted = {};
-  fyRows.forEach(r => {
-    if (!daily.includes(r.code)) return;
-    const key = r.code + '|' + new Date(r.ts).toDateString();
-    if (!submitted[key]) submitted[key] = false;
-    if (String(r.onTime) === 'TRUE' || r.onTime === true) submitted[key] = true;
+// Portal RAG status
+function portalRag(code,rows){
+  const reg=portalReg(code);
+  if(!reg||reg.season==='exclude'||reg.season==='pending')return'grey';
+  const sorted=rows.filter(r=>r.code===code).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const last=sorted[0];
+  if(!last)return'grey';
+  const h=hoursAgo(last.ts);
+  if(code==='SNOW-MK'||code==='PISTENBULL'){if(!isWinterDay(new Date()))return'grey';}
+  if(code==='CL-CHECKS'){
+    const tr=rows.filter(r=>r.code==='CL-CHECKS'&&new Date(r.ts).toDateString()===new Date().toDateString());
+    const hs=tr.some(r=>(r.notes||'').toLowerCase().includes('start of day'));
+    const hc=tr.some(r=>(r.notes||'').toLowerCase().includes('end of day'));
+    if(hs&&hc)return'green';if(hs||hc)return'yellow';return h<=26?'yellow':'red';
+  }
+  if(reg.type==='Daily')return h<=26?'green':h<=50?'yellow':'red';
+  return h<=72?'green':h<=168?'yellow':'red';
+}
+
+// ── FY SCORE CALCULATION ─────────────────────────────────────────────
+function calcScore(codes,rows,closedDays){
+  const reg=codes.map(c=>portalReg(c)).filter(Boolean);
+  const scoredRegs=reg.filter(r=>r.scoring!=='exclude'&&r.scoring!=='pending');
+  if(!scoredRegs.length)return null;
+
+  const fyRows=rows.filter(r=>isInFY(r.ts));
+  const now=new Date();const start=new Date(FY_START);
+  const days=Math.max(1,Math.floor((now-start)/86400000));
+
+  let exp=0,ot=0;
+
+  // Build submitted map for daily portals
+  const submitted={};
+  fyRows.forEach(r=>{
+    const key=r.code+'|'+new Date(r.ts).toDateString();
+    if(!submitted[key])submitted[key]=false;
+    if(String(r.onTime)==='TRUE'||r.onTime===true)submitted[key]=true;
   });
 
-  const now   = new Date();
-  const start = new Date(FY_START);
-  const days  = Math.max(1, Math.floor((now - start) / 86400000));
+  // CL-CHECKS special: need both start and end
+  const clByDay={};
+  fyRows.filter(r=>r.code==='CL-CHECKS').forEach(r=>{
+    const ds=new Date(r.ts).toDateString();
+    if(!clByDay[ds])clByDay[ds]={start:false,end:false};
+    if((r.notes||'').toLowerCase().includes('start of day'))clByDay[ds].start=true;
+    if((r.notes||'').toLowerCase().includes('end of day'))clByDay[ds].end=true;
+  });
 
-  let exp = 0, ot = 0;
+  for(const sreg of scoredRegs){
+    const code=sreg.code;
 
-  for (let i = 0; i < days; i++) {
-    const d = new Date(start.getTime() + i * 86400000);
-    daily.forEach(code => {
-      if (!isPortalActiveDay(code, d)) return; // skip off-season days
+    if(sreg.scoring==='daily'||sreg.scoring==='daily-closed'||sreg.scoring==='daily-winter'){
+      for(let i=0;i<days;i++){
+        const d=new Date(start.getTime()+i*86400000);
+        const ds=d.toDateString();
+        // Skip winter-only portals on non-winter days
+        if(sreg.scoring==='daily-winter'&&!isWinterDay(d))continue;
+        // Skip closed days for applicable portals
+        if(sreg.scoring==='daily-closed'&&closedDays.has(ds))continue;
+        exp++;
+        if(code==='CL-CHECKS'){if(clByDay[ds]&&clByDay[ds].start&&clByDay[ds].end)ot++;}
+        else{if(submitted[code+'|'+ds])ot++;}
+      }
+    }
+
+    else if(sreg.scoring==='hm'){
+      // Pre-winter pass/fail by 31 Oct
+      const preWinterDeadline=new Date('2026-10-31T23:59:59+05:00');
       exp++;
-      const key = code + '|' + d.toDateString();
-      if (submitted[key]) ot++;
-    });
-  }
+      const preWinterDone=fyRows.some(r=>r.code==='HM-CHECKS'&&new Date(r.ts)<=preWinterDeadline);
+      if(preWinterDone)ot++;
+      // Winter daily scoring
+      for(let i=0;i<days;i++){
+        const d=new Date(start.getTime()+i*86400000);
+        if(!isWinterDay(d))continue;
+        const ds=d.toDateString();
+        exp++;if(submitted['HM-CHECKS|'+ds])ot++;
+      }
+    }
 
-  // HM-CHECKS pre-winter bonus: add 1 expected + 1 if submitted before 31 Oct this FY
-  if (daily.includes('HM-CHECKS')) {
-    // FY year: Jul 2026 - Jun 2027, so pre-winter deadline is 31 Oct 2026
-    const preWinterDeadline = new Date('2026-10-31T23:59:59+05:00');
-    if (now <= preWinterDeadline || now > preWinterDeadline) {
-      // Always add the pre-winter obligation to scoring
-      exp++;
-      const preWinterSubmitted = fyRows.some(r => {
-        if (r.code !== 'HM-CHECKS') return false;
-        const ts = new Date(r.ts);
-        return ts >= FY_START && ts <= preWinterDeadline;
+    else if(sreg.scoring==='monthly-fire'){
+      // FIRE-EX: all 4 properties must have submissions each calendar month
+      const monthsSinceFY={};
+      for(let i=0;i<days;i++){
+        const d=new Date(start.getTime()+i*86400000);
+        const mk=d.getFullYear()+'-'+(d.getMonth()+1);
+        if(d<=now&&!monthsSinceFY[mk])monthsSinceFY[mk]=false;
+      }
+      const fireRows=fyRows.filter(r=>r.code==='FIRE-EX');
+      Object.keys(monthsSinceFY).forEach(mk=>{
+        const[yr,mo]=mk.split('-').map(Number);
+        const monthRows=fireRows.filter(r=>{const d=new Date(r.ts);return d.getFullYear()===yr&&(d.getMonth()+1)===mo;});
+        // Check all 4 properties have submissions
+        const hasMJSR=monthRows.some(r=>(r.notes||'').includes('MJSR'));
+        const hasVM=monthRows.some(r=>(r.notes||'').includes('VM'));
+        // GV and Inn not in compliance data yet so check any submissions exist
+        if(monthRows.length>0)monthsSinceFY[mk]=true;
       });
-      if (preWinterSubmitted) ot++;
+      Object.values(monthsSinceFY).forEach(pass=>{exp++;if(pass)ot++;});
+    }
+
+    else if(sreg.scoring==='weekly'){
+      // At least one submission per 7-day window
+      const weekWindows=Math.ceil(days/7);
+      for(let w=0;w<weekWindows;w++){
+        const wStart=new Date(start.getTime()+w*7*86400000);
+        const wEnd=new Date(Math.min(wStart.getTime()+7*86400000,now.getTime()));
+        exp++;
+        const hasSubmission=fyRows.some(r=>{
+          if(r.code!==code)return false;
+          const ts=new Date(r.ts);return ts>=wStart&&ts<wEnd;
+        });
+        if(hasSubmission)ot++;
+      }
     }
   }
 
-  return { pct: exp > 0 ? Math.round((ot/exp)*100) : 100, ot, exp };
+  return{pct:exp>0?Math.round((ot/exp)*100):100,ot,exp};
 }
 
-// ── DEPARTMENTS ──────────────────────────────────────────────────────────
-function renderDepartments() {
-  const rows = allRows.map(parseRow);
-  const now  = new Date();
+// ── DEPARTMENTS ──────────────────────────────────────────────────────
+function renderDepartments(){
+  const rows=allRows.map(parseRow);
+  const now=new Date();
+  const closedDays=buildClosedDays(rows);
 
-  const todaySubs   = rows.filter(r => isToday(r.ts)).length;
-  const weekSubs    = rows.filter(r => isThisWeek(r.ts)).length;
-  const scheduled   = rows.filter(r => r.deadline && r.deadline !== 'N/A' && r.deadline !== 'Variable' && r.onTime !== '');
-  const otCount     = scheduled.filter(r => String(r.onTime)==='TRUE'||r.onTime===true).length;
-  const otPct       = scheduled.length ? Math.round((otCount/scheduled.length)*100) : 100;
-  const activeCodes = new Set(rows.filter(r => isThisWeek(r.ts)).map(r => r.code)).size;
+  // Summary strip
+  const todaySubs=rows.filter(r=>isToday(r.ts)).length;
+  const weekSubs=rows.filter(r=>isThisWeek(r.ts)).length;
+  const scheduled=rows.filter(r=>r.deadline&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day'&&r.onTime!=='');
+  const otCount=scheduled.filter(r=>String(r.onTime)==='TRUE'||r.onTime===true).length;
+  const otPct=scheduled.length?Math.round((otCount/scheduled.length)*100):100;
+  const activeCodes=new Set(rows.filter(r=>isThisWeek(r.ts)).map(r=>r.code)).size;
 
-  const fyAll  = calcFyScore(SCORED_DAILY, rows);
-  const fyPct  = fyAll ? fyAll.pct : 0;
+  const allScoredCodes=PORTAL_REGISTRY.filter(p=>p.scoring!=='exclude'&&p.scoring!=='pending').map(p=>p.code);
+  const fyAll=calcScore(allScoredCodes,rows,closedDays);
+  const fyPct=fyAll?fyAll.pct:0;
 
-  // Missed today — only count portals that are in-season today
-  const todayCodes  = new Set(rows.filter(r => isToday(r.ts)).map(r => r.code));
-  const missedToday = SCORED_DAILY.filter(c => {
-    if (!isPortalActiveDay(c, now)) return false; // skip off-season
-    if (PORTAL_SEASON[c] === 'hm' && !isWinterDay(now)) return false; // HM daily only in winter
-    return !todayCodes.has(c);
-  });
+  // Missed today (daily portals in season, not closed)
+  const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
+  const missedToday=PORTAL_REGISTRY.filter(p=>{
+    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire')return false;
+    if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
+    if(p.scoring==='hm'&&!isWinterDay(now))return false;
+    if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
+    return !todayCodes.has(p.code);
+  }).map(p=>p.code);
 
-  document.getElementById('statPortals').textContent  = activeCodes;
-  document.getElementById('statToday').textContent    = todaySubs;
-  document.getElementById('statWeek').textContent     = weekSubs;
-  document.getElementById('statOnTime').textContent   = otPct + '%';
-  document.getElementById('statFyScore').textContent  = fyPct + '%';
-  document.getElementById('statMissed').textContent   = missedToday.length;
+  document.getElementById('statPortals').textContent=activeCodes;
+  document.getElementById('statToday').textContent=todaySubs;
+  document.getElementById('statWeek').textContent=weekSubs;
+  document.getElementById('statOnTime').textContent=otPct+'%';
+  document.getElementById('statFyScore').textContent=fyPct+'%';
+  document.getElementById('statMissed').textContent=missedToday.length;
 
   // Missed strip
-  const ms = document.getElementById('missedStrip');
-  if (missedToday.length) {
-    const names = missedToday.map(c => { const r = PORTAL_REGISTRY.find(p => p.code===c); return r ? r.name : c; });
-    ms.innerHTML = `<div class="missed-strip"><div class="missed-label">Missed Today (${missedToday.length})</div><div class="missed-items">${names.join(' &middot; ')}</div></div>`;
-  } else { ms.innerHTML = ''; }
+  const ms=document.getElementById('missedStrip');
+  if(missedToday.length){
+    const names=missedToday.map(c=>{const r=portalReg(c);return r?r.name:c;});
+    ms.innerHTML=`<div class="missed-strip"><div class="missed-label">Missed Today (${missedToday.length})</div><div class="missed-items">${names.join(' &middot; ')}</div></div>`;
+  }else{ms.innerHTML='';}
 
   // Seasonal note
-  const sn = document.getElementById('seasonalNote');
-  const winterNow = isWinterDay(now);
-  if (!winterNow) {
-    // Check if pre-winter HM deadline is approaching
-    const preWinterDeadline = new Date('2026-10-31T23:59:59+05:00');
-    const daysToDeadline = Math.ceil((preWinterDeadline - now) / 86400000);
-    const hmSubmitted = rows.some(r => r.code === 'HM-CHECKS' && isInFY(r.ts) && new Date(r.ts) <= preWinterDeadline);
-    let notes = ['SNOW-MK and PISTENBULL are excluded from scoring (winter season not active)', 'TVC-COUNT is excluded from FY scoring (seasonal portal)'];
-    if (!hmSubmitted && daysToDeadline > 0) {
-      notes.push('HM-CHECKS pre-winter service check due by 31 Oct (' + daysToDeadline + ' day' + (daysToDeadline!==1?'s':'')+' remaining)');
-    } else if (!hmSubmitted && daysToDeadline <= 0) {
-      notes.push('HM-CHECKS pre-winter service check OVERDUE — deadline was 31 Oct');
-    } else {
-      notes.push('HM-CHECKS pre-winter service check completed');
-    }
-    sn.innerHTML = `<div class="seasonal-note">Seasonal scoring active: ${notes.join(' &middot; ')}</div>`;
-  } else {
-    sn.innerHTML = '<div class="seasonal-note">Winter season active: SNOW-MK, PISTENBULL and HM-CHECKS are included in daily scoring (15 Dec &ndash; 15 Mar)</div>';
+  const sn=document.getElementById('seasonalNote');
+  const winterNow=isWinterDay(now);
+  const preWinterDeadline=new Date('2026-10-31T23:59:59+05:00');
+  const daysToDeadline=Math.ceil((preWinterDeadline-now)/86400000);
+  const hmDone=rows.some(r=>r.code==='HM-CHECKS'&&isInFY(r.ts)&&new Date(r.ts)<=preWinterDeadline);
+  let notes=[];
+  if(!winterNow){
+    notes.push('SNOW-MK and PISTENBULL off-season (active 15 Dec &ndash; 15 Mar)');
+    if(!hmDone&&daysToDeadline>0)notes.push('<strong>HM-CHECKS pre-winter service due by 31 Oct &mdash; '+daysToDeadline+' day'+(daysToDeadline!==1?'s':'')+' remaining</strong>');
+    else if(!hmDone&&daysToDeadline<=0)notes.push('<strong style="color:var(--red)">HM-CHECKS pre-winter service OVERDUE &mdash; deadline was 31 Oct</strong>');
+    else notes.push('HM-CHECKS pre-winter service check complete');
+  }else{
+    notes.push('Winter season active &mdash; SNOW-MK, PISTENBULL and HM-CHECKS included in daily scoring');
   }
+  sn.innerHTML=`<div class="seasonal-note">${notes.join(' &middot; ')}</div>`;
 
-  // Department cards
-  const grid = document.getElementById('deptGrid');
-  grid.innerHTML = '';
+  // Build dept cards
+  const grid=document.getElementById('deptGrid');
+  grid.innerHTML='';
 
-  DEPARTMENTS.forEach(dept => {
-    const isPending = dept.id === 'pending';
-    const dailyInDept = dept.portals.filter(c => {
-      const r = PORTAL_REGISTRY.find(p=>p.code===c);
-      return r && r.type==='Daily' && !r.ph && PORTAL_SEASON[c] !== 'exclude';
-    });
-    const hasDaily = dailyInDept.length > 0;
+  DEPARTMENTS.forEach(dept=>{
+    const isPending=dept.id==='clinic';
+    const deptScore=isPending?null:calcScore(dept.portals,rows,closedDays);
+    let scorePct=deptScore?deptScore.pct:null;
+    let grade=scorePct!==null?kpiGrade(scorePct):null;
+    let scoreDisplay=scorePct!==null?(scorePct+'%'):'—';
+    let scoreCls=grade?grade.cls:(isPending?'pending':'event');
 
-    let scorePct=null, grade=null, scoreDisplay='—', scoreCls='';
-    if (!isPending && hasDaily) {
-      const fy = calcFyScore(dept.portals, rows);
-      if (fy) { scorePct=fy.pct; grade=kpiGrade(scorePct); scoreDisplay=scorePct+'%'; scoreCls=grade.cls; }
-    } else if (!isPending && !hasDaily) {
-      // Event-only dept: 7-day activity rate
-      const active7 = new Set(rows.filter(r => dept.portals.includes(r.code) && isThisWeek(r.ts)).map(r => new Date(r.ts).toDateString())).size;
-      scoreDisplay = active7 + '/7d';
-      scoreCls = 'event';
-      grade = { cls:'event', label: active7 >= 5 ? 'Active' : active7 >= 3 ? 'Moderate' : 'Low Activity' };
+    // Missed today in this dept
+    const deptMissed=missedToday.filter(c=>dept.portals.includes(c));
+
+    // Sub-section HTML
+    let subHtml='';
+    if(dept.split){
+      const colClass=dept.split.length===3?'three-col':'two-col';
+      subHtml=`<div class="sub-sections ${colClass}">`;
+      dept.split.forEach(sub=>{
+        const subScore=calcScore(sub.portals,rows,closedDays);
+        let spct=subScore?subScore.pct:null;
+        let sg=spct!==null?kpiGrade(spct):null;
+        let scls=sg?sg.cls:'event';
+        // Check if excluded
+        const allExcluded=sub.portals.every(c=>{const r=portalReg(c);return r&&(r.scoring==='exclude'||r.scoring==='pending');});
+        if(allExcluded){spct=null;sg=null;scls='excluded';}
+        const subMissed=missedToday.filter(c=>sub.portals.includes(c));
+        subHtml+=`<div class="sub-section">
+          <div class="sub-label">${sub.label}</div>
+          <div class="sub-score ${allExcluded?'pending':scls}">${spct!==null?(spct+'%'):'—'}</div>
+          ${sg?`<div class="sub-grade ${scls}">${sg.label}</div>`:(allExcluded?'<div class="sub-grade pending">Pending</div>':'')}
+          <div class="sub-bar"><div class="sub-bar-fill" style="width:${spct||0}%;background:${barColor(scls)}"></div></div>
+          ${subMissed.length?`<div class="sub-missed">Missed: ${subMissed.join(', ')}</div>`:''}
+        </div>`;
+      });
+      subHtml+='</div>';
     }
 
-    // Missed today in this dept (in-season only)
-    const deptMissed = dailyInDept.filter(c => {
-      if (!isPortalActiveDay(c, now)) return false;
-      if (PORTAL_SEASON[c] === 'hm' && !isWinterDay(now)) return false;
-      return !todayCodes.has(c);
-    });
-
-    const barW = scorePct !== null ? scorePct : 0;
-    const accentCls = isPending ? 'event' : (scoreCls || 'event');
-
-    const portalRowsHtml = dept.portals.map(code => {
-      const reg = PORTAL_REGISTRY.find(p => p.code===code);
-      if (!reg) return '';
-      const rag  = portalRag(code, rows);
-      const last = rows.filter(r => r.code===code).sort((a,b) => new Date(b.ts)-new Date(a.ts))[0];
-      const isSeasonalOff = (code === 'SNOW-MK' || code === 'PISTENBULL') && !isWinterDay(now);
-      const isTvcExcluded = code === 'TVC-COUNT';
-      let statusLabel, statusCls;
-      if (reg.ph) { statusLabel='Pending'; statusCls='s-pending'; }
-      else if (isSeasonalOff || isTvcExcluded) { statusLabel='Off-Season'; statusCls='s-seasonal'; }
-      else { statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag]; statusCls={green:'s-active',yellow:'s-due',red:'s-overdue',grey:'s-nodata'}[rag]; }
-      return `<div class="portal-row">
-        <div class="p-rag ${(isSeasonalOff||isTvcExcluded||reg.ph)?'grey':rag}"></div>
+    // Portal rows
+    const portalRowsHtml=dept.portals.map(code=>{
+      const reg=portalReg(code);if(!reg)return'';
+      const rag=portalRag(code,rows);
+      const last=rows.filter(r=>r.code===code).sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0];
+      const isSeasonalOff=(code==='SNOW-MK'||code==='PISTENBULL')&&!isWinterDay(now);
+      const isExcluded=reg.scoring==='exclude';
+      const isPend=reg.scoring==='pending';
+      let statusLabel,statusCls;
+      if(isPend){statusLabel='Pending';statusCls='s-pending';}
+      else if(isExcluded){statusLabel='Excluded';statusCls='s-excluded';}
+      else if(isSeasonalOff){statusLabel='Off-Season';statusCls='s-seasonal';}
+      else{statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag];statusCls={green:'s-active',yellow:'s-due',red:'s-overdue',grey:'s-nodata'}[rag];}
+      const displayName=code==='GEN-MAINT'?'Generator Daily Checks':reg.name;
+      return`<div class="portal-row">
+        <div class="p-rag ${(isSeasonalOff||isExcluded||isPend)?'grey':rag}"></div>
         <div class="p-code">${code}</div>
-        <div class="p-name">${reg.name}</div>
+        <div class="p-name">${displayName}</div>
         <div class="p-last">${last?fmtTs(last.ts):'—'}</div>
         <div class="p-status ${statusCls}">${statusLabel}</div>
       </div>`;
     }).join('');
 
-    const card = document.createElement('div');
-    card.className = 'dept-card';
-    card.innerHTML = `
+    const card=document.createElement('div');
+    card.className='dept-card';
+    const accentCls=isPending?'pending':(scoreCls||'event');
+    card.innerHTML=`
       <div class="dept-head">
         <div class="dept-name-group">
           <div class="dept-accent-bar ${accentCls}"></div>
           <div><div class="dept-name">${dept.name}</div><div class="dept-custs">${dept.custodians}</div></div>
         </div>
         <div class="score-side">
-          <div class="dept-score ${scoreCls||'event'}">${scoreDisplay}</div>
-          ${grade?`<div class="grade-chip ${grade.cls}">${grade.label}</div>`:''}
+          <div class="dept-score ${accentCls}">${scoreDisplay}</div>
+          ${grade?`<div class="grade-chip ${grade.cls}">${grade.label}</div>`:(isPending?'<div class="grade-chip pending">Pending Setup</div>':'')}
         </div>
       </div>
       <div class="dept-bar-row">
-        <div class="dept-bar"><div class="dept-bar-fill" style="width:${barW}%;background:${barColor(accentCls)}"></div></div>
+        <div class="dept-bar"><div class="dept-bar-fill" style="width:${scorePct||0}%;background:${barColor(accentCls)}"></div></div>
         ${deptMissed.length?`<div class="dept-missed">Missed today: ${deptMissed.join(', ')}</div>`:''}
       </div>
+      ${subHtml}
       <div class="dept-portals">${portalRowsHtml}</div>`;
     grid.appendChild(card);
   });
 }
 
-// ── ALL PORTALS ──────────────────────────────────────────────────────────
-function renderPortals() {
-  const rows = allRows.map(parseRow);
-  const grid = document.getElementById('portalGrid');
-  grid.innerHTML = '';
-  const now = new Date();
+// ── ALL PORTALS ──────────────────────────────────────────────────────
+function renderPortals(){
+  const rows=allRows.map(parseRow);
+  const grid=document.getElementById('portalGrid');
+  grid.innerHTML='';
+  const now=new Date();
+  const closedDays=buildClosedDays(rows);
 
-  const lastSub={}, subCount={}, otByCode={}, totByCode={};
-  rows.forEach(r => {
-    if (!lastSub[r.code]||new Date(r.ts)>new Date(lastSub[r.code].ts)) lastSub[r.code]=r;
+  const lastSub={},subCount={},otByCode={},totByCode={};
+  rows.forEach(r=>{
+    if(!lastSub[r.code]||new Date(r.ts)>new Date(lastSub[r.code].ts))lastSub[r.code]=r;
     subCount[r.code]=(subCount[r.code]||0)+1;
-    if (r.deadline&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.onTime!=='') {
+    if(r.deadline&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day'&&r.onTime!==''){
       totByCode[r.code]=(totByCode[r.code]||0)+1;
-      if (String(r.onTime)==='TRUE'||r.onTime===true) otByCode[r.code]=(otByCode[r.code]||0)+1;
+      if(String(r.onTime)==='TRUE'||r.onTime===true)otByCode[r.code]=(otByCode[r.code]||0)+1;
     }
   });
 
-  PORTAL_REGISTRY.forEach(portal => {
-    const tile = document.createElement('div');
-    tile.className = 'portal-tile';
-    if (portal.ph) {
+  PORTAL_REGISTRY.filter(p=>p.code!=='GEN-CHECKS').forEach(portal=>{
+    const tile=document.createElement('div');
+    tile.className='portal-tile';
+    if(portal.scoring==='pending'){
       tile.classList.add('t-grey');
       tile.innerHTML=`<div class="tile-header"><span class="tile-code placeholder">${portal.code}</span><span class="tile-badge badge-grey">Pending</span></div>
         <div class="tile-name placeholder">${portal.name}</div>
         <div class="tile-type">${portal.type} &middot; ${portal.deadline}</div>
         <div class="tile-meta"><div class="placeholder-note">Write-back coming soon</div></div>`;
-      grid.appendChild(tile); return;
+      grid.appendChild(tile);return;
     }
 
-    const isSeasonalOff = (portal.code==='SNOW-MK'||portal.code==='PISTENBULL')&&!isWinterDay(now);
-    const isTvcExcluded = portal.code==='TVC-COUNT';
-    const rag   = portalRag(portal.code, rows);
-    const last  = lastSub[portal.code];
-    const count = subCount[portal.code]||0;
-    const ot    = otByCode[portal.code]||0;
-    const tot   = totByCode[portal.code]||0;
-    const otPct = tot>0?Math.round((ot/tot)*100):null;
-    const fyS   = (!isTvcExcluded) ? calcFyScore([portal.code], rows) : null;
-    const fyPct = fyS?fyS.pct:null;
-    const fyG   = fyPct!==null?kpiGrade(fyPct):null;
+    const isSeasonalOff=(portal.code==='SNOW-MK'||portal.code==='PISTENBULL')&&!isWinterDay(now);
+    const isExcluded=portal.scoring==='exclude';
+    const rag=portalRag(portal.code,rows);
+    const last=lastSub[portal.code];
+    const count=subCount[portal.code]||0;
+    const fyS=(!isExcluded)?calcScore([portal.code],rows,closedDays):null;
+    const fyPct=fyS?fyS.pct:null;
+    const fyG=fyPct!==null?kpiGrade(fyPct):null;
+    let statusLabel,badgeCls;
+    if(isExcluded){statusLabel='Not Scored';badgeCls='badge-grey';}
+    else if(isSeasonalOff){statusLabel='Off-Season';badgeCls='badge-seasonal';}
+    else{statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag];badgeCls='badge-'+rag;}
+    const fyStr=fyPct!==null?(fyPct+'%'):(isExcluded?'Excluded':'—');
+    const fyClass=fyG?(fyG.cls==='on-track'?'green':fyG.cls==='needs-att'||fyG.cls==='near-fail'?'warn':'red'):'grey';
+    const displayName=portal.code==='GEN-MAINT'?'Generator Daily Checks':portal.name;
 
-    let statusLabel, badgeCls;
-    if (isSeasonalOff||isTvcExcluded) { statusLabel=isTvcExcluded?'Not Scored':'Off-Season'; badgeCls='badge-seasonal'; }
-    else { statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag]; badgeCls='badge-'+rag; }
-
-    const fyStr   = fyPct!==null?(fyPct+'%'):(isTvcExcluded?'Excluded':'—');
-    const fyClass = fyG?(fyG.cls==='on-track'?'green':fyG.cls==='needs-att'||fyG.cls==='near-fail'?'warn':'red'):'grey';
-    const seasonNote = portal.seasonal?` &middot; ${portal.seasonal}`:'';
-
-    tile.classList.add(isSeasonalOff||isTvcExcluded?'t-grey':'t-'+rag);
+    tile.classList.add(isExcluded||isSeasonalOff?'t-grey':'t-'+rag);
     tile.innerHTML=`
       <div class="tile-header"><span class="tile-code">${portal.code}</span><span class="tile-badge ${badgeCls}">${statusLabel}</span></div>
-      <div class="tile-name">${portal.name}</div>
-      <div class="tile-type">${portal.type} &middot; Deadline: ${portal.deadline}${seasonNote}</div>
+      <div class="tile-name">${displayName}</div>
+      <div class="tile-type">${portal.type} &middot; ${portal.deadline}</div>
       <div class="tile-meta">
         <div class="tile-meta-item"><div class="tile-meta-label">Last Submission</div><div class="tile-meta-value">${last?fmtTs(last.ts):'—'}</div></div>
         <div class="tile-meta-item"><div class="tile-meta-label">Submitted By</div><div class="tile-meta-value">${last?(last.by||'—'):'—'}</div></div>
@@ -712,23 +796,23 @@ function renderPortals() {
   });
 }
 
-// ── LOG TABLE ────────────────────────────────────────────────────────────
-function populatePortalFilter() {
+// ── LOG TABLE ────────────────────────────────────────────────────────
+function populatePortalFilter(){
   const sel=document.getElementById('filterPortal');
-  if (sel.options.length>1) return;
+  if(sel.options.length>1)return;
   [...new Set(allRows.map(r=>r[2]).filter(Boolean))].sort().forEach(c=>{
     const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
   });
 }
 
-function renderLog() {
+function renderLog(){
   populatePortalFilter();
-  const search  =document.getElementById('filterSearch').value.toLowerCase();
-  const portal  =document.getElementById('filterPortal').value;
-  const type    =document.getElementById('filterType').value;
-  const status  =document.getElementById('filterStatus').value;
+  const search=document.getElementById('filterSearch').value.toLowerCase();
+  const portal=document.getElementById('filterPortal').value;
+  const type=document.getElementById('filterType').value;
+  const status=document.getElementById('filterStatus').value;
   const dateFrom=document.getElementById('filterDateFrom').value;
-  const dateTo  =document.getElementById('filterDateTo').value;
+  const dateTo=document.getElementById('filterDateTo').value;
 
   let filtered=allRows.map(parseRow).filter(r=>{
     if(portal&&r.code!==portal)return false;
@@ -748,11 +832,12 @@ function renderLog() {
 
   tbody.innerHTML=page.map(r=>{
     const onTime=String(r.onTime)==='TRUE'||r.onTime===true;
-    const otStr=(!r.deadline||r.deadline==='N/A'||r.deadline==='Variable')?'<span class="dot-grey">—</span>':onTime?'<span class="dot-green">&#10003; On Time</span>':'<span class="dot-red">&#10007; Late</span>';
-    const devStr=(r.devMins&&r.devMins!==0&&r.deadline!=='N/A'&&r.deadline!=='Variable')?`<span class="${Number(r.devMins)>0?'dot-red':'dot-green'}">${Number(r.devMins)>0?'+':''}${r.devMins}</span>`:'<span class="dot-grey">—</span>';
-    return `<tr>
+    const otStr=(!r.deadline||r.deadline==='N/A'||r.deadline==='Variable'||r.deadline==='Monthly'||r.deadline==='Same day')?'<span class="dot-grey">—</span>':onTime?'<span class="dot-green">&#10003; On Time</span>':'<span class="dot-red">&#10007; Late</span>';
+    const devStr=(r.devMins&&r.devMins!==0&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day')?`<span class="${Number(r.devMins)>0?'dot-red':'dot-green'}">${Number(r.devMins)>0?'+':''}${r.devMins}</span>`:'<span class="dot-grey">—</span>';
+    const displayPortal=r.code==='GEN-MAINT'?'Generator Daily Checks':(r.portal||'—');
+    return`<tr>
       <td class="td-time">${fmtTsFull(r.ts)}</td>
-      <td class="td-name">${r.portal||'—'}</td>
+      <td class="td-name">${displayPortal}</td>
       <td class="td-code">${r.code||'—'}</td>
       <td>${r.by||'—'}</td>
       <td style="font-size:11px;color:var(--text3)">${r.type||'—'}</td>
@@ -767,18 +852,20 @@ function renderLog() {
   document.getElementById('logPagination').textContent=pages>1?`Page ${logPage} of ${pages} (${total.toLocaleString()} rows)`:`${total.toLocaleString()} rows`;
 }
 
-// ── ANALYTICS ────────────────────────────────────────────────────────────
-function renderAnalytics() {
+// ── ANALYTICS ────────────────────────────────────────────────────────
+function renderAnalytics(){
   const rows=allRows.map(parseRow);
+  const closedDays=buildClosedDays(rows);
   const now=new Date();
 
   const byPortal={};
-  rows.forEach(r=>{byPortal[r.code]=(byPortal[r.code]||0)+1;});
+  rows.forEach(r=>{if(r.code!=='GEN-CHECKS')byPortal[r.code]=(byPortal[r.code]||0)+1;});
   const pE=Object.entries(byPortal).sort((a,b)=>b[1]-a[1]).slice(0,12);
   const maxP=pE[0]?.[1]||1;
-  document.getElementById('chartByPortal').innerHTML=pE.map(([code,n])=>
-    `<div class="bar-row"><div class="bar-label">${code}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxP)*100)}%"></div></div><div class="bar-count">${n}</div></div>`
-  ).join('');
+  document.getElementById('chartByPortal').innerHTML=pE.map(([code,n])=>{
+    const displayCode=code==='GEN-MAINT'?'GEN-MAINT (Gen Daily)':code;
+    return`<div class="bar-row"><div class="bar-label">${displayCode}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxP)*100)}%"></div></div><div class="bar-count">${n}</div></div>`;
+  }).join('');
 
   const bySub={};
   rows.filter(r=>isLast30(r.ts)).forEach(r=>{if(r.by)bySub[r.by]=(bySub[r.by]||0)+1;});
@@ -793,21 +880,19 @@ function renderAnalytics() {
   rows.forEach(r=>{try{const d=new Date(r.ts);if((now-d)<=14*86400000){const k=d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'});if(dailyMap[k]!==undefined)dailyMap[k]++;}}catch(e){}});
   const dE=Object.entries(dailyMap);
   const maxD=Math.max(...dE.map(([,v])=>v),1);
-  document.getElementById('chartDaily').innerHTML=dE.map(([date,n])=>
-    `<div class="bar-row"><div class="bar-label">${date}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxD)*100)}%;background:var(--slate2)"></div></div><div class="bar-count">${n}</div></div>`
-  ).join('');
+  document.getElementById('chartDaily').innerHTML=dE.map(([date,n])=>`<div class="bar-row"><div class="bar-label">${date}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxD)*100)}%;background:var(--slate2)"></div></div><div class="bar-count">${n}</div></div>`).join('');
 
-  // On-time chart: FY only, exclude TVC-COUNT and off-season days
   const otByP={},totByP={};
-  rows.filter(r=>isInFY(r.ts)).forEach(r=>{
-    if(!r.code||!r.deadline||r.deadline==='N/A'||r.deadline==='Variable'||r.onTime==='') return;
-    if(PORTAL_SEASON[r.code]==='exclude') return;
+  rows.filter(r=>isInFY(r.ts)&&r.code!=='GEN-CHECKS').forEach(r=>{
+    const reg=portalReg(r.code);
+    if(!reg||reg.scoring==='exclude'||reg.scoring==='pending')return;
+    if(!r.deadline||r.deadline==='N/A'||r.deadline==='Variable'||r.deadline==='Monthly'||r.deadline==='Same day'||r.onTime==='')return;
     const d=new Date(r.ts);
-    if(!isPortalActiveDay(r.code,d)) return;
+    if((reg.scoring==='daily-winter'||reg.scoring==='hm')&&!isWinterDay(d))return;
     totByP[r.code]=(totByP[r.code]||0)+1;
-    if(String(r.onTime)==='TRUE'||r.onTime===true) otByP[r.code]=(otByP[r.code]||0)+1;
+    if(String(r.onTime)==='TRUE'||r.onTime===true)otByP[r.code]=(otByP[r.code]||0)+1;
   });
-  const otE=Object.entries(totByP).map(([c,t])=>[c,Math.round(((otByP[c]||0)/t)*100)]).sort((a,b)=>a[1]-b[1]);
+  const otE=Object.entries(totByP).map(([c,t])=>[c==='GEN-MAINT'?'GEN-MAINT':c,Math.round(((otByP[c]||0)/t)*100)]).sort((a,b)=>a[1]-b[1]);
   document.getElementById('chartOnTime').innerHTML=otE.length
     ?otE.map(([code,pct])=>`<div class="bar-row"><div class="bar-label">${code}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=95?'var(--green)':pct>=85?'var(--warn)':pct>=75?'var(--orange)':'var(--red)'}"></div></div><div class="bar-count">${pct}%</div></div>`).join('')
     :'<div class="empty-state">No FY 2026-27 scored data yet</div>';
