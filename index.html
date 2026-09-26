@@ -248,23 +248,23 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
   <div class="view active" id="view-departments">
     <div id="dashError"></div>
     <div class="summary-strip">
-      <div class="stat-card"><div class="stat-label">Portals Active</div><div class="stat-value teal" id="statPortals">—</div><div class="stat-sub">of 19 in programme</div></div>
-      <div class="stat-card"><div class="stat-label">Submissions Today</div><div class="stat-value" id="statToday">—</div><div class="stat-sub">across all portals</div></div>
-      <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="statWeek">—</div><div class="stat-sub">last 7 days</div></div>
-      <div class="stat-card"><div class="stat-label">On-Time Rate</div><div class="stat-value green" id="statOnTime">—</div><div class="stat-sub">scheduled submissions</div></div>
-      <div class="stat-card"><div class="stat-label">FY 2026-27 Score</div><div class="stat-value amber" id="statFyScore">—</div><div class="stat-sub">in-season portals only</div></div>
-      <div class="stat-card"><div class="stat-label">Missed Today</div><div class="stat-value red" id="statMissed">—</div><div class="stat-sub">daily portals</div></div>
+      <div class="stat-card"><div class="stat-label">Portals Active</div><div class="stat-value teal" id="statPortals">–</div><div class="stat-sub">of 19 in programme</div></div>
+      <div class="stat-card"><div class="stat-label">Submissions Today</div><div class="stat-value" id="statToday">–</div><div class="stat-sub">across all portals</div></div>
+      <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="statWeek">–</div><div class="stat-sub">last 7 days</div></div>
+      <div class="stat-card"><div class="stat-label">On-Time Rate</div><div class="stat-value green" id="statOnTime">–</div><div class="stat-sub">scheduled submissions</div></div>
+      <div class="stat-card"><div class="stat-label">FY 2026-27 Score</div><div class="stat-value amber" id="statFyScore">–</div><div class="stat-sub">in-season portals only</div></div>
+      <div class="stat-card"><div class="stat-label">Missed Today</div><div class="stat-value red" id="statMissed">–</div><div class="stat-sub">daily portals</div></div>
     </div>
     <div id="missedStrip"></div>
     <div id="seasonalNote"></div>
-    <div class="section-row"><div class="section-title">Departmental Performance &mdash; FY 2026-27</div></div>
+    <div class="section-row"><div class="section-title">Departmental Performance (FY 2026-27)</div></div>
     <div class="dept-grid" id="deptGrid">
       <div class="loading-state"><div class="spinner"></div><div class="loading-label">Loading compliance data...</div></div>
     </div>
   </div>
 
   <div class="view" id="view-portals">
-    <div class="section-row"><div class="section-title">Portal Status &mdash; Live</div></div>
+    <div class="section-row"><div class="section-title">Portal Status (Live)</div></div>
     <div class="portal-grid" id="portalGrid"></div>
   </div>
 
@@ -290,7 +290,7 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
     <div class="analytics-grid">
       <div class="analytics-card"><div class="analytics-title">Submissions by Portal (All Time)</div><div id="chartByPortal"></div></div>
       <div class="analytics-card"><div class="analytics-title">Submissions by Submitter (Last 30 Days)</div><div id="chartBySubmitter"></div></div>
-      <div class="analytics-card"><div class="analytics-title">Daily Volume &mdash; Last 14 Days</div><div id="chartDaily"></div></div>
+      <div class="analytics-card"><div class="analytics-title">Daily Volume, Last 14 Days</div><div id="chartDaily"></div></div>
       <div class="analytics-card"><div class="analytics-title">On-Time Rate by Portal (FY 2026-27)</div><div id="chartOnTime"></div></div>
     </div>
   </div>
@@ -434,20 +434,20 @@ function hoursAgo(ts){try{return(new Date()-new Date(ts))/3600000;}catch(e){retu
 function isWinterDay(d){const m=d.getMonth()+1,day=d.getDate();return(m===12&&day>=15)||(m===1||m===2)||(m===3&&day<=15);}
 
 function fmtTs(ts){
-  if(!ts)return'—';
+  if(!ts)return'–';
   try{
-    const d=new Date(ts);if(isNaN(d))return'—';
+    const d=new Date(ts);if(isNaN(d))return'–';
     const diff=(new Date()-d)/1000;
     if(diff<60)return Math.round(diff)+'s ago';
     if(diff<3600)return Math.round(diff/60)+'m ago';
     if(diff<86400)return Math.round(diff/3600)+'h ago';
     return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  }catch(e){return'—';}
+  }catch(e){return'–';}
 }
 
 function fmtTsFull(ts){
-  if(!ts)return'—';
-  try{const d=new Date(ts);if(isNaN(d))return'—';return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});}catch(e){return'—';}
+  if(!ts)return'–';
+  try{const d=new Date(ts);if(isNaN(d))return'–';return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});}catch(e){return'–';}
 }
 
 function kpiGrade(pct){
@@ -670,11 +670,11 @@ function renderDepartments(procKpi, procRecon){
   let notes=[];
   if(!winterNow){
     notes.push('SNOW-MK and PISTENBULL off-season (active 15 Dec &ndash; 15 Mar)');
-    if(!hmDone&&daysToDeadline>0)notes.push('<strong>HM-CHECKS pre-winter service due by 31 Oct &mdash; '+daysToDeadline+' day'+(daysToDeadline!==1?'s':'')+' remaining</strong>');
-    else if(!hmDone&&daysToDeadline<=0)notes.push('<strong style="color:var(--red)">HM-CHECKS pre-winter service OVERDUE &mdash; deadline was 31 Oct</strong>');
+    if(!hmDone&&daysToDeadline>0)notes.push('<strong>HM-CHECKS pre-winter service due by 31 Oct, '+daysToDeadline+' day'+(daysToDeadline!==1?'s':'')+' remaining</strong>');
+    else if(!hmDone&&daysToDeadline<=0)notes.push('<strong style="color:var(--red)">HM-CHECKS pre-winter service OVERDUE, deadline was 31 Oct</strong>');
     else notes.push('HM-CHECKS pre-winter service check complete');
   }else{
-    notes.push('Winter season active &mdash; SNOW-MK, PISTENBULL and HM-CHECKS included in daily scoring');
+    notes.push('Winter season active, SNOW-MK, PISTENBULL and HM-CHECKS included in daily scoring');
   }
   sn.innerHTML=`<div class="seasonal-note">${notes.join(' &middot; ')}</div>`;
 
@@ -687,7 +687,7 @@ function renderDepartments(procKpi, procRecon){
     const deptScore=isPending?null:calcScore(dept.portals,rows,closedDays);
     let scorePct=deptScore?deptScore.pct:null;
     let grade=scorePct!==null?kpiGrade(scorePct):null;
-    let scoreDisplay=scorePct!==null?(scorePct+'%'):'—';
+    let scoreDisplay=scorePct!==null?(scorePct+'%'):'–';
     let scoreCls=grade?grade.cls:(isPending?'pending':'event');
 
     // Missed today in this dept
@@ -712,7 +712,7 @@ function renderDepartments(procKpi, procRecon){
 
         subHtml+=`<div class="sub-section">
           <div class="sub-label">${sub.label}</div>
-          <div class="sub-score ${allExcluded?'pending':scls}">${spct!==null?(spct+'%'):'—'}</div>
+          <div class="sub-score ${allExcluded?'pending':scls}">${spct!==null?(spct+'%'):'–'}</div>
           ${sg?`<div class="sub-grade ${scls}">${sg.label}</div>`:(allExcluded?'<div class="sub-grade pending">Pending</div>':'')}
           <div class="sub-bar"><div class="sub-bar-fill" style="width:${spct||0}%;background:${barColor(scls)}"></div></div>
           ${procDetail}
@@ -731,7 +731,7 @@ function renderDepartments(procKpi, procRecon){
       const isExcluded=reg.scoring==='exclude';
       const isPend=reg.scoring==='pending';
       let statusLabel,statusCls;
-      if(isPend){statusLabel='Pending';statusCls='s-pending';}
+      if(isPend){statusLabel='Monitoring';statusCls='s-pending';}
       else if(isExcluded){statusLabel='Excluded';statusCls='s-excluded';}
       else if(isSeasonalOff){statusLabel='Off-Season';statusCls='s-seasonal';}
       else{statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag];statusCls={green:'s-active',yellow:'s-due',red:'s-overdue',grey:'s-nodata'}[rag];}
@@ -740,7 +740,7 @@ function renderDepartments(procKpi, procRecon){
         <div class="p-rag ${(isSeasonalOff||isExcluded||isPend)?'grey':rag}"></div>
         <div class="p-code">${code}</div>
         <div class="p-name">${displayName}</div>
-        <div class="p-last">${last?fmtTs(last.ts):'—'}</div>
+        <div class="p-last">${last?fmtTs(last.ts):'–'}</div>
         <div class="p-status ${statusCls}">${statusLabel}</div>
       </div>`;
     }).join('');
@@ -788,7 +788,7 @@ function renderDepartments(procKpi, procRecon){
         <div style="padding:8px 14px 4px;border-bottom:1px solid var(--border)">
           <div onclick="var l=this.parentElement.querySelector('.proc-list');var a=this.querySelector('.proc-arrow');l.style.display=l.style.display==='block'?'none':'block';a.textContent=l.style.display==='block'?'▼':'▶';"
             style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:2px 0">
-            <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">No GRN Submitted — Requester Accountability (${noGrn})</div>
+            <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">No GRN Submitted (Requester Accountability) (${noGrn})</div>
             <span class="proc-arrow" style="font-size:10px;color:var(--text3);margin-left:8px">▶</span>
           </div>
           <div class="proc-list" style="display:none">
@@ -808,7 +808,7 @@ function renderDepartments(procKpi, procRecon){
         </div>
         <div class="score-side">
           <div class="dept-score ${accentCls}">${scoreDisplay}</div>
-          ${grade?`<div class="grade-chip ${grade.cls}">${grade.label}</div>`:(isPending?'<div class="grade-chip pending">Pending Setup</div>':'')}
+          ${grade?`<div class="grade-chip ${grade.cls}">${grade.label}</div>`:(isPending?'<div class="grade-chip pending">Monitoring</div>':'')}
         </div>
       </div>
       <div class="dept-bar-row">
@@ -845,10 +845,10 @@ function renderPortals(){
     tile.className='portal-tile';
     if(portal.scoring==='pending'){
       tile.classList.add('t-grey');
-      tile.innerHTML=`<div class="tile-header"><span class="tile-code placeholder">${portal.code}</span><span class="tile-badge badge-grey">Pending</span></div>
+      tile.innerHTML=`<div class="tile-header"><span class="tile-code placeholder">${portal.code}</span><span class="tile-badge badge-grey">Monitoring</span></div>
         <div class="tile-name placeholder">${portal.name}</div>
         <div class="tile-type">${portal.type} &middot; ${portal.deadline}</div>
-        <div class="tile-meta"><div class="placeholder-note">Write-back coming soon</div></div>`;
+        <div class="tile-meta"><div class="tile-meta-item"><div class="tile-meta-label">Last Submission</div><div class="tile-meta-value">${lastSub[portal.code]?fmtTs(lastSub[portal.code].ts):'–'}</div></div><div class="placeholder-note">Monitor only, not scored. Review 24 Oct 2026</div></div>`;
       grid.appendChild(tile);return;
     }
 
@@ -864,7 +864,7 @@ function renderPortals(){
     if(isExcluded){statusLabel='Not Scored';badgeCls='badge-grey';}
     else if(isSeasonalOff){statusLabel='Off-Season';badgeCls='badge-seasonal';}
     else{statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag];badgeCls='badge-'+rag;}
-    const fyStr=fyPct!==null?(fyPct+'%'):(isExcluded?'Excluded':'—');
+    const fyStr=fyPct!==null?(fyPct+'%'):(isExcluded?'Excluded':'–');
     const fyClass=fyG?(fyG.cls==='on-track'?'green':fyG.cls==='needs-att'||fyG.cls==='near-fail'?'warn':'red'):'grey';
     const displayName=portal.code==='GEN-MAINT'?'Generator Daily Checks':portal.name;
 
@@ -874,8 +874,8 @@ function renderPortals(){
       <div class="tile-name">${displayName}</div>
       <div class="tile-type">${portal.type} &middot; ${portal.deadline}</div>
       <div class="tile-meta">
-        <div class="tile-meta-item"><div class="tile-meta-label">Last Submission</div><div class="tile-meta-value">${last?fmtTs(last.ts):'—'}</div></div>
-        <div class="tile-meta-item"><div class="tile-meta-label">Submitted By</div><div class="tile-meta-value">${last?(last.by||'—'):'—'}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">Last Submission</div><div class="tile-meta-value">${last?fmtTs(last.ts):'–'}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">Submitted By</div><div class="tile-meta-value">${last?(last.by||'–'):'–'}</div></div>
         <div class="tile-meta-item"><div class="tile-meta-label">Total Logged</div><div class="tile-meta-value">${count.toLocaleString()}</div></div>
         <div class="tile-meta-item"><div class="tile-meta-label">FY KPI Score</div><div class="tile-meta-value ${fyClass}">${fyStr}</div></div>
       </div>`;
@@ -919,19 +919,19 @@ function renderLog(){
 
   tbody.innerHTML=page.map(r=>{
     const onTime=String(r.onTime)==='TRUE'||r.onTime===true;
-    const otStr=(!r.deadline||r.deadline==='N/A'||r.deadline==='Variable'||r.deadline==='Monthly'||r.deadline==='Same day')?'<span class="dot-grey">—</span>':onTime?'<span class="dot-green">&#10003; On Time</span>':'<span class="dot-red">&#10007; Late</span>';
-    const devStr=(r.devMins&&r.devMins!==0&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day')?`<span class="${Number(r.devMins)>0?'dot-red':'dot-green'}">${Number(r.devMins)>0?'+':''}${r.devMins}</span>`:'<span class="dot-grey">—</span>';
-    const displayPortal=r.code==='GEN-MAINT'?'Generator Daily Checks':(r.portal||'—');
+    const otStr=(!r.deadline||r.deadline==='N/A'||r.deadline==='Variable'||r.deadline==='Monthly'||r.deadline==='Same day')?'<span class="dot-grey">–</span>':onTime?'<span class="dot-green">&#10003; On Time</span>':'<span class="dot-red">&#10007; Late</span>';
+    const devStr=(r.devMins&&r.devMins!==0&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day')?`<span class="${Number(r.devMins)>0?'dot-red':'dot-green'}">${Number(r.devMins)>0?'+':''}${r.devMins}</span>`:'<span class="dot-grey">–</span>';
+    const displayPortal=r.code==='GEN-MAINT'?'Generator Daily Checks':(r.portal||'–');
     return`<tr>
       <td class="td-time">${fmtTsFull(r.ts)}</td>
       <td class="td-name">${displayPortal}</td>
-      <td class="td-code">${r.code||'—'}</td>
-      <td>${r.by||'—'}</td>
-      <td style="font-size:11px;color:var(--text3)">${r.type||'—'}</td>
-      <td style="font-size:11px;color:var(--text3)">${r.deadline||'—'}</td>
+      <td class="td-code">${r.code||'–'}</td>
+      <td>${r.by||'–'}</td>
+      <td style="font-size:11px;color:var(--text3)">${r.type||'–'}</td>
+      <td style="font-size:11px;color:var(--text3)">${r.deadline||'–'}</td>
       <td style="font-size:12px">${otStr}</td>
       <td style="font-size:12px">${devStr}</td>
-      <td class="td-notes" title="${(r.notes||'').replace(/"/g,'&quot;')}">${r.notes||'—'}</td>
+      <td class="td-notes" title="${(r.notes||'').replace(/"/g,'&quot;')}">${r.notes||'–'}</td>
     </tr>`;
   }).join('');
 
