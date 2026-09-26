@@ -7,21 +7,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Condensed:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* ── Industry design system tokens ────────────────────────────────── */
 :root {
   --color-bg:       #f2f2f3;
   --color-surface:  #e9e9ea;
   --color-text:     #1d1f20;
   --color-accent:   #5980a6;
   --color-divider:  rgba(29,31,32,.16);
-
   --color-neutral-100: #f5f5f8;
   --color-neutral-200: #e7e7ea;
   --color-neutral-300: #d4d4d7;
   --color-neutral-500: #98989b;
   --color-neutral-700: #5d5d60;
   --color-neutral-900: #2b2b2d;
-
   --color-accent-100: #eef6ff;
   --color-accent-200: #d6ebff;
   --color-accent-300: #b5d9fd;
@@ -31,618 +28,211 @@
   --color-accent-700: #416180;
   --color-accent-800: #2c455d;
   --color-accent-900: #1d2d3d;
-
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-body:    "Barlow", system-ui, sans-serif;
-
-  --space-1: 3.4px;
-  --space-2: 6.8px;
-  --space-3: 10.2px;
-  --space-4: 13.6px;
-  --space-6: 20.4px;
-  --space-8: 27.2px;
-
-  --radius-md: 4px;
+  --space-1: 3.4px; --space-2: 6.8px; --space-3: 10.2px;
+  --space-4: 13.6px; --space-6: 20.4px; --space-8: 27.2px;
   --shadow-sm: 0 1px 2px rgba(43,43,45,.14);
   --shadow-md: 0 3px 10px rgba(43,43,45,.16);
-
-  /* Status colours — used only for RAG dots/badges, never surfaces */
-  --green:  #2e7d52;
-  --yellow: #a05c00;
-  --red:    #b52b2b;
-  --green-bg:  #e6f4ec;
-  --yellow-bg: #fef3e2;
-  --red-bg:    #fdeaea;
-  --grey:  #5d5d60;
-  --grey-bg: #f0f0f1;
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.55;
-  min-height: 100vh;
-}
-
-h1,h2,h3,h4,h5,h6 {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -.015em;
-}
-
-/* ── Blueprint card frame helper ───────────────────────────────────── */
-.blueprint {
-  position: relative;
-  border: 1px solid var(--color-divider);
-}
-.blueprint > .corner {
-  position: absolute;
-  width: 11px; height: 11px;
-  color: rgba(29,31,32,.45);
-}
-.blueprint > .corner::before,
-.blueprint > .corner::after {
-  content: ""; position: absolute; background: currentColor;
-}
-.blueprint > .corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
-.blueprint > .corner::after  { top: 5px; left: 0; width: 100%; height: 1px; }
-.blueprint > .corner.tl { top: -6px; left: -6px; }
-.blueprint > .corner.tr { top: -6px; right: -6px; }
-.blueprint > .corner.bl { bottom: -6px; left: -6px; }
-.blueprint > .corner.br { bottom: -6px; right: -6px; }
-
-/* ── Header ─────────────────────────────────────────────────────────── */
-header {
-  background: var(--color-accent-900);
-  color: #fff;
-  padding: 0 var(--space-8);
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--color-accent-800);
-}
-
-.header-brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.brand-mark {
-  width: 28px; height: 28px;
-  border: 1px solid rgba(255,255,255,.35);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-heading);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: .05em;
-  color: var(--color-accent-300);
-  flex-shrink: 0;
-}
-
-.brand-title {
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-.brand-sub {
-  font-size: 11px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-accent-400);
-  margin-top: 1px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-}
-
-.live-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  letter-spacing: .05em;
-  color: var(--color-accent-300);
-}
-
-.live-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: #4ade80;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-.btn-refresh {
-  font-family: var(--font-heading);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,.25);
-  color: var(--color-accent-200);
-  cursor: pointer;
-}
-.btn-refresh:hover { background: rgba(255,255,255,.08); }
-
-/* ── Nav tabs ───────────────────────────────────────────────────────── */
-nav {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-divider);
-  padding: 0 var(--space-8);
-  display: flex;
-  gap: 0;
-}
-
-.nav-tab {
-  padding: 11px 16px;
-  font-family: var(--font-heading);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--color-neutral-700);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  user-select: none;
-  transition: color .12s;
-}
-.nav-tab:hover { color: var(--color-accent); }
-.nav-tab.active {
-  color: var(--color-accent-900);
-  border-bottom-color: var(--color-accent);
-}
-
-/* ── Main layout ────────────────────────────────────────────────────── */
-main {
-  padding: var(--space-8);
-  max-width: 1600px;
-}
-
-.view { display: none; }
-.view.active { display: block; }
-
-/* ── Summary strip ──────────────────────────────────────────────────── */
-.summary-strip {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
-}
-
-.stat-card {
-  padding: var(--space-4) var(--space-6);
-  background: transparent;
-  border: 1px solid var(--color-divider);
-  position: relative;
-}
-
-.stat-label {
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-neutral-700);
-  margin-bottom: var(--space-2);
-}
-
-.stat-value {
-  font-family: var(--font-heading);
-  font-size: 32px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--color-accent-900);
-}
-
-.stat-value.accent { color: var(--color-accent); }
-.stat-value.green  { color: var(--green); }
-.stat-value.yellow { color: var(--yellow); }
-.stat-value.red    { color: var(--red); }
-
-.stat-sub {
-  font-size: 11px;
-  color: var(--color-neutral-500);
-  margin-top: var(--space-1);
-}
-
-/* ── Section heading ────────────────────────────────────────────────── */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.section-label {
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--color-neutral-500);
-}
-
-/* ── Portal grid ────────────────────────────────────────────────────── */
-.portal-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
-}
-
-.portal-tile {
-  padding: var(--space-4);
-  position: relative;
-  background: transparent;
-  border: 1px solid var(--color-divider);
-  border-top-width: 3px;
-  transition: box-shadow .12s;
-}
-.portal-tile:hover { box-shadow: var(--shadow-md); }
-
-.portal-tile.status-green  { border-top-color: var(--green); }
-.portal-tile.status-yellow { border-top-color: var(--yellow); }
-.portal-tile.status-red    { border-top-color: var(--red); }
-.portal-tile.status-grey   { border-top-color: var(--color-neutral-300); opacity: .7; }
-
-.tile-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-}
-
-.tile-code {
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  background: var(--color-accent-100);
-  padding: 2px 7px;
-}
-.tile-code.placeholder { color: var(--grey); background: var(--grey-bg); }
-
-.status-badge {
-  font-family: var(--font-heading);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-}
-.badge-green  { background: var(--green-bg);  color: var(--green); }
-.badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
-.badge-red    { background: var(--red-bg);    color: var(--red); }
-.badge-grey   { background: var(--grey-bg);   color: var(--grey); }
-
-.tile-name {
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-accent-900);
-  margin-bottom: 2px;
-  line-height: 1.2;
-}
-.tile-name.placeholder { color: var(--color-neutral-500); }
-
-.tile-type {
-  font-size: 11px;
-  color: var(--color-neutral-500);
-  margin-bottom: var(--space-4);
-  letter-spacing: .02em;
-}
-
-.tile-meta {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-}
-
-.tile-meta-item {
-  background: var(--color-neutral-100);
-  padding: 6px 8px;
-}
-
-.tile-meta-label {
-  font-family: var(--font-heading);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--color-neutral-500);
-  margin-bottom: 2px;
-}
-
-.tile-meta-value {
-  font-family: var(--font-heading);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-accent-900);
-}
-.tile-meta-value.green  { color: var(--green); }
-.tile-meta-value.yellow { color: var(--yellow); }
-.tile-meta-value.red    { color: var(--red); }
-.tile-meta-value.grey   { color: var(--color-neutral-500); }
-
-.placeholder-notice {
-  grid-column: 1/-1;
-  text-align: center;
-  font-size: 11px;
-  color: var(--color-neutral-500);
-  letter-spacing: .04em;
-  padding: var(--space-3);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-/* ── Filter bar ─────────────────────────────────────────────────────── */
-.filter-bar {
-  display: flex;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.filter-bar input,
-.filter-bar select {
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--color-text);
-  background: #fff;
-  border: 1px solid var(--color-divider);
-  padding: 6px 10px;
-  outline: none;
-  min-width: 160px;
-}
-.filter-bar input:focus,
-.filter-bar select:focus { border-color: var(--color-accent); }
-
-/* ── Table ──────────────────────────────────────────────────────────── */
-.table-wrap {
-  border: 1px solid var(--color-divider);
-  overflow: hidden;
-  background: #fff;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-thead tr {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-divider);
-}
-
-thead th {
-  text-align: left;
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-neutral-700);
-  padding: 9px 12px;
-  white-space: nowrap;
-}
-
-tbody tr {
-  border-bottom: 1px solid rgba(29,31,32,.06);
-}
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: var(--color-accent-100); }
-
-tbody td {
-  padding: 8px 12px;
-  color: var(--color-text);
-  vertical-align: middle;
-}
-
-.td-code {
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .06em;
-  color: var(--color-accent);
-}
-.td-time {
-  font-size: 11px;
-  color: var(--color-neutral-700);
-  white-space: nowrap;
-}
-.td-name { font-weight: 500; color: var(--color-accent-900); }
-.td-notes {
-  color: var(--color-neutral-700);
-  font-size: 12px;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dot-green  { color: var(--green); }
-.dot-yellow { color: var(--yellow); }
-.dot-red    { color: var(--red); }
-.dot-grey   { color: var(--color-neutral-500); }
-
-/* ── Analytics ──────────────────────────────────────────────────────── */
-.analytics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
-}
-
-.analytics-card {
-  border: 1px solid var(--color-divider);
-  padding: var(--space-6);
-  background: #fff;
-  position: relative;
-}
-
-.analytics-title {
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-neutral-500);
-  margin-bottom: var(--space-4);
-}
-
-.bar-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: 8px;
-}
-
-.bar-label {
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-accent-900);
-  width: 110px;
-  flex-shrink: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bar-track {
-  flex: 1;
-  height: 5px;
-  background: var(--color-neutral-200);
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  background: var(--color-accent);
-  transition: width .4s ease;
-}
-
-.bar-count {
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-neutral-700);
-  width: 28px;
-  text-align: right;
-}
-
-/* ── States ─────────────────────────────────────────────────────────── */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 0;
-  gap: var(--space-4);
-  color: var(--color-neutral-500);
-}
-
-.spinner {
-  width: 28px; height: 28px;
-  border: 2px solid var(--color-neutral-300);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.loading-label {
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-neutral-500);
-}
-
-.error-state {
-  border: 1px solid rgba(181,43,43,.35);
-  background: var(--red-bg);
-  padding: var(--space-4) var(--space-6);
-  font-size: 13px;
-  color: var(--red);
-  margin-bottom: var(--space-6);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  letter-spacing: .02em;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px;
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-neutral-500);
-}
-
-/* ── Pagination ─────────────────────────────────────────────────────── */
-#logPagination {
-  margin-top: var(--space-4);
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--color-neutral-500);
-  text-align: center;
-}
-
-/* ── Responsive ─────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .summary-strip { grid-template-columns: repeat(3,1fr); }
-  .analytics-grid { grid-template-columns: 1fr; }
-  main { padding: var(--space-4); }
-  header { padding: 0 var(--space-4); }
-  nav { padding: 0 var(--space-4); }
-}
-@media (max-width: 600px) {
-  .summary-strip { grid-template-columns: 1fr 1fr; }
-  .portal-grid { grid-template-columns: 1fr; }
-}
+  --green:      #2e7d52; --green-bg:  #e6f4ec;
+  --yellow:     #a05c00; --yellow-bg: #fef3e2;
+  --red:        #b52b2b; --red-bg:    #fdeaea;
+  --grey:       #5d5d60; --grey-bg:   #f0f0f1;
+  --on-track:   #1a5c3a; --on-track-bg:   #d4edda;
+  --needs-att:  #7a4a00; --needs-att-bg:  #fff3cd;
+  --near-fail:  #8b3a00; --near-fail-bg:  #ffe5cc;
+  --failed:     #8b1a1a; --failed-bg:     #fdd;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:14px;line-height:1.55;min-height:100vh;}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-heading);font-weight:600;line-height:1.12;letter-spacing:-.015em;}
+
+/* Blueprint corners */
+.blueprint{position:relative;border:1px solid var(--color-divider);}
+.blueprint>.corner{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.45);}
+.blueprint>.corner::before,.blueprint>.corner::after{content:"";position:absolute;background:currentColor;}
+.blueprint>.corner::before{left:5px;top:0;width:1px;height:100%;}
+.blueprint>.corner::after{top:5px;left:0;width:100%;height:1px;}
+.blueprint>.corner.tl{top:-6px;left:-6px;}
+.blueprint>.corner.tr{top:-6px;right:-6px;}
+.blueprint>.corner.bl{bottom:-6px;left:-6px;}
+.blueprint>.corner.br{bottom:-6px;right:-6px;}
+
+/* Header */
+header{background:var(--color-accent-900);color:#fff;padding:0 var(--space-8);height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--color-accent-800);}
+.header-brand{display:flex;align-items:center;gap:var(--space-4);}
+.brand-mark{width:30px;height:30px;border:1px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--color-accent-300);flex-shrink:0;}
+.brand-title{font-family:var(--font-heading);font-size:15px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#fff;}
+.brand-sub{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-400);margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:var(--space-6);}
+.fy-badge{font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--color-accent-800);color:var(--color-accent-200);padding:4px 10px;border:1px solid var(--color-accent-700);}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.05em;color:var(--color-accent-300);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.btn-refresh{font-family:var(--font-heading);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--color-accent-200);cursor:pointer;}
+.btn-refresh:hover{background:rgba(255,255,255,.08);}
+
+/* Nav */
+nav{background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:0 var(--space-8);display:flex;}
+.nav-tab{padding:11px 16px;font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);cursor:pointer;border-bottom:2px solid transparent;user-select:none;transition:color .12s;}
+.nav-tab:hover{color:var(--color-accent);}
+.nav-tab.active{color:var(--color-accent-900);border-bottom-color:var(--color-accent);}
+
+/* Main */
+main{padding:var(--space-8);max-width:1700px;}
+.view{display:none;}.view.active{display:block;}
+
+/* Summary strip */
+.summary-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--space-4);margin-bottom:var(--space-8);}
+.stat-card{padding:var(--space-4) var(--space-4);background:transparent;border:1px solid var(--color-divider);position:relative;}
+.stat-label{font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:var(--space-2);}
+.stat-value{font-family:var(--font-heading);font-size:28px;font-weight:600;line-height:1;color:var(--color-accent-900);}
+.stat-value.accent{color:var(--color-accent);}
+.stat-value.green{color:var(--green);}
+.stat-value.red{color:var(--red);}
+.stat-value.yellow{color:var(--yellow);}
+.stat-sub{font-size:11px;color:var(--color-neutral-500);margin-top:var(--space-1);}
+
+/* Section header */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);}
+.section-label{font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-500);}
+
+/* KPI grade badges */
+.kpi-grade{display:inline-flex;align-items:center;font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;gap:5px;}
+.kpi-grade.on-track{background:var(--on-track-bg);color:var(--on-track);}
+.kpi-grade.needs-att{background:var(--needs-att-bg);color:var(--needs-att);}
+.kpi-grade.near-fail{background:var(--near-fail-bg);color:var(--near-fail);}
+.kpi-grade.failed{background:var(--failed-bg);color:var(--failed);}
+
+/* Department sections */
+.dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--space-6);margin-bottom:var(--space-8);}
+.dept-card{background:transparent;border:1px solid var(--color-divider);position:relative;}
+.dept-header{background:var(--color-accent-900);padding:var(--space-3) var(--space-4);display:flex;align-items:center;justify-content:space-between;}
+.dept-name{font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#fff;}
+.dept-custodians{font-size:10px;color:var(--color-accent-300);letter-spacing:.04em;margin-top:1px;}
+.dept-kpi-block{padding:var(--space-4);border-bottom:1px solid var(--color-divider);display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);}
+.dept-kpi-score{font-family:var(--font-heading);font-size:36px;font-weight:600;line-height:1;color:var(--color-accent-900);}
+.dept-kpi-score.on-track{color:var(--on-track);}
+.dept-kpi-score.needs-att{color:var(--needs-att);}
+.dept-kpi-score.near-fail{color:var(--near-fail);}
+.dept-kpi-score.failed{color:var(--failed);}
+.dept-kpi-meta{flex:1;}
+.dept-kpi-label{font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:var(--space-2);}
+.dept-kpi-bar{height:4px;background:var(--color-neutral-200);margin-bottom:var(--space-2);}
+.dept-kpi-bar-fill{height:100%;transition:width .4s ease;}
+.dept-missed{font-size:11px;color:var(--red);font-weight:500;margin-top:2px;}
+.dept-portals{padding:var(--space-3) var(--space-4);}
+.portal-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(29,31,32,.06);}
+.portal-row:last-child{border-bottom:none;}
+.portal-row-left{display:flex;align-items:center;gap:var(--space-3);}
+.portal-rag{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.portal-rag.green{background:var(--green);}
+.portal-rag.yellow{background:var(--yellow);}
+.portal-rag.red{background:var(--red);}
+.portal-rag.grey{background:var(--color-neutral-300);}
+.portal-row-code{font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--color-accent);width:90px;flex-shrink:0;}
+.portal-row-name{font-size:12px;color:var(--color-neutral-700);}
+.portal-row-right{display:flex;align-items:center;gap:var(--space-3);}
+.portal-row-last{font-size:11px;color:var(--color-neutral-500);}
+.portal-row-status{font-family:var(--font-heading);font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;}
+.status-active{background:var(--green-bg);color:var(--green);}
+.status-due{background:var(--yellow-bg);color:var(--yellow);}
+.status-overdue{background:var(--red-bg);color:var(--red);}
+.status-nodata{background:var(--grey-bg);color:var(--grey);}
+.status-pending{background:var(--grey-bg);color:var(--grey);}
+
+/* Portal grid (All Portals tab) */
+.portal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:var(--space-6);margin-bottom:var(--space-8);}
+.portal-tile{padding:var(--space-4);position:relative;background:transparent;border:1px solid var(--color-divider);border-top-width:3px;transition:box-shadow .12s;}
+.portal-tile:hover{box-shadow:var(--shadow-md);}
+.portal-tile.status-green{border-top-color:var(--green);}
+.portal-tile.status-yellow{border-top-color:var(--yellow);}
+.portal-tile.status-red{border-top-color:var(--red);}
+.portal-tile.status-grey{border-top-color:var(--color-neutral-300);opacity:.7;}
+.tile-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--space-3);}
+.tile-code{font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent);background:var(--color-accent-100);padding:2px 7px;}
+.tile-code.placeholder{color:var(--grey);background:var(--grey-bg);}
+.status-badge{font-family:var(--font-heading);font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;}
+.badge-green{background:var(--green-bg);color:var(--green);}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow);}
+.badge-red{background:var(--red-bg);color:var(--red);}
+.badge-grey{background:var(--grey-bg);color:var(--grey);}
+.tile-name{font-family:var(--font-heading);font-size:15px;font-weight:600;color:var(--color-accent-900);margin-bottom:2px;line-height:1.2;}
+.tile-name.placeholder{color:var(--color-neutral-500);}
+.tile-type{font-size:11px;color:var(--color-neutral-500);margin-bottom:var(--space-4);}
+.tile-meta{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);}
+.tile-meta-item{background:var(--color-neutral-100);padding:6px 8px;}
+.tile-meta-label{font-family:var(--font-heading);font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:2px;}
+.tile-meta-value{font-family:var(--font-heading);font-size:13px;font-weight:600;color:var(--color-accent-900);}
+.tile-meta-value.green{color:var(--green);}
+.tile-meta-value.yellow{color:var(--yellow);}
+.tile-meta-value.red{color:var(--red);}
+.tile-meta-value.grey{color:var(--color-neutral-500);}
+.placeholder-notice{grid-column:1/-1;text-align:center;font-size:11px;color:var(--color-neutral-500);padding:var(--space-3);font-family:var(--font-heading);font-weight:600;text-transform:uppercase;}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:var(--space-3);margin-bottom:var(--space-4);flex-wrap:wrap;align-items:center;}
+.filter-bar input,.filter-bar select{font-family:var(--font-body);font-size:13px;color:var(--color-text);background:#fff;border:1px solid var(--color-divider);padding:6px 10px;outline:none;min-width:150px;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--color-accent);}
+
+/* Table */
+.table-wrap{border:1px solid var(--color-divider);overflow:hidden;background:#fff;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--color-surface);border-bottom:1px solid var(--color-divider);}
+thead th{text-align:left;font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700);padding:9px 12px;white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(29,31,32,.06);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--color-accent-100);}
+tbody td{padding:8px 12px;color:var(--color-text);vertical-align:middle;}
+.td-code{font-family:var(--font-heading);font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--color-accent);}
+.td-time{font-size:11px;color:var(--color-neutral-700);white-space:nowrap;}
+.td-name{font-weight:500;color:var(--color-accent-900);}
+.td-notes{color:var(--color-neutral-700);font-size:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dot-green{color:var(--green);}
+.dot-yellow{color:var(--yellow);}
+.dot-red{color:var(--red);}
+.dot-grey{color:var(--color-neutral-500);}
+
+/* Analytics */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);margin-bottom:var(--space-8);}
+.analytics-card{border:1px solid var(--color-divider);padding:var(--space-6);background:#fff;position:relative;}
+.analytics-title{font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-500);margin-bottom:var(--space-4);}
+.bar-row{display:flex;align-items:center;gap:var(--space-3);margin-bottom:8px;}
+.bar-label{font-family:var(--font-heading);font-size:11px;font-weight:600;color:var(--color-accent-900);width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;height:5px;background:var(--color-neutral-200);overflow:hidden;}
+.bar-fill{height:100%;background:var(--color-accent);transition:width .4s ease;}
+.bar-count{font-family:var(--font-heading);font-size:11px;font-weight:600;color:var(--color-neutral-700);width:32px;text-align:right;}
+
+/* States */
+.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;gap:var(--space-4);color:var(--color-neutral-500);}
+.spinner{width:28px;height:28px;border:2px solid var(--color-neutral-300);border-top-color:var(--color-accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-label{font-family:var(--font-heading);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-500);}
+.error-state{border:1px solid rgba(181,43,43,.35);background:var(--red-bg);padding:var(--space-4) var(--space-6);font-size:13px;color:var(--red);margin-bottom:var(--space-6);font-family:var(--font-heading);font-weight:600;}
+.empty-state{text-align:center;padding:48px;font-family:var(--font-heading);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-500);}
+#logPagination{margin-top:var(--space-4);font-family:var(--font-heading);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-500);text-align:center;}
+
+/* Missed portals alert strip */
+.missed-strip{background:var(--red-bg);border:1px solid rgba(181,43,43,.3);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-6);display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;}
+.missed-strip-label{font-family:var(--font-heading);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--red);white-space:nowrap;}
+.missed-strip-items{font-size:12px;color:var(--red);flex:1;}
+
+@media(max-width:1100px){.summary-strip{grid-template-columns:repeat(3,1fr);}  .analytics-grid{grid-template-columns:1fr;}  main{padding:var(--space-4);}  header,nav{padding-left:var(--space-4);padding-right:var(--space-4);}}
+@media(max-width:600px){.summary-strip{grid-template-columns:1fr 1fr;} .dept-grid,.portal-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 
-<!-- ── Header ─────────────────────────────────────────────────────── -->
 <header>
   <div class="header-brand">
     <div class="brand-mark">CR</div>
     <div>
       <div class="brand-title">Central Compliance Register</div>
-      <div class="brand-sub">Samsons Group &mdash; MJSR Operations Oversight</div>
+      <div class="brand-sub">Samsons Group / MJSR &mdash; Operations Oversight</div>
     </div>
   </div>
   <div class="header-right">
+    <div class="fy-badge">FY 2026-27</div>
     <div class="live-badge">
       <div class="live-dot" id="liveDot"></div>
       <span id="lastRefresh">Loading...</span>
@@ -651,75 +241,72 @@ tbody td {
   </div>
 </header>
 
-<!-- ── Nav ───────────────────────────────────────────────────────── -->
 <nav>
-  <div class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</div>
+  <div class="nav-tab active" onclick="switchTab('departments')">Departments</div>
+  <div class="nav-tab" onclick="switchTab('portals')">All Portals</div>
   <div class="nav-tab" onclick="switchTab('log')">Submission Log</div>
   <div class="nav-tab" onclick="switchTab('analytics')">Analytics</div>
 </nav>
 
-<!-- ── Main ──────────────────────────────────────────────────────── -->
 <main>
 
-  <!-- DASHBOARD -->
-  <div class="view active" id="view-dashboard">
-
+  <!-- DEPARTMENTS TAB -->
+  <div class="view active" id="view-departments">
     <div id="dashError"></div>
-
-    <!-- Summary strip -->
-    <div class="summary-strip">
-      <div class="stat-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div class="summary-strip" id="summaryStrip">
+      <div class="stat-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="stat-label">Portals Active</div>
         <div class="stat-value accent" id="statPortals">—</div>
-        <div class="stat-sub">of 22 in programme</div>
+        <div class="stat-sub">of 21 in programme</div>
       </div>
-      <div class="stat-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="stat-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="stat-label">Submissions Today</div>
         <div class="stat-value" id="statToday">—</div>
         <div class="stat-sub">across all portals</div>
       </div>
-      <div class="stat-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="stat-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="stat-label">This Week</div>
         <div class="stat-value" id="statWeek">—</div>
         <div class="stat-sub">last 7 days</div>
       </div>
-      <div class="stat-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="stat-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="stat-label">On-Time Rate</div>
         <div class="stat-value green" id="statOnTime">—</div>
         <div class="stat-sub">scheduled submissions</div>
       </div>
-      <div class="stat-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="stat-label">Total Logged</div>
-        <div class="stat-value accent" id="statTotal">—</div>
-        <div class="stat-sub">all time</div>
+      <div class="stat-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="stat-label">FY 2026-27 Score</div>
+        <div class="stat-value accent" id="statFyScore">—</div>
+        <div class="stat-sub">daily portals, on-time</div>
+      </div>
+      <div class="stat-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="stat-label">Missed Today</div>
+        <div class="stat-value red" id="statMissed">—</div>
+        <div class="stat-sub">daily portals not submitted</div>
       </div>
     </div>
+
+    <div id="missedStrip"></div>
 
     <div class="section-header">
-      <div class="section-label">Portal Status &mdash; Live</div>
+      <div class="section-label">Departmental Performance &mdash; FY 2026-27</div>
     </div>
-
-    <div class="portal-grid" id="portalGrid">
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <div class="loading-label">Loading compliance data...</div>
-      </div>
+    <div class="dept-grid" id="deptGrid">
+      <div class="loading-state"><div class="spinner"></div><div class="loading-label">Loading...</div></div>
     </div>
-
   </div>
 
-  <!-- LOG -->
+  <!-- ALL PORTALS TAB -->
+  <div class="view" id="view-portals">
+    <div class="section-header"><div class="section-label">Portal Status &mdash; Live</div></div>
+    <div class="portal-grid" id="portalGrid"></div>
+  </div>
+
+  <!-- LOG TAB -->
   <div class="view" id="view-log">
     <div class="filter-bar">
       <input type="text" id="filterSearch" placeholder="Search portal, submitter, notes..." oninput="renderLog()">
-      <select id="filterPortal" onchange="renderLog()">
-        <option value="">All portals</option>
-      </select>
+      <select id="filterPortal" onchange="renderLog()"><option value="">All portals</option></select>
       <select id="filterType" onchange="renderLog()">
         <option value="">All types</option>
         <option value="Daily">Daily</option>
@@ -735,48 +322,33 @@ tbody td {
     </div>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Portal</th>
-            <th>Code</th>
-            <th>Submitted By</th>
-            <th>Type</th>
-            <th>Deadline</th>
-            <th>On Time</th>
-            <th>Dev (min)</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody id="logTableBody">
-          <tr><td colspan="9" class="empty-state">Loading...</td></tr>
-        </tbody>
+        <thead><tr>
+          <th>Timestamp</th><th>Portal</th><th>Code</th><th>Submitted By</th>
+          <th>Type</th><th>Deadline</th><th>On Time</th><th>Dev (min)</th><th>Notes</th>
+        </tr></thead>
+        <tbody id="logTableBody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
       </table>
     </div>
     <div id="logPagination"></div>
   </div>
 
-  <!-- ANALYTICS -->
+  <!-- ANALYTICS TAB -->
   <div class="view" id="view-analytics">
     <div class="analytics-grid">
-      <div class="analytics-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="analytics-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="analytics-title">Submissions by Portal (All Time)</div>
         <div id="chartByPortal"></div>
       </div>
-      <div class="analytics-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="analytics-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="analytics-title">Submissions by Submitter (Last 30 Days)</div>
         <div id="chartBySubmitter"></div>
       </div>
-      <div class="analytics-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="analytics-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="analytics-title">Daily Volume &mdash; Last 14 Days</div>
         <div id="chartDaily"></div>
       </div>
-      <div class="analytics-card blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="analytics-title">On-Time Rate by Portal</div>
+      <div class="analytics-card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="analytics-title">On-Time Rate by Portal (FY 2026-27)</div>
         <div id="chartOnTime"></div>
       </div>
     </div>
@@ -785,34 +357,73 @@ tbody td {
 </main>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────
+// ── CONFIG ──────────────────────────────────────────────────────────
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyP1rM-YRMsZyJiZzrnOKuIUNGa6M1tTYc_OxG3-XMRBIs19lnOtgfv_ri4eM4-eTLlnQ/exec';
+const FY_START = new Date('2026-07-01T00:00:00+05:00');
 
-const PORTAL_REGISTRY = [
-  { code:'CL-CHECKS',   name:'Chairlift Daily Checks',          type:'Daily',  deadline:'10:30',    placeholder:false },
-  { code:'ADV-CHECKS',  name:'MJSR Adventure Checks',           type:'Daily',  deadline:'10:30',    placeholder:false },
-  { code:'GV-CHECKS',   name:'GV Adventure Park Daily Checks',  type:'Daily',  deadline:'10:30',    placeholder:false },
-  { code:'HM-CHECKS',   name:'Heavy Machinery Daily Checks',    type:'Daily',  deadline:'10:30',    placeholder:false },
-  { code:'VH-FLEET',    name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'FIRE-EX',     name:'Fire Extinguisher Management',    type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'PR-FUND',     name:'PR Fund Tracker',                 type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'SNOW-MK',     name:'Snowmaking Master Portal',        type:'Daily',  deadline:'07:00',    placeholder:false },
-  { code:'PISTENBULL',  name:'PistenBully Master Portal',       type:'Daily',  deadline:'07:00',    placeholder:false },
-  { code:'GEN-CHECKS',  name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30',    placeholder:false },
-  { code:'SALES-CL',    name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    placeholder:false },
-  { code:'TVC-COUNT',   name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    placeholder:false },
-  { code:'INN-TRACK',   name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    placeholder:false },
-  { code:'FB-STOCK',    name:'F&B Stock Control Portal',        type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'PROC-HUB',    name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'LEAVE-TRK',   name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'TOUR-OPS',    name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'LOYALTY',     name:'MJSR Loyalty Programme',          type:'Event',  deadline:'Variable', placeholder:false },
-  { code:'GEN-MAINT',   name:'Generator Maintenance Portal',    type:'Daily',  deadline:'10:30',    placeholder:false },
-  { code:'CLINIC-DP',   name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', placeholder:true  },
-  { code:'GRP-BOOK',    name:'Group Bookings Portal',           type:'Event',  deadline:'Variable', placeholder:true  },
+// Department registry
+const DEPARTMENTS = [
+  {
+    id: 'technical', name: 'Technical', icon: 'T',
+    custodians: 'Bilal Tariq, Engr Ishtiaq, Engr Akram, Gohar, Engr Asif',
+    portals: ['CL-CHECKS','HM-CHECKS','GEN-CHECKS','GEN-MAINT','FIRE-EX','SNOW-MK','PISTENBULL']
+  },
+  {
+    id: 'adventure', name: 'Adventure', icon: 'A',
+    custodians: 'Nasir Khan, Mutasim, Rahim Ullah',
+    portals: ['ADV-CHECKS','GV-CHECKS']
+  },
+  {
+    id: 'commercial', name: 'Commercial', icon: 'C',
+    custodians: 'Shahzad Alam, Muhammad Saeed, Sales Team',
+    portals: ['SALES-CL','TVC-COUNT','LOYALTY','TOUR-OPS']
+  },
+  {
+    id: 'hospitality', name: 'Hospitality', icon: 'H',
+    custodians: 'Bawar Hussain, Abcar',
+    portals: ['INN-TRACK','FB-STOCK']
+  },
+  {
+    id: 'admin', name: 'Admin', icon: 'Ad',
+    custodians: 'Ashfaq, Abid Nawaz',
+    portals: ['VH-FLEET','PR-FUND','PROC-HUB','LEAVE-TRK']
+  },
+  {
+    id: 'pending', name: 'Pending Integration', icon: 'P',
+    custodians: 'Dr Rahim',
+    portals: ['CLINIC-DP','GRP-BOOK']
+  }
 ];
 
-// ── STATE ─────────────────────────────────────────────────────────────
+// Portal registry
+const PORTAL_REGISTRY = [
+  { code:'CL-CHECKS',  name:'Chairlift Daily Checks',         type:'Daily',  deadline:'10:30',    placeholder:false },
+  { code:'ADV-CHECKS', name:'MJSR Adventure Checks',          type:'Daily',  deadline:'10:30',    placeholder:false },
+  { code:'GV-CHECKS',  name:'GV Adventure Park Daily Checks', type:'Daily',  deadline:'10:30',    placeholder:false },
+  { code:'HM-CHECKS',  name:'Heavy Machinery Daily Checks',   type:'Daily',  deadline:'10:30',    placeholder:false },
+  { code:'VH-FLEET',   name:'Vehicle and Machinery Fleet',    type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'FIRE-EX',    name:'Fire Extinguisher Management',   type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'PR-FUND',    name:'PR Fund Tracker',                type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'SNOW-MK',    name:'Snowmaking Master Portal',       type:'Daily',  deadline:'07:00',    placeholder:false },
+  { code:'PISTENBULL', name:'PistenBully Master Portal',      type:'Daily',  deadline:'07:00',    placeholder:false },
+  { code:'GEN-CHECKS', name:'Generator Daily Checks',         type:'Daily',  deadline:'10:30',    placeholder:false },
+  { code:'SALES-CL',   name:'Sales Daily Checklist',          type:'Daily',  deadline:'10:30',    placeholder:false },
+  { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',   type:'Daily',  deadline:'23:59',    placeholder:false },
+  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',      type:'Daily',  deadline:'12:00',    placeholder:false },
+  { code:'FB-STOCK',   name:'F&B Stock Control Portal',       type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',  type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'LEAVE-TRK',  name:'Annual Leave Tracker',           type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal',type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'LOYALTY',    name:'MJSR Loyalty Programme',         type:'Event',  deadline:'Variable', placeholder:false },
+  { code:'GEN-MAINT',  name:'Generator Maintenance Portal',   type:'Daily',  deadline:'10:30',    placeholder:false },
+  { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',  type:'Event',  deadline:'Variable', placeholder:true  },
+  { code:'GRP-BOOK',   name:'Group Bookings Portal',          type:'Event',  deadline:'Variable', placeholder:true  },
+];
+
+// Daily portals that must submit every operating day
+const DAILY_PORTALS = PORTAL_REGISTRY.filter(p => p.type === 'Daily' && !p.placeholder).map(p => p.code);
+
+// ── STATE ────────────────────────────────────────────────────────────
 let allRows = [];
 let logPage = 1;
 const PAGE_SIZE = 100;
@@ -824,44 +435,54 @@ async function loadData() {
   document.getElementById('liveDot').style.background = '#f39c12';
   try {
     const resp = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'getComplianceData' })
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'getComplianceData' })
     });
     const json = await resp.json();
     if (!json.ok) throw new Error(json.error || 'Unknown error');
     allRows = json.rows || [];
-    document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('lastRefresh').textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('liveDot').style.background = '#4ade80';
     document.getElementById('dashError').innerHTML = '';
-    renderDashboard();
+    renderDepartments();
+    renderPortals();
     renderLog();
     renderAnalytics();
   } catch(err) {
     document.getElementById('lastRefresh').textContent = 'Error';
     document.getElementById('liveDot').style.background = '#b52b2b';
     document.getElementById('dashError').innerHTML = '<div class="error-state">Failed to load data: ' + err.message + '</div>';
-    document.getElementById('portalGrid').innerHTML = '';
   }
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ['dashboard','log','analytics'][i] === tab));
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', ['departments','portals','log','analytics'][i] === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + tab).classList.add('active');
 }
 
+// ── HELPERS ──────────────────────────────────────────────────────────
 function parseRow(r) {
   return { ts:r[0], portal:r[1], code:r[2], by:r[3], type:r[4], deadline:r[5], onTime:r[6], devMins:r[7], notes:r[10]||'' };
 }
+
+function toDate(ts) { try { return new Date(ts); } catch(e) { return null; } }
+
+function isToday(ts) {
+  try { return new Date(ts).toDateString() === new Date().toDateString(); } catch(e) { return false; }
+}
+function isThisWeek(ts) { try { return (new Date() - new Date(ts)) < 7*86400000; } catch(e) { return false; } }
+function isLast30(ts)   { try { return (new Date() - new Date(ts)) < 30*86400000; } catch(e) { return false; } }
+function isInFY(ts)     { try { return new Date(ts) >= FY_START; } catch(e) { return false; } }
+function hoursAgo(ts)   { try { return (new Date() - new Date(ts)) / 3600000; } catch(e) { return Infinity; } }
 
 function fmtTs(ts) {
   if (!ts) return '—';
   try {
     const d = new Date(ts); if (isNaN(d)) return String(ts).substring(0,16);
     const diff = (new Date() - d) / 1000;
-    if (diff < 60)   return Math.round(diff) + 's ago';
-    if (diff < 3600) return Math.round(diff/60) + 'm ago';
+    if (diff < 60)    return Math.round(diff) + 's ago';
+    if (diff < 3600)  return Math.round(diff/60) + 'm ago';
     if (diff < 86400) return Math.round(diff/3600) + 'h ago';
     return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
   } catch(e) { return String(ts).substring(0,16); }
@@ -875,40 +496,222 @@ function fmtTsFull(ts) {
   } catch(e) { return String(ts).substring(0,19); }
 }
 
-function isToday(ts)   { try { return new Date(ts).toDateString() === new Date().toDateString(); } catch(e) { return false; } }
-function isThisWeek(ts){ try { return (new Date() - new Date(ts)) < 7*86400000; } catch(e) { return false; } }
-function isLast30(ts)  { try { return (new Date() - new Date(ts)) < 30*86400000; } catch(e) { return false; } }
-function hoursAgo(ts)  { try { return (new Date() - new Date(ts)) / 3600000; } catch(e) { return Infinity; } }
+function kpiGrade(pct) {
+  if (pct >= 95) return { cls:'on-track',  label:'On Track' };
+  if (pct >= 85) return { cls:'needs-att', label:'Needs Attention' };
+  if (pct >= 75) return { cls:'near-fail', label:'Near Failure' };
+  return              { cls:'failed',    label:'Failed' };
+}
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────
-function renderDashboard() {
+function kpiBarColor(cls) {
+  return cls === 'on-track' ? 'var(--on-track)' : cls === 'needs-att' ? 'var(--needs-att)' : cls === 'near-fail' ? 'var(--near-fail)' : 'var(--failed)';
+}
+
+function portalRagStatus(code, rows) {
+  const reg  = PORTAL_REGISTRY.find(p => p.code === code);
+  if (!reg || reg.placeholder) return 'grey';
+  const last = rows.filter(r => r.code === code).sort((a,b) => new Date(b.ts) - new Date(a.ts))[0];
+  if (!last) return 'grey';
+  const h = hoursAgo(last.ts);
+  if (code === 'CL-CHECKS') {
+    const todayStr = new Date().toDateString();
+    const todayRows = rows.filter(r => r.code === 'CL-CHECKS' && new Date(r.ts).toDateString() === todayStr);
+    const hasStart  = todayRows.some(r => (r.notes||'').toLowerCase().includes('start of day'));
+    const hasClose  = todayRows.some(r => (r.notes||'').toLowerCase().includes('end of day'));
+    if (hasStart && hasClose) return 'green';
+    if (hasStart || hasClose) return 'yellow';
+    return h <= 26 ? 'yellow' : 'red';
+  }
+  if (reg.type === 'Daily') return h <= 26 ? 'green' : h <= 50 ? 'yellow' : 'red';
+  return h <= 72 ? 'green' : h <= 168 ? 'yellow' : 'red';
+}
+
+// FY compliance score for a set of portal codes (daily portals only)
+function calcFyScore(codes, rows) {
+  const fyRows   = rows.filter(r => isInFY(r.ts));
+  const dailyCodes = codes.filter(c => {
+    const reg = PORTAL_REGISTRY.find(p => p.code === c);
+    return reg && reg.type === 'Daily' && !reg.placeholder;
+  });
+  if (!dailyCodes.length) return null;
+
+  // Count operating days since FY start to now
+  const now      = new Date();
+  const fyStart  = new Date(FY_START);
+  let totalExpected = 0, totalOnTime = 0;
+
+  // Group FY rows by date and code
+  const submitted = {}; // 'code|dateStr' -> {onTime: bool}
+  fyRows.forEach(r => {
+    if (!dailyCodes.includes(r.code)) return;
+    const d   = new Date(r.ts);
+    const key = r.code + '|' + d.toDateString();
+    if (!submitted[key]) submitted[key] = { onTime: false };
+    if (String(r.onTime) === 'TRUE' || r.onTime === true) submitted[key].onTime = true;
+  });
+
+  // Count days since FY start
+  const msDiff  = now - fyStart;
+  const numDays = Math.max(1, Math.floor(msDiff / 86400000));
+
+  for (let i = 0; i < numDays; i++) {
+    const d   = new Date(fyStart.getTime() + i * 86400000);
+    const ds  = d.toDateString();
+    dailyCodes.forEach(code => {
+      totalExpected++;
+      const key = code + '|' + ds;
+      if (submitted[key] && submitted[key].onTime) totalOnTime++;
+    });
+  }
+
+  const pct = totalExpected > 0 ? Math.round((totalOnTime / totalExpected) * 100) : 100;
+  return { pct, totalOnTime, totalExpected };
+}
+
+// ── DEPARTMENTS ──────────────────────────────────────────────────────
+function renderDepartments() {
   const rows = allRows.map(parseRow);
-  const today = rows.filter(r => isToday(r.ts)).length;
-  const week  = rows.filter(r => isThisWeek(r.ts)).length;
-  const scheduled = rows.filter(r => r.deadline && r.deadline !== 'N/A' && r.deadline !== 'Variable' && r.onTime !== '');
+  const now  = new Date();
+
+  // Summary strip
+  const todaySubs   = rows.filter(r => isToday(r.ts)).length;
+  const weekSubs    = rows.filter(r => isThisWeek(r.ts)).length;
+  const scheduled   = rows.filter(r => r.deadline && r.deadline !== 'N/A' && r.deadline !== 'Variable' && r.onTime !== '');
   const onTimeCount = scheduled.filter(r => String(r.onTime) === 'TRUE' || r.onTime === true).length;
-  const onTimePct = scheduled.length > 0 ? Math.round((onTimeCount / scheduled.length) * 100) : 100;
+  const onTimePct   = scheduled.length ? Math.round((onTimeCount / scheduled.length) * 100) : 100;
   const activeCodes = new Set(rows.filter(r => isThisWeek(r.ts)).map(r => r.code)).size;
 
+  // Overall FY score (all daily portals)
+  const allDailyCodes = DAILY_PORTALS;
+  const fyOverall = calcFyScore(allDailyCodes, rows);
+  const fyPct     = fyOverall ? fyOverall.pct : 0;
+  const fyGrade   = kpiGrade(fyPct);
+
+  // Missed today (daily portals with no submission today)
+  const todayRows      = rows.filter(r => isToday(r.ts));
+  const submittedToday = new Set(todayRows.map(r => r.code));
+  const missedToday    = DAILY_PORTALS.filter(c => !submittedToday.has(c));
+
   document.getElementById('statPortals').textContent = activeCodes;
-  document.getElementById('statToday').textContent   = today;
-  document.getElementById('statWeek').textContent    = week;
+  document.getElementById('statToday').textContent   = todaySubs;
+  document.getElementById('statWeek').textContent    = weekSubs;
   document.getElementById('statOnTime').textContent  = onTimePct + '%';
-  document.getElementById('statTotal').textContent   = rows.length.toLocaleString();
+  const fyEl = document.getElementById('statFyScore');
+  fyEl.textContent  = fyPct + '%';
+  fyEl.className    = 'stat-value ' + fyGrade.cls.replace('needs-att','yellow').replace('near-fail','yellow').replace('on-track','green').replace('failed','red');
+  document.getElementById('statMissed').textContent  = missedToday.length;
 
-  const otEl = document.getElementById('statOnTime');
-  otEl.className = 'stat-value ' + (onTimePct >= 85 ? 'green' : onTimePct >= 70 ? 'yellow' : 'red');
+  // Missed strip
+  const ms = document.getElementById('missedStrip');
+  if (missedToday.length > 0) {
+    const names = missedToday.map(c => { const reg = PORTAL_REGISTRY.find(p => p.code === c); return reg ? reg.name : c; });
+    ms.innerHTML = `<div class="missed-strip">
+      <div class="missed-strip-label">Missed Today (${missedToday.length})</div>
+      <div class="missed-strip-items">${names.join(' &middot; ')}</div>
+    </div>`;
+  } else {
+    ms.innerHTML = '';
+  }
 
-  const grid = document.getElementById('portalGrid');
+  // Department cards
+  const grid = document.getElementById('deptGrid');
+  grid.innerHTML = '';
+
+  DEPARTMENTS.forEach(dept => {
+    const deptPortals = dept.portals;
+    const fyScore     = calcFyScore(deptPortals, rows);
+    const isPending   = dept.id === 'pending';
+
+    // For event-only departments, fall back to activity rate
+    const dailyInDept = deptPortals.filter(c => { const r = PORTAL_REGISTRY.find(p => p.code === c); return r && r.type === 'Daily' && !r.placeholder; });
+    const hasDaily    = dailyInDept.length > 0;
+
+    let scorePct = null, grade = null, scoreDisplay = 'N/A', scoreClass = '';
+    if (!isPending && hasDaily && fyScore) {
+      scorePct     = fyScore.pct;
+      grade        = kpiGrade(scorePct);
+      scoreDisplay = scorePct + '%';
+      scoreClass   = grade.cls;
+    } else if (!isPending && !hasDaily) {
+      // Event dept: show 7-day activity
+      const fyDeptRows = rows.filter(r => deptPortals.includes(r.code) && isThisWeek(r.ts));
+      const activeDays = new Set(fyDeptRows.map(r => new Date(r.ts).toDateString())).size;
+      scoreDisplay = activeDays + '/7d';
+      scoreClass   = activeDays >= 5 ? 'on-track' : activeDays >= 3 ? 'needs-att' : 'near-fail';
+      grade = { cls: scoreClass, label: activeDays >= 5 ? 'Active' : activeDays >= 3 ? 'Moderate' : 'Low Activity' };
+    }
+
+    // Missed portals in this dept today
+    const deptMissedToday = dailyInDept.filter(c => !submittedToday.has(c));
+
+    // Build portal rows
+    const portalRowsHtml = deptPortals.map(code => {
+      const reg    = PORTAL_REGISTRY.find(p => p.code === code);
+      if (!reg) return '';
+      const rag    = portalRagStatus(code, rows);
+      const last   = rows.filter(r => r.code === code).sort((a,b) => new Date(b.ts)-new Date(a.ts))[0];
+      const lastStr = last ? fmtTs(last.ts) : '—';
+      const statusLabel = reg.placeholder ? 'Pending' : { green:'Active', yellow:'Due', red:'Overdue', grey:'No Data' }[rag];
+      const statusClass = reg.placeholder ? 'status-pending' : { green:'status-active', yellow:'status-due', red:'status-overdue', grey:'status-nodata' }[rag];
+      return `<div class="portal-row">
+        <div class="portal-row-left">
+          <div class="portal-rag ${reg.placeholder ? 'grey' : rag}"></div>
+          <div class="portal-row-code">${code}</div>
+          <div class="portal-row-name">${reg.name}</div>
+        </div>
+        <div class="portal-row-right">
+          <div class="portal-row-last">${lastStr}</div>
+          <div class="portal-row-status ${statusClass}">${statusLabel}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // KPI bar fill
+    const barWidth  = scorePct !== null ? scorePct : 0;
+    const barColor  = grade ? kpiBarColor(grade.cls) : 'var(--color-neutral-300)';
+    const gradeHtml = grade ? `<span class="kpi-grade ${grade.cls}">${grade.label}</span>` : '';
+    const missedHtml = deptMissedToday.length > 0
+      ? `<div class="dept-missed">Missed today: ${deptMissedToday.join(', ')}</div>` : '';
+
+    const card = document.createElement('div');
+    card.className = 'dept-card blueprint';
+    card.innerHTML = `
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="dept-header">
+        <div>
+          <div class="dept-name">${dept.name}</div>
+          <div class="dept-custodians">${dept.custodians}</div>
+        </div>
+      </div>
+      <div class="dept-kpi-block">
+        <div class="dept-kpi-score ${scoreClass}">${scoreDisplay}</div>
+        <div class="dept-kpi-meta">
+          <div class="dept-kpi-label">FY 2026-27 KPI Score</div>
+          ${gradeHtml}
+          <div class="dept-kpi-bar" style="margin-top:6px">
+            <div class="dept-kpi-bar-fill" style="width:${barWidth}%;background:${barColor}"></div>
+          </div>
+          ${missedHtml}
+        </div>
+      </div>
+      <div class="dept-portals">${portalRowsHtml}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ── ALL PORTALS ──────────────────────────────────────────────────────
+function renderPortals() {
+  const rows  = allRows.map(parseRow);
+  const grid  = document.getElementById('portalGrid');
   grid.innerHTML = '';
 
   const lastSub = {}, subCount = {}, onTimeByCode = {}, totalByCode = {};
   rows.forEach(r => {
     if (!lastSub[r.code] || new Date(r.ts) > new Date(lastSub[r.code].ts)) lastSub[r.code] = r;
-    subCount[r.code] = (subCount[r.code] || 0) + 1;
+    subCount[r.code] = (subCount[r.code]||0)+1;
     if (r.deadline && r.deadline !== 'N/A' && r.deadline !== 'Variable' && r.onTime !== '') {
-      totalByCode[r.code] = (totalByCode[r.code] || 0) + 1;
-      if (String(r.onTime) === 'TRUE' || r.onTime === true) onTimeByCode[r.code] = (onTimeByCode[r.code] || 0) + 1;
+      totalByCode[r.code]  = (totalByCode[r.code]||0)+1;
+      if (String(r.onTime) === 'TRUE' || r.onTime === true) onTimeByCode[r.code] = (onTimeByCode[r.code]||0)+1;
     }
   });
 
@@ -918,89 +721,50 @@ function renderDashboard() {
 
     if (portal.placeholder) {
       tile.classList.add('status-grey');
-      tile.innerHTML = `
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="tile-header">
-          <span class="tile-code placeholder">${portal.code}</span>
-          <span class="status-badge badge-grey">Pending</span>
-        </div>
+      tile.innerHTML = `<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="tile-header"><span class="tile-code placeholder">${portal.code}</span><span class="status-badge badge-grey">Pending</span></div>
         <div class="tile-name placeholder">${portal.name}</div>
         <div class="tile-type">${portal.type} &middot; ${portal.deadline}</div>
-        <div class="tile-meta">
-          <div class="placeholder-notice">Write-back coming soon</div>
-        </div>`;
+        <div class="tile-meta"><div class="placeholder-notice">Write-back coming soon</div></div>`;
       grid.appendChild(tile); return;
     }
 
+    const rag   = portalRagStatus(portal.code, rows);
     const last  = lastSub[portal.code];
     const count = subCount[portal.code] || 0;
     const ot    = onTimeByCode[portal.code] || 0;
     const tot   = totalByCode[portal.code]  || 0;
     const otPct = tot > 0 ? Math.round((ot/tot)*100) : null;
+    const statusLabel = { green:'Active', yellow:'Due', red:'Overdue', grey:'No Data' }[rag];
 
-    let status = 'grey';
-    if (last) {
-      const h = hoursAgo(last.ts);
-      if (portal.code === 'CL-CHECKS') {
-        const todayStr = new Date().toDateString();
-        const todayRows = rows.filter(r => r.code === 'CL-CHECKS' && new Date(r.ts).toDateString() === todayStr);
-        const hasStart  = todayRows.some(r => (r.notes||'').toLowerCase().includes('start of day'));
-        const hasClose  = todayRows.some(r => (r.notes||'').toLowerCase().includes('end of day'));
-        if (hasStart && hasClose) status = 'green';
-        else if (hasStart || hasClose) status = 'yellow';
-        else if (h <= 26) status = 'yellow';
-        else status = 'red';
-      } else if (portal.type === 'Daily') {
-        status = h <= 26 ? 'green' : h <= 50 ? 'yellow' : 'red';
-      } else {
-        status = h <= 72 ? 'green' : h <= 168 ? 'yellow' : 'red';
-      }
-    }
+    // FY score for this portal
+    const fyS    = calcFyScore([portal.code], rows);
+    const fyPct  = fyS ? fyS.pct : null;
+    const fyG    = fyPct !== null ? kpiGrade(fyPct) : null;
+    const fyStr  = fyPct !== null ? fyPct + '%' : '—';
+    const fyClass = fyG ? fyG.cls.replace('needs-att','yellow').replace('near-fail','yellow').replace('on-track','green').replace('failed','red') : 'grey';
 
-    const statusLabel = { green:'Active', yellow:'Due', red:'Overdue', grey:'No Data' }[status];
-    const lastStr = last ? fmtTs(last.ts) : '—';
-    const lastBy  = last ? (last.by || '—') : '—';
-    const otStr   = otPct !== null ? otPct + '%' : '—';
-    const otClass = otPct === null ? 'grey' : otPct >= 85 ? 'green' : otPct >= 70 ? 'yellow' : 'red';
-
-    tile.classList.add('status-' + status);
-    tile.innerHTML = `
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="tile-header">
-        <span class="tile-code">${portal.code}</span>
-        <span class="status-badge badge-${status}">${statusLabel}</span>
-      </div>
+    tile.classList.add('status-' + rag);
+    tile.innerHTML = `<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="tile-header"><span class="tile-code">${portal.code}</span><span class="status-badge badge-${rag}">${statusLabel}</span></div>
       <div class="tile-name">${portal.name}</div>
       <div class="tile-type">${portal.type} &middot; Deadline: ${portal.deadline}</div>
       <div class="tile-meta">
-        <div class="tile-meta-item">
-          <div class="tile-meta-label">Last Submission</div>
-          <div class="tile-meta-value">${lastStr}</div>
-        </div>
-        <div class="tile-meta-item">
-          <div class="tile-meta-label">Submitted By</div>
-          <div class="tile-meta-value">${lastBy}</div>
-        </div>
-        <div class="tile-meta-item">
-          <div class="tile-meta-label">Total Logged</div>
-          <div class="tile-meta-value">${count.toLocaleString()}</div>
-        </div>
-        <div class="tile-meta-item">
-          <div class="tile-meta-label">On-Time Rate</div>
-          <div class="tile-meta-value ${otClass}">${otStr}</div>
-        </div>
+        <div class="tile-meta-item"><div class="tile-meta-label">Last Submission</div><div class="tile-meta-value">${last ? fmtTs(last.ts) : '—'}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">Submitted By</div><div class="tile-meta-value">${last ? (last.by||'—') : '—'}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">Total Logged</div><div class="tile-meta-value">${count.toLocaleString()}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">FY KPI Score</div><div class="tile-meta-value ${fyClass}">${fyStr}</div></div>
       </div>`;
-
     grid.appendChild(tile);
   });
 }
 
-// ── LOG TABLE ─────────────────────────────────────────────────────────
+// ── LOG TABLE ────────────────────────────────────────────────────────
 function populatePortalFilter() {
   const sel = document.getElementById('filterPortal');
   if (sel.options.length > 1) return;
   [...new Set(allRows.map(r => r[2]).filter(Boolean))].sort().forEach(c => {
-    const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt);
+    const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o);
   });
 }
 
@@ -1018,12 +782,12 @@ function renderLog() {
     if (type   && r.type !== type)   return false;
     if (status !== '') {
       const ot = String(r.onTime) === 'TRUE' || r.onTime === true;
-      if (status === 'true' && !ot) return false;
-      if (status === 'false' && ot) return false;
+      if (status === 'true' && !ot)  return false;
+      if (status === 'false' && ot)  return false;
     }
     if (dateFrom) { try { if (new Date(r.ts) < new Date(dateFrom)) return false; } catch(e){} }
-    if (dateTo)   { try { if (new Date(r.ts) > new Date(dateTo + 'T23:59:59')) return false; } catch(e){} }
-    if (search) { if (![r.portal,r.code,r.by,r.notes,r.type].join(' ').toLowerCase().includes(search)) return false; }
+    if (dateTo)   { try { if (new Date(r.ts) > new Date(dateTo+'T23:59:59')) return false; } catch(e){} }
+    if (search)   { if (![r.portal,r.code,r.by,r.notes,r.type].join(' ').toLowerCase().includes(search)) return false; }
     return true;
   }).reverse();
 
@@ -1062,32 +826,26 @@ function renderLog() {
   document.getElementById('logPagination').textContent = pages > 1 ? `Page ${logPage} of ${pages} (${total.toLocaleString()} rows)` : `${total.toLocaleString()} rows`;
 }
 
-// ── ANALYTICS ─────────────────────────────────────────────────────────
+// ── ANALYTICS ────────────────────────────────────────────────────────
 function renderAnalytics() {
   const rows = allRows.map(parseRow);
 
   const byPortal = {};
   rows.forEach(r => { byPortal[r.code] = (byPortal[r.code]||0)+1; });
   const pEntries = Object.entries(byPortal).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  const maxP = pEntries[0]?.[1] || 1;
+  const maxP = pEntries[0]?.[1]||1;
   document.getElementById('chartByPortal').innerHTML = pEntries.map(([code,count]) =>
-    `<div class="bar-row">
-      <div class="bar-label">${code}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxP)*100)}%"></div></div>
-      <div class="bar-count">${count}</div>
-    </div>`).join('');
+    `<div class="bar-row"><div class="bar-label">${code}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxP)*100)}%"></div></div><div class="bar-count">${count}</div></div>`
+  ).join('');
 
   const bySub = {};
-  rows.filter(r => isLast30(r.ts)).forEach(r => { if(r.by) bySub[r.by] = (bySub[r.by]||0)+1; });
+  rows.filter(r => isLast30(r.ts)).forEach(r => { if(r.by) bySub[r.by]=(bySub[r.by]||0)+1; });
   const sEntries = Object.entries(bySub).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  const maxS = sEntries[0]?.[1] || 1;
+  const maxS = sEntries[0]?.[1]||1;
   document.getElementById('chartBySubmitter').innerHTML = sEntries.length
     ? sEntries.map(([name,count]) =>
-        `<div class="bar-row">
-          <div class="bar-label">${name}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxS)*100)}%;background:var(--color-accent-700)"></div></div>
-          <div class="bar-count">${count}</div>
-        </div>`).join('')
+        `<div class="bar-row"><div class="bar-label">${name}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxS)*100)}%;background:var(--color-accent-700)"></div></div><div class="bar-count">${count}</div></div>`
+      ).join('')
     : '<div class="empty-state">No data for last 30 days</div>';
 
   const dailyMap = {};
@@ -1108,29 +866,22 @@ function renderAnalytics() {
   const dEntries = Object.entries(dailyMap);
   const maxD = Math.max(...dEntries.map(([,v])=>v), 1);
   document.getElementById('chartDaily').innerHTML = dEntries.map(([date,count]) =>
-    `<div class="bar-row">
-      <div class="bar-label">${date}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxD)*100)}%;background:var(--color-accent-500)"></div></div>
-      <div class="bar-count">${count}</div>
-    </div>`).join('');
+    `<div class="bar-row"><div class="bar-label">${date}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((count/maxD)*100)}%;background:var(--color-accent-500)"></div></div><div class="bar-count">${count}</div></div>`
+  ).join('');
 
+  // On-time by portal for FY only
   const otByPortal = {}, totByPortal = {};
-  rows.forEach(r => {
-    if (!r.code || !r.deadline || r.deadline === 'N/A' || r.deadline === 'Variable' || r.onTime === '') return;
+  rows.filter(r => isInFY(r.ts)).forEach(r => {
+    if (!r.code || !r.deadline || r.deadline==='N/A' || r.deadline==='Variable' || r.onTime==='') return;
     totByPortal[r.code] = (totByPortal[r.code]||0)+1;
-    if (String(r.onTime) === 'TRUE' || r.onTime === true) otByPortal[r.code] = (otByPortal[r.code]||0)+1;
+    if (String(r.onTime)==='TRUE'||r.onTime===true) otByPortal[r.code]=(otByPortal[r.code]||0)+1;
   });
-  const otEntries = Object.entries(totByPortal)
-    .map(([code,tot]) => [code, Math.round(((otByPortal[code]||0)/tot)*100)])
-    .sort((a,b)=>a[1]-b[1]);
+  const otEntries = Object.entries(totByPortal).map(([code,tot])=>[code,Math.round(((otByPortal[code]||0)/tot)*100)]).sort((a,b)=>a[1]-b[1]);
   document.getElementById('chartOnTime').innerHTML = otEntries.length
     ? otEntries.map(([code,pct]) =>
-        `<div class="bar-row">
-          <div class="bar-label">${code}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=85?'var(--green)':pct>=70?'var(--yellow)':'var(--red)'}"></div></div>
-          <div class="bar-count">${pct}%</div>
-        </div>`).join('')
-    : '<div class="empty-state">No scheduled submission data</div>';
+        `<div class="bar-row"><div class="bar-label">${code}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=95?'var(--on-track)':pct>=85?'var(--needs-att)':pct>=75?'var(--near-fail)':'var(--failed)'}"></div></div><div class="bar-count">${pct}%</div></div>`
+      ).join('')
+    : '<div class="empty-state">No FY data yet</div>';
 }
 </script>
 </body>
