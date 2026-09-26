@@ -308,6 +308,7 @@ const PORTAL_REGISTRY = [
   { code:'ADV-CHECKS', name:'MJSR Adventure Checks',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'GV-CHECKS',  name:'GV Adventure Park Daily Checks',  type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'HM-CHECKS',  name:'Heavy Machinery Daily Checks',    type:'Daily',  deadline:'10:30',    season:'hm',      scoring:'hm'           },
+  { code:'FIXED-AS',   name:'Fixed Asset Verification System',  type:'Event',  deadline:'Variable', season:'all',     scoring:'quarterly'    },
   { code:'VH-FLEET',   name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'FIRE-EX',    name:'Fire Extinguisher Management',    type:'Event',  deadline:'Monthly',  season:'all',     scoring:'monthly-fire' },
   { code:'PR-FUND',    name:'PR Fund Tracker',                 type:'Event',  deadline:'Same day', season:'all',     scoring:'weekly'       },
@@ -356,8 +357,9 @@ const DEPARTMENTS = [
   },
   {
     id:'admin', name:'Admin', custodians:'Ashfaq, Abid Nawaz',
-    portals:['VH-FLEET','PR-FUND'],
+    portals:['FIXED-AS','VH-FLEET','PR-FUND'],
     split:[
+      { label:'Fixed Assets',  portals:['FIXED-AS'] },
       { label:'Vehicle Fleet', portals:['VH-FLEET'] },
       { label:'PR Fund',       portals:['PR-FUND']  }
     ]
@@ -581,6 +583,21 @@ function calcScore(codes,rows,closedDays){
         if(monthRows.length>0)monthsSinceFY[mk]=true;
       });
       Object.values(monthsSinceFY).forEach(pass=>{exp++;if(pass)ot++;});
+    }
+
+    else if(sreg.scoring==='quarterly'){
+      // Quarterly: at least one submission per 90-day window since FY start
+      const quarters=Math.ceil(days/90);
+      for(let q=0;q<quarters;q++){
+        const qStart=new Date(start.getTime()+q*90*86400000);
+        const qEnd=new Date(Math.min(qStart.getTime()+90*86400000,now.getTime()));
+        exp++;
+        const hasSubmission=fyRows.some(r=>{
+          if(r.code!==code)return false;
+          const ts=new Date(r.ts);return ts>=qStart&&ts<qEnd;
+        });
+        if(hasSubmission)ot++;
+      }
     }
 
     else if(sreg.scoring==='weekly'){
