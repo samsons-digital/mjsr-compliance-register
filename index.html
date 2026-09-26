@@ -377,6 +377,7 @@ const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL'];
 
 let allRows = [];
 let procKpiData = null;
+let procReconData = null;
 let logPage = 1;
 const PAGE_SIZE = 100;
 
@@ -386,18 +387,20 @@ async function loadData() {
   document.getElementById('lastRefresh').textContent = 'Loading...';
   document.querySelector('.live-dot').style.background = '#f59e0b';
   try {
-    const [resp, procResp] = await Promise.all([
+    const [resp, procResp, reconcResp] = await Promise.all([
       fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getComplianceData'})}),
-      fetch(PROCHUB_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getKpiData'})}).catch(()=>null)
+      fetch(PROCHUB_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getKpiData'})}).catch(()=>null),
+      fetch(PROCHUB_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'getReconciliation'})}).catch(()=>null)
     ]);
     const json = await resp.json();
     if (!json.ok) throw new Error(json.error||'Unknown error');
     allRows = json.rows||[];
     try { const pj = procResp ? await procResp.json() : null; procKpiData = (pj && pj.status==='ok') ? pj : null; } catch(e) { procKpiData = null; }
+    try { const rj = reconcResp ? await reconcResp.json() : null; procReconData = (rj && rj.status==='ok') ? rj : null; } catch(e) { procReconData = null; }
     document.getElementById('lastRefresh').textContent = 'Updated '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
     document.querySelector('.live-dot').style.background = '#0d9488';
     document.getElementById('dashError').innerHTML = '';
-    renderDepartments(procKpiData);
+    renderDepartments(procKpiData, procReconData);
     renderPortals();
     renderLog();
     renderAnalytics();
@@ -596,7 +599,7 @@ function calcScore(codes,rows,closedDays){
 }
 
 // ── DEPARTMENTS ──────────────────────────────────────────────────────
-function renderDepartments(procKpi){
+function renderDepartments(procKpi, procRecon){
   const rows=allRows.map(parseRow);
   const now=new Date();
   const closedDays=buildClosedDays(rows);
@@ -683,22 +686,44 @@ function renderDepartments(procKpi){
         if(allExcluded){spct=null;sg=null;scls='excluded';}
         const subMissed=missedToday.filter(c=>sub.portals.includes(c));
 
-        // PROC-HUB: inject live procurement KPI data if available
+        // PROC-HUB: inject live reconciliation data
         let procDetail='';
-        if(sub.portals.includes('PROC-HUB')&&procKpi){
-          const openPrfs=procKpi.openPrfs||0;
-          const unmatchedGrns=(procKpi.kpis||[]).find(k=>k.id==='proc_grn_no_prf');
-          const timing=(procKpi.kpis||[]).find(k=>k.id==='proc_submission_timing');
-          const unmatchedCount=unmatchedGrns?unmatchedGrns.value:0;
-          const sameDayRate=timing?timing.sameDayRate:null;
-          // Override score with procurement overall score
-          spct=procKpi.overallScore||spct;
-          sg=spct!==null?kpiGrade(spct):null;
-          scls=sg?sg.cls:'event';
-          procDetail=`<div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.6">
-            Open PRFs: <strong style="color:${openPrfs>0?'var(--warn)':'var(--green)'}">${openPrfs}</strong> &middot;
-            Unmatched GRNs: <strong style="color:${unmatchedCount>0?'var(--red)':'var(--green)'}">${unmatchedCount}</strong>
-            ${sameDayRate!==null?`&middot; Same-day: <strong style="color:${sameDayRate>=85?'var(--green)':'var(--warn)'}">${sameDayRate}%</strong>`:''}
+        if(sub.portals.includes('PROC-HUB')&&procRecon){
+          spct=procRecon.healthScore;
+          sg=kpiGrade(spct);
+          scls=sg.cls;
+          const noGrn=procRecon.noGrnSubmitted||0;
+          const awFin=procRecon.awaitingFinance||0;
+          const awGM=procRecon.awaitingGM||0;
+          const recon=procRecon.reconciled||0;
+          const total=procRecon.totalPrfs||0;
+          const breakdown=procRecon.requesterBreakdown||[];
+          const breakdownHtml=breakdown.slice(0,8).map(p=>
+            `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--surface3)">
+              <span style="color:var(--text2)">${p.name}</span>
+              <span style="font-family:var(--mono);font-weight:600;color:${p.count>=5?'var(--red)':p.count>=2?'var(--warn)':'var(--text2)'}">${p.count} PRF${p.count!==1?'s':''} &middot; oldest ${p.oldest}d</span>
+            </div>`
+          ).join('');
+          procDetail=`<div style="margin-top:6px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:6px">
+              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
+                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">No GRN</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${noGrn>0?'var(--red)':'var(--green)'}">${noGrn}</div>
+              </div>
+              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
+                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Fin. Pending</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${awFin>0?'var(--warn)':'var(--green)'}">${awFin}</div>
+              </div>
+              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
+                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">GM Pending</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${awGM>0?'var(--warn)':'var(--green)'}">${awGM}</div>
+              </div>
+              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
+                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Reconciled</div>
+                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${recon}</div>
+              </div>
+            </div>
+            ${noGrn>0?`<div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">No GRN Submitted — by Requester</div>${breakdownHtml}`:'<div style="font-size:11px;color:var(--green);font-weight:600">All approved PRFs reconciled</div>'}
           </div>`;
         }
 
