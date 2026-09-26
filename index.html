@@ -786,8 +786,14 @@ function renderDepartments(procKpi, procRecon){
         </div>
         ${noGrn>0?`
         <div style="padding:8px 14px 4px;border-bottom:1px solid var(--border)">
-          <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">No GRN Submitted — Requester Accountability</div>
-          ${breakdownHtml}
+          <div onclick="var l=this.parentElement.querySelector('.proc-list');var a=this.querySelector('.proc-arrow');l.style.display=l.style.display==='block'?'none':'block';a.textContent=l.style.display==='block'?'▼':'▶';"
+            style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:2px 0">
+            <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">No GRN Submitted — Requester Accountability (${noGrn})</div>
+            <span class="proc-arrow" style="font-size:10px;color:var(--text3);margin-left:8px">▶</span>
+          </div>
+          <div class="proc-list" style="display:none">
+            ${breakdownHtml}
+          </div>
         </div>`:'<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--green)">All approved PRFs reconciled</div>'}`;
     }
 
