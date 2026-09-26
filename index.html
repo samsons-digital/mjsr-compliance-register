@@ -356,12 +356,16 @@ const DEPARTMENTS = [
   },
   {
     id:'admin', name:'Admin', custodians:'Ashfaq, Abid Nawaz',
-    portals:['VH-FLEET','PR-FUND','PROC-HUB'],
+    portals:['VH-FLEET','PR-FUND'],
     split:[
-      { label:'Vehicle Fleet', portals:['VH-FLEET']  },
-      { label:'PR Fund',       portals:['PR-FUND']   },
-      { label:'Procurement',   portals:['PROC-HUB']  }
+      { label:'Vehicle Fleet', portals:['VH-FLEET'] },
+      { label:'PR Fund',       portals:['PR-FUND']  }
     ]
+  },
+  {
+    id:'procurement', name:'Procurement', custodians:'Moiz (Procurement Manager)',
+    portals:['PROC-HUB'],
+    split: null
   },
   {
     id:'clinic', name:'Clinic', custodians:'Dr Rahim',
@@ -686,46 +690,8 @@ function renderDepartments(procKpi, procRecon){
         if(allExcluded){spct=null;sg=null;scls='excluded';}
         const subMissed=missedToday.filter(c=>sub.portals.includes(c));
 
-        // PROC-HUB: inject live reconciliation data
+        // PROC-HUB sub-section: no longer used (Procurement is its own dept card)
         let procDetail='';
-        if(sub.portals.includes('PROC-HUB')&&procRecon){
-          spct=procRecon.healthScore;
-          sg=kpiGrade(spct);
-          scls=sg.cls;
-          const noGrn=procRecon.noGrnSubmitted||0;
-          const awFin=procRecon.awaitingFinance||0;
-          const awGM=procRecon.awaitingGM||0;
-          const recon=procRecon.reconciled||0;
-          const total=procRecon.totalPrfs||0;
-          const breakdown=procRecon.requesterBreakdown||[];
-          const breakdownHtml=breakdown.slice(0,8).map(p=>
-            `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--surface3)">
-              <span style="color:var(--text2)">${p.name}</span>
-              <span style="font-family:var(--mono);font-weight:600;color:${p.count>=5?'var(--red)':p.count>=2?'var(--warn)':'var(--text2)'}">${p.count} PRF${p.count!==1?'s':''} &middot; oldest ${p.oldest}d</span>
-            </div>`
-          ).join('');
-          procDetail=`<div style="margin-top:6px">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:6px">
-              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
-                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">No GRN</div>
-                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${noGrn>0?'var(--red)':'var(--green)'}">${noGrn}</div>
-              </div>
-              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
-                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Fin. Pending</div>
-                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${awFin>0?'var(--warn)':'var(--green)'}">${awFin}</div>
-              </div>
-              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
-                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">GM Pending</div>
-                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${awGM>0?'var(--warn)':'var(--green)'}">${awGM}</div>
-              </div>
-              <div style="background:var(--surface2);padding:5px 7px;border-radius:4px">
-                <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Reconciled</div>
-                <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${recon}</div>
-              </div>
-            </div>
-            ${noGrn>0?`<div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">No GRN Submitted — by Requester</div>${breakdownHtml}`:'<div style="font-size:11px;color:var(--green);font-weight:600">All approved PRFs reconciled</div>'}
-          </div>`;
-        }
 
         subHtml+=`<div class="sub-section">
           <div class="sub-label">${sub.label}</div>
@@ -762,6 +728,52 @@ function renderDepartments(procKpi, procRecon){
       </div>`;
     }).join('');
 
+    // Build procurement body if this is the procurement dept
+    let procBodyHtml = '';
+    if(dept.id==='procurement'&&procRecon){
+      const noGrn=procRecon.noGrnSubmitted||0;
+      const awFin=procRecon.awaitingFinance||0;
+      const awGM=procRecon.awaitingGM||0;
+      const recon=procRecon.reconciled||0;
+      const breakdown=procRecon.requesterBreakdown||[];
+      scorePct=procRecon.healthScore;
+      grade=kpiGrade(scorePct);
+      scoreDisplay=scorePct+'%';
+      scoreCls=grade.cls;
+      const breakdownHtml=breakdown.map(p=>
+        `<div class="portal-row">
+          <div class="p-rag ${p.count>=5?'red':p.count>=2?'yellow':'green'}"></div>
+          <div class="p-name" style="font-weight:600">${p.name}</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">${p.count} PRF${p.count!==1?'s':''} open</div>
+          <div style="font-family:var(--mono);font-size:11px;color:${p.oldest>=30?'var(--red)':p.oldest>=14?'var(--warn)':'var(--text3)'};margin-left:8px;white-space:nowrap">oldest ${p.oldest}d</div>
+        </div>`
+      ).join('');
+      procBodyHtml=`
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid var(--border)">
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">No GRN</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${noGrn>0?'var(--red)':'var(--green)'}">${noGrn}</div>
+          </div>
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">Fin. Pending</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${awFin>0?'var(--warn)':'var(--green)'}">${awFin}</div>
+          </div>
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">GM Pending</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${awGM>0?'var(--warn)':'var(--green)'}">${awGM}</div>
+          </div>
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">Reconciled</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green)">${recon}</div>
+          </div>
+        </div>
+        ${noGrn>0?`
+        <div style="padding:8px 14px 4px;border-bottom:1px solid var(--border)">
+          <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">No GRN Submitted — Requester Accountability</div>
+          ${breakdownHtml}
+        </div>`:'<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--green)">All approved PRFs reconciled</div>'}`;
+    }
+
     const card=document.createElement('div');
     card.className='dept-card';
     const accentCls=isPending?'pending':(scoreCls||'event');
@@ -781,6 +793,7 @@ function renderDepartments(procKpi, procRecon){
         ${deptMissed.length?`<div class="dept-missed">Missed today: ${deptMissed.join(', ')}</div>`:''}
       </div>
       ${subHtml}
+      ${procBodyHtml}
       <div class="dept-portals">${portalRowsHtml}</div>`;
     grid.appendChild(card);
   });
