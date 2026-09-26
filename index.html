@@ -318,7 +318,7 @@ const PORTAL_REGISTRY = [
   { code:'SALES-CL',   name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    season:'exclude', scoring:'exclude'      },
   { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    season:'all',     scoring:'daily'        },
-  { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
+  { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
   { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
@@ -640,7 +640,7 @@ function renderDepartments(procKpi, procRecon){
   // Missed today (daily portals in season, not closed)
   const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
   const missedToday=PORTAL_REGISTRY.filter(p=>{
-    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire')return false;
+    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly')return false;
     if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
     if(p.scoring==='hm'&&!isWinterDay(now))return false;
     if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
