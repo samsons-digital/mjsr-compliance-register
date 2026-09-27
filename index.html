@@ -442,7 +442,7 @@ async function loadData() {
   document.querySelector('.live-dot').style.background = '#f59e0b';
   try {
     const [json, pj, rj, prb] = await Promise.all([
-      postJson(GAS_URL, {action:'getComplianceData'}, j => j && j.ok && Array.isArray(j.rows) && j.rows.length > 0, 4),
+      postJson(GAS_URL, {action:'getComplianceData', limit:20000}, j => j && j.ok && Array.isArray(j.rows) && j.rows.length > 0, 4),
       postJson(PROCHUB_URL, {action:'getKpiData'}, j => j && j.status === 'ok', 3),
       postJson(PROCHUB_URL, {action:'getReconciliation'}, j => j && j.status === 'ok', 3),
       loadPrBudget()
@@ -566,9 +566,9 @@ function portalRag(code,rows){
 // KPI 1  Receipts reconciled same day   (Stock In rows submitted on the filed date)
 // KPI 2  Date accuracy                  (all stock rows submitted on the filed date)
 // KPI 3  Daily activity                 (at least one stock entry every open day, closed days excused)
-// F&B score = average of the KPIs that have data. Scoring starts on the write-back go-live date.
-const FNB_KPI_START = new Date('2026-09-27T00:00:00+05:00');
-const FNB_DAY_LOOP_START = new Date('2026-09-27T12:00:00+05:00'); // midday so the date is the same in PKT and Dubai
+// F&B score = average of the KPIs that have data. Scored from FY start; Jul to Sep recovered by backfill.
+const FNB_KPI_START = new Date('2026-07-01T00:00:00+05:00');
+const FNB_DAY_LOOP_START = new Date('2026-07-01T12:00:00+05:00'); // midday so the date is the same in PKT and Dubai
 function fnbKpis(rows, closedDays){
   const now=new Date();
   const fnbRows=rows.filter(r=>r.code==='FB-STOCK'&&new Date(r.ts)>=FNB_KPI_START);
@@ -593,7 +593,7 @@ function fnbKpis(rows, closedDays){
 }
 function fnbDetailHtml(f){
   const line=(label,k)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+'/'+k.tot+')':'–'}</span></div>`;
-  return `<div style="margin-top:8px">${line('Receipts same day',f.k1)}${line('Date accuracy',f.k2)}${line('Active open days',f.k3)}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 27 Sep 2026</div></div>`;
+  return `<div style="margin-top:8px">${line('Receipts same day',f.k1)}${line('Date accuracy',f.k2)}${line('Active open days',f.k3)}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 1 Jul 2026</div></div>`;
 }
 
 // ── FIXED ASSETS COVERAGE (agreed 27 Sep 2026) ────────────────────────
