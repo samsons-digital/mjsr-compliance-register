@@ -328,6 +328,7 @@ const PORTAL_REGISTRY = [
   { code:'LOYALTY',    name:'MJSR Loyalty Programme',          type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'GEN-CHECKS', name:'Generator Daily Checks (Legacy)', type:'Daily',  deadline:'10:30',    season:'exclude', scoring:'exclude'      },
   { code:'STORE-CHK',  name:'Technical Stores Stock Take',     type:'Monthly',deadline:'1st 23:59',season:'all',     scoring:'store-monthly'},
+  { code:'CERT-VALID', name:'Annual Certifications and Inspections', type:'Daily', deadline:'Continuous', season:'all', scoring:'cert-daily' },
   { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', season:'pending', scoring:'pending'      },
 ];
 
@@ -335,7 +336,7 @@ const PORTAL_REGISTRY = [
 const DEPARTMENTS = [
   {
     id:'technical', name:'Technical', custodians:'Bilal Tariq, Engr Ishtiaq, Engr Akram, Gohar, Engr Asif',
-    portals:['CL-CHECKS','GEN-MAINT','HM-CHECKS','FIRE-EX','SNOW-MK','PISTENBULL','STORE-CHK'],
+    portals:['CL-CHECKS','GEN-MAINT','HM-CHECKS','FIRE-EX','SNOW-MK','PISTENBULL','STORE-CHK','CERT-VALID'],
     split: null
   },
   {
@@ -543,6 +544,10 @@ function portalRag(code,rows){
   const sorted=rows.filter(r=>r.code===code&&isActivityRow(r)).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
   const last=sorted[0];
   if(!last)return'grey';
+  if(code==='CERT-VALID'){
+    const f=certDays(rows);if(!f.latest)return'grey';
+    const r=f.latest.valid/f.latest.total;return r>=1?'green':r>=0.9?'yellow':'red';
+  }
   if(code==='STORE-CHK'){
     const f=storeTakes(rows);const open=f.months.find(m=>!m.closed);const closed=f.months.filter(m=>m.closed);const last=closed[closed.length-1];
     const all=m=>m&&STORES.every(([s])=>f.done[s+'|'+m.key]);
@@ -729,6 +734,36 @@ function storeDetailHtml(f){
   return html+'</div>';
 }
 
+// ── ANNUAL CERTIFICATIONS (agreed 27 Sep 2026) ────────────────────────
+// Every required international vendor certificate must be valid at all times.
+// CertWatcher writes one CERT-VALID row a day ("Certificates 27 of 30 valid (90%) | Not valid: ... | Expiring within 60 days: ...").
+// Score = average of the daily % valid since the first check.
+function certDays(rows){
+  const byDay={};
+  rows.filter(r=>r.code==='CERT-VALID').forEach(r=>{
+    const m=String(r.notes||'').match(/Certificates (\d+) of (\d+) valid/);
+    if(!m)return;
+    const key=pktParts(r.ts).key;
+    if(!byDay[key]||new Date(r.ts)>new Date(byDay[key].ts))byDay[key]={ts:r.ts,valid:Number(m[1]),total:Number(m[2]),notes:String(r.notes)};
+  });
+  const days=Object.keys(byDay).sort().map(k=>byDay[k]);
+  const pcts=days.filter(d=>d.total>0).map(d=>d.valid/d.total*100);
+  const pct=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
+  return{days,latest:days[days.length-1]||null,pct,count:pcts.length};
+}
+function certDetailHtml(f){
+  if(!f.latest)return '';
+  const parts=f.latest.notes.split(' | ');
+  const bad=(parts.find(p=>p.startsWith('Not valid:'))||'').replace('Not valid: ','');
+  const soon=(parts.find(p=>p.startsWith('Expiring within'))||'').replace(/Expiring within \d+ days: /,'');
+  const line=(label,val,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:3px"><span>${label}</span><span style="font-family:var(--mono)">${val}</span></div>`;
+  let h='<div style="padding:8px 14px;border-bottom:1px solid var(--border)"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px">Annual certifications and inspections</div>';
+  h+=line('Valid today',f.latest.valid+' of '+f.latest.total,f.latest.valid<f.latest.total?'var(--red)':'var(--text2)');
+  if(bad&&bad!=='none')h+=`<div style="font-size:10px;color:var(--red);margin-top:3px">Not valid: ${bad}</div>`;
+  h+=`<div style="font-size:10px;color:${soon&&soon!=='none'?'var(--warn)':'var(--text3)'};margin-top:3px">Expiring within 60 days: ${soon||'none'}</div>`;
+  return h+'</div>';
+}
+
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
 function calcScore(codes,rows,closedDays){
   const reg=codes.map(c=>portalReg(c)).filter(Boolean);
@@ -820,6 +855,10 @@ function calcScore(codes,rows,closedDays){
       }
     }
 
+    else if(sreg.scoring==='cert-daily'){
+      const f=certDays(rows);if(f.pct!==null){exp+=f.count;ot+=f.count*f.pct/100;}
+    }
+
     else if(sreg.scoring==='store-monthly'){
       const f=storeTakes(rows);exp+=f.exp;ot+=f.ot;
     }
@@ -854,7 +893,7 @@ function calcScore(codes,rows,closedDays){
     }
   }
 
-  if(exp===0&&scoredRegs.every(r=>r.scoring==='fnb'||r.scoring==='fa-coverage'))return null;
+  if(exp===0&&scoredRegs.every(r=>r.scoring==='fnb'||r.scoring==='fa-coverage'||r.scoring==='cert-daily'))return null;
   return{pct:exp>0?Math.round((ot/exp)*100):100,ot,exp};
 }
 
@@ -879,7 +918,7 @@ function renderDepartments(procKpi, procRecon){
   // Missed today (daily portals in season, not closed)
   const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
   const missedToday=PORTAL_REGISTRY.filter(p=>{
-    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage'||p.scoring==='inn-dual'||p.scoring==='store-monthly')return false;
+    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage'||p.scoring==='inn-dual'||p.scoring==='store-monthly'||p.scoring==='cert-daily')return false;
     if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
     if(p.scoring==='hm'&&!isWinterDay(now))return false;
     if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
@@ -1039,7 +1078,7 @@ function renderDepartments(procKpi, procRecon){
           </div>
         </div>`:'<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--green)">All approved PRFs reconciled</div>'}`;
     }else if(dept.id==='technical'){
-      procBodyHtml=storeDetailHtml(storeTakes(rows));
+      procBodyHtml=storeDetailHtml(storeTakes(rows))+certDetailHtml(certDays(rows));
     }else if(dept.id==='procurement'){
       scorePct=null;grade=null;scoreDisplay='–';scoreCls='event';
       procBodyHtml='<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--warn)">Procurement Hub data did not load. Tap Refresh.</div>';
