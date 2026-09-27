@@ -308,7 +308,7 @@ const PORTAL_REGISTRY = [
   { code:'ADV-CHECKS', name:'MJSR Adventure Checks',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'GV-CHECKS',  name:'GV Adventure Park Daily Checks',  type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'HM-CHECKS',  name:'Heavy Machinery Daily Checks',    type:'Daily',  deadline:'10:30',    season:'hm',      scoring:'hm'           },
-  { code:'FIXED-AS',   name:'Fixed Asset Verification System',  type:'Event',  deadline:'Variable', season:'all',     scoring:'quarterly'    },
+  { code:'FIXED-AS',   name:'Fixed Asset Verification System',  type:'Event',  deadline:'Variable', season:'all',     scoring:'fa-coverage'  },
   { code:'VH-FLEET',   name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'FIRE-EX',    name:'Fire Extinguisher Management',    type:'Event',  deadline:'Monthly',  season:'all',     scoring:'monthly-fire' },
   { code:'PR-FUND',    name:'PR Fund Tracker',                 type:'Event',  deadline:'Same day', season:'all',     scoring:'weekly'       },
@@ -555,6 +555,43 @@ function fnbDetailHtml(f){
   return `<div style="margin-top:8px">${line('Receipts same day',f.k1)}${line('Date accuracy',f.k2)}${line('Active open days',f.k3)}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 27 Sep 2026</div></div>`;
 }
 
+// ── FIXED ASSETS COVERAGE (agreed 27 Sep 2026) ────────────────────────
+// Every asset must be verified once per FY quarter. The watcher script writes
+// Coverage rows ("Coverage FY2026-27 Q1, 212 of 627 assets (33.8%), to date").
+// Closed quarters are scored on their final %. The current quarter shows progress only.
+const FA_QUARTERS = [
+  { label:'FY2026-27 Q1', end:new Date('2026-09-30T23:59:59+05:00') },
+  { label:'FY2026-27 Q2', end:new Date('2026-12-31T23:59:59+05:00') },
+  { label:'FY2026-27 Q3', end:new Date('2027-03-31T23:59:59+05:00') },
+  { label:'FY2026-27 Q4', end:new Date('2027-06-30T23:59:59+05:00') }
+];
+const FA_QUARTER_WEIGHT = 13; // a quarter weighs the same as 13 weekly windows
+function faCoverage(rows){
+  const now=new Date();
+  const latest={};
+  rows.filter(r=>r.code==='FIXED-AS'&&r.type==='Coverage').forEach(r=>{
+    const m=String(r.notes||'').match(/Coverage (FY\d{4}-\d{2} Q\d), (\d+) of (\d+)/);
+    if(!m)return;
+    const ts=new Date(r.ts);
+    if(!latest[m[1]]||ts>latest[m[1]].ts)latest[m[1]]={ts,count:Number(m[2]),total:Number(m[3])};
+  });
+  const quarters=FA_QUARTERS.map((q,i)=>{
+    const prevEnd=i===0?FY_START:FA_QUARTERS[i-1].end;
+    const started=now>prevEnd;
+    const closed=now>q.end;
+    const c=latest[q.label];
+    const pct=c&&c.total>0?Math.round(c.count/c.total*1000)/10:(closed?0:null);
+    return{label:q.label.replace('FY2026-27 ',''),started,closed,count:c?c.count:0,total:c?c.total:627,pct};
+  }).filter(q=>q.started);
+  const closedQ=quarters.filter(q=>q.closed);
+  const pct=closedQ.length?Math.round(closedQ.reduce((a,q)=>a+(q.pct||0),0)/closedQ.length):null;
+  return{quarters,closedCount:closedQ.length,pct};
+}
+function faDetailHtml(f){
+  const lines=f.quarters.map(q=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span>${q.label} ${q.closed?'final':'to date'}</span><span style="font-family:var(--mono)">${q.count} of ${q.total} (${q.pct!==null?q.pct:0}%)</span></div>`).join('');
+  return `<div style="margin-top:8px">${lines}<div style="font-size:10px;color:var(--text3);margin-top:4px">All assets verified once per quarter</div></div>`;
+}
+
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
 function calcScore(codes,rows,closedDays){
   const reg=codes.map(c=>portalReg(c)).filter(Boolean);
@@ -652,6 +689,11 @@ function calcScore(codes,rows,closedDays){
       }
     }
 
+    else if(sreg.scoring==='fa-coverage'){
+      const f=faCoverage(rows);
+      if(f.pct!==null){exp+=FA_QUARTER_WEIGHT*f.closedCount;ot+=FA_QUARTER_WEIGHT*f.closedCount*f.pct/100;}
+    }
+
     else if(sreg.scoring==='fnb'){
       const f=fnbKpis(rows,closedDays);
       if(f.pct!==null){exp+=f.weight;ot+=f.weight*f.pct/100;}
@@ -673,7 +715,7 @@ function calcScore(codes,rows,closedDays){
     }
   }
 
-  if(exp===0&&scoredRegs.every(r=>r.scoring==='fnb'))return null;
+  if(exp===0&&scoredRegs.every(r=>r.scoring==='fnb'||r.scoring==='fa-coverage'))return null;
   return{pct:exp>0?Math.round((ot/exp)*100):100,ot,exp};
 }
 
@@ -698,7 +740,7 @@ function renderDepartments(procKpi, procRecon){
   // Missed today (daily portals in season, not closed)
   const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
   const missedToday=PORTAL_REGISTRY.filter(p=>{
-    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb')return false;
+    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage')return false;
     if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
     if(p.scoring==='hm'&&!isWinterDay(now))return false;
     if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
@@ -768,6 +810,7 @@ function renderDepartments(procKpi, procRecon){
         // PROC-HUB sub-section: no longer used (Procurement is its own dept card)
         let procDetail='';
         if(sub.portals.includes('FB-STOCK'))procDetail=fnbDetailHtml(fnbKpis(rows,closedDays));
+        if(sub.portals.includes('FIXED-AS'))procDetail=faDetailHtml(faCoverage(rows));
 
         subHtml+=`<div class="sub-section">
           <div class="sub-label">${sub.label}</div>
