@@ -506,9 +506,17 @@ function buildClosedDays(rows){
 function portalRag(code,rows){
   const reg=portalReg(code);
   if(!reg||reg.season==='exclude'||reg.season==='pending')return'grey';
-  const sorted=rows.filter(r=>r.code===code).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const sorted=rows.filter(r=>r.code===code&&isActivityRow(r)).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
   const last=sorted[0];
   if(!last)return'grey';
+  if(code==='FIRE-EX'){
+    const now=new Date();const fr=rows.filter(r=>r.code==='FIRE-EX');
+    const cur=fireSitesForMonth(fr,now.getFullYear(),now.getMonth());
+    if(FIRE_SITES.every(s=>cur.has(s)))return'green';
+    const pm=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const prev=fireSitesForMonth(fr,pm.getFullYear(),pm.getMonth());
+    return FIRE_SITES.every(s=>prev.has(s))?'yellow':'red';
+  }
   const h=hoursAgo(last.ts);
   if(code==='SNOW-MK'||code==='PISTENBULL'){if(!isWinterDay(new Date()))return'grey';}
   if(code==='CL-CHECKS'){
@@ -592,6 +600,17 @@ function faDetailHtml(f){
   return `<div style="margin-top:8px">${lines}<div style="font-size:10px;color:var(--text3);margin-top:4px">All assets verified once per quarter</div></div>`;
 }
 
+// ── FIRE-EX MONTHLY SITE COVERAGE ─────────────────────────────────────
+const FIRE_SITES=['MJSR','SI','GV','VM'];
+function fireSiteOf(r){const m=String(r.notes||'').match(/(MJSR|SI|GV|VM|MH|FG)\s*$/);return m?m[1]:null;}
+function fireSitesForMonth(fireRows,yr,mo){
+  const s=new Set();
+  fireRows.forEach(r=>{const d=new Date(r.ts);if(d.getFullYear()===yr&&d.getMonth()===mo){const site=fireSiteOf(r);if(site)s.add(site);}});
+  return s;
+}
+// Rows written by background watchers are not user activity
+function isActivityRow(r){return r.type!=='Coverage';}
+
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
 function calcScore(codes,rows,closedDays){
   const reg=codes.map(c=>portalReg(c)).filter(Boolean);
@@ -654,24 +673,18 @@ function calcScore(codes,rows,closedDays){
     }
 
     else if(sreg.scoring==='monthly-fire'){
-      // FIRE-EX: all 4 properties must have submissions each calendar month
-      const monthsSinceFY={};
-      for(let i=0;i<days;i++){
-        const d=new Date(start.getTime()+i*86400000);
-        const mk=d.getFullYear()+'-'+(d.getMonth()+1);
-        if(d<=now&&!monthsSinceFY[mk])monthsSinceFY[mk]=false;
-      }
+      // FIRE-EX: all 4 properties (MJSR, Samsons Inn, Green Valley, Vehicles) must be inspected each calendar month.
+      // A month is scored once it has ended, or earlier if all 4 are already done.
       const fireRows=fyRows.filter(r=>r.code==='FIRE-EX');
-      Object.keys(monthsSinceFY).forEach(mk=>{
-        const[yr,mo]=mk.split('-').map(Number);
-        const monthRows=fireRows.filter(r=>{const d=new Date(r.ts);return d.getFullYear()===yr&&(d.getMonth()+1)===mo;});
-        // Check all 4 properties have submissions
-        const hasMJSR=monthRows.some(r=>(r.notes||'').includes('MJSR'));
-        const hasVM=monthRows.some(r=>(r.notes||'').includes('VM'));
-        // GV and Inn not in compliance data yet so check any submissions exist
-        if(monthRows.length>0)monthsSinceFY[mk]=true;
+      const months=[];
+      for(let d=new Date(start.getFullYear(),start.getMonth(),1);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1))months.push(d);
+      months.forEach(m=>{
+        const sites=fireSitesForMonth(fireRows,m.getFullYear(),m.getMonth());
+        const allDone=FIRE_SITES.every(s=>sites.has(s));
+        const monthEnded=new Date(m.getFullYear(),m.getMonth()+1,1)<=now;
+        if(!monthEnded&&!allDone)return;
+        exp++;if(allDone)ot++;
       });
-      Object.values(monthsSinceFY).forEach(pass=>{exp++;if(pass)ot++;});
     }
 
     else if(sreg.scoring==='quarterly'){
@@ -828,7 +841,7 @@ function renderDepartments(procKpi, procRecon){
     const portalRowsHtml=dept.portals.map(code=>{
       const reg=portalReg(code);if(!reg)return'';
       const rag=portalRag(code,rows);
-      const last=rows.filter(r=>r.code===code).sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0];
+      const last=rows.filter(r=>r.code===code&&isActivityRow(r)).sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0];
       const isSeasonalOff=(code==='SNOW-MK'||code==='PISTENBULL')&&!isWinterDay(now);
       const isExcluded=reg.scoring==='exclude';
       const isPend=reg.scoring==='pending';
@@ -937,7 +950,7 @@ function renderPortals(){
 
   const lastSub={},subCount={},otByCode={},totByCode={};
   rows.forEach(r=>{
-    if(!lastSub[r.code]||new Date(r.ts)>new Date(lastSub[r.code].ts))lastSub[r.code]=r;
+    if(isActivityRow(r)&&(!lastSub[r.code]||new Date(r.ts)>new Date(lastSub[r.code].ts)))lastSub[r.code]=r;
     subCount[r.code]=(subCount[r.code]||0)+1;
     if(r.deadline&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day'&&r.onTime!==''){
       totByCode[r.code]=(totByCode[r.code]||0)+1;
