@@ -320,7 +320,7 @@ const PORTAL_REGISTRY = [
   { code:'GEN-MAINT',  name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily'        },
   { code:'SALES-CL',   name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    season:'exclude', scoring:'exclude'      },
-  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    season:'all',     scoring:'daily'        },
+  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    season:'all',     scoring:'inn-dual'     },
   { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Daily',  deadline:'Same day', season:'all',     scoring:'fnb'          },
   { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
@@ -644,6 +644,28 @@ function fireSitesForMonth(fireRows,yr,mo){
 // Rows written by background watchers are not user activity
 function isActivityRow(r){return r.type!=='Coverage';}
 
+// ── SAMSONS INN DUAL DEADLINE (handover rule) ─────────────────────────
+// A day passes if the Inn submitted before 12:00, or at 20:00 or later (night closure).
+// Submissions between 12:00 and 20:00 are late. All-year, no closed-day exclusion. Times in PKT.
+function pktParts(ts){const d=new Date(new Date(ts).getTime()+5*3600000);return{key:d.toISOString().slice(0,10),h:d.getUTCHours()};}
+function innDays(rows){
+  const now=new Date();const today=pktParts(now).key;
+  const status={};
+  rows.filter(r=>r.code==='INN-TRACK'&&isActivityRow(r)).forEach(r=>{
+    const p=pktParts(r.ts);if(isNaN(p.h))return;
+    const ok=p.h<12||p.h>=20;
+    status[p.key]=status[p.key]||ok;
+  });
+  let exp=0,ot=0;
+  for(let d=new Date(FY_START.getTime()+12*3600000);;d=new Date(d.getTime()+86400000)){
+    const key=pktParts(d).key;
+    if(key>today)break;
+    if(key===today&&!status[key])continue;
+    exp++;if(status[key])ot++;
+  }
+  return{exp,ot};
+}
+
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
 function calcScore(codes,rows,closedDays){
   const reg=codes.map(c=>portalReg(c)).filter(Boolean);
@@ -735,6 +757,10 @@ function calcScore(codes,rows,closedDays){
       }
     }
 
+    else if(sreg.scoring==='inn-dual'){
+      const f=innDays(rows);exp+=f.exp;ot+=f.ot;
+    }
+
     else if(sreg.scoring==='fa-coverage'){
       const f=faCoverage(rows);
       if(f.pct!==null){exp+=FA_QUARTER_WEIGHT*f.closedCount;ot+=FA_QUARTER_WEIGHT*f.closedCount*f.pct/100;}
@@ -786,7 +812,7 @@ function renderDepartments(procKpi, procRecon){
   // Missed today (daily portals in season, not closed)
   const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
   const missedToday=PORTAL_REGISTRY.filter(p=>{
-    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage')return false;
+    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage'||p.scoring==='inn-dual')return false;
     if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
     if(p.scoring==='hm'&&!isWinterDay(now))return false;
     if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
