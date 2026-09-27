@@ -327,6 +327,7 @@ const PORTAL_REGISTRY = [
   { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'LOYALTY',    name:'MJSR Loyalty Programme',          type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'GEN-CHECKS', name:'Generator Daily Checks (Legacy)', type:'Daily',  deadline:'10:30',    season:'exclude', scoring:'exclude'      },
+  { code:'STORE-CHK',  name:'Technical Stores Stock Take',     type:'Monthly',deadline:'1st 23:59',season:'all',     scoring:'store-monthly'},
   { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', season:'pending', scoring:'pending'      },
 ];
 
@@ -334,7 +335,7 @@ const PORTAL_REGISTRY = [
 const DEPARTMENTS = [
   {
     id:'technical', name:'Technical', custodians:'Bilal Tariq, Engr Ishtiaq, Engr Akram, Gohar, Engr Asif',
-    portals:['CL-CHECKS','GEN-MAINT','HM-CHECKS','FIRE-EX','SNOW-MK','PISTENBULL'],
+    portals:['CL-CHECKS','GEN-MAINT','HM-CHECKS','FIRE-EX','SNOW-MK','PISTENBULL','STORE-CHK'],
     split: null
   },
   {
@@ -542,6 +543,11 @@ function portalRag(code,rows){
   const sorted=rows.filter(r=>r.code===code&&isActivityRow(r)).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
   const last=sorted[0];
   if(!last)return'grey';
+  if(code==='STORE-CHK'){
+    const f=storeTakes(rows);const open=f.months.find(m=>!m.closed);const closed=f.months.filter(m=>m.closed);const last=closed[closed.length-1];
+    const all=m=>m&&STORES.every(([s])=>f.done[s+'|'+m.key]);
+    return all(open)?'green':all(last)?'yellow':'red';
+  }
   if(code==='FIRE-EX'){
     const now=new Date();const fr=rows.filter(r=>r.code==='FIRE-EX');
     const cur=fireSitesForMonth(fr,now.getFullYear(),now.getMonth());
@@ -674,6 +680,55 @@ function innDetailHtml(f){
   return `<div style="margin-top:8px">${line('Submitted by 23:59',f.ot,'var(--text2)')}${line('No submission',f.missed,f.missed?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Any time on the day counts. Scored from 1 Jul 2026, PKT</div></div>`;
 }
 
+// ── TECHNICAL STORES MONTHLY STOCK TAKE (agreed 27 Sep 2026) ──────────
+// Each of the 7 stores must finalise its stock take for a month before the 2nd day
+// of the following month (23:59 PKT on the 1st). Scored per store per month from FY start.
+// A month is scored once its deadline has passed; the current month only counts stores already done.
+const STORES=[['chairlift','Chairlift'],['civil','Civil'],['pistenbully','PistenBully'],['electrical','Electrical'],['zipline','Zipline'],['giantswing','Giant Swing'],['snowmaking','Snowmaking']];
+function storeTakes(rows){
+  const done={};
+  rows.filter(r=>r.code==='STORE-CHK').forEach(r=>{
+    const m=String(r.notes||'').match(/Stock take (\w+) (\d{4}-\d{2})/);
+    if(!m)return;
+    if(String(r.onTime)==='TRUE'||r.onTime===true)done[m[1]+'|'+m[2]]=true;
+  });
+  const now=new Date();const months=[];
+  for(let y=2026,mo=7;;){
+    const key=y+'-'+String(mo).padStart(2,'0');
+    const ny=mo===12?y+1:y,nm=mo===12?1:mo+1;
+    const deadline=new Date(ny+'-'+String(nm).padStart(2,'0')+'-01T23:59:00+05:00');
+    const start=new Date(key+'-01T00:00:00+05:00');
+    if(start>now)break;
+    months.push({key,deadline,closed:now>deadline});
+    y=ny;mo=nm;
+  }
+  let exp=0,ot=0;
+  months.forEach(m=>STORES.forEach(([s])=>{
+    const ok=!!done[s+'|'+m.key];
+    if(m.closed||ok){exp++;if(ok)ot++;}
+  }));
+  return{exp,ot,months,done};
+}
+function storeDetailHtml(f){
+  const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const lbl=k=>names[Number(k.slice(5))-1]+' '+k.slice(0,4);
+  const closed=f.months.filter(m=>m.closed);
+  const last=closed[closed.length-1];
+  const open=f.months.find(m=>!m.closed);
+  const cnt=m=>STORES.filter(([s])=>f.done[s+'|'+m.key]).length;
+  let html='<div style="padding:8px 14px;border-bottom:1px solid var(--border)"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px">Stores monthly stock take</div>';
+  const line=(label,val,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:3px"><span>${label}</span><span style="font-family:var(--mono)">${val}</span></div>`;
+  if(last){const n=cnt(last);html+=line(lbl(last.key)+' (deadline passed)',n+' of 7 stores',n<7?'var(--red)':'var(--text2)');}
+  if(open){
+    const n=cnt(open);
+    const missing=STORES.filter(([s])=>!f.done[s+'|'+open.key]).map(([,l])=>l);
+    const dl=open.deadline.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    html+=line(lbl(open.key)+' (due '+dl+')',n+' of 7 stores','var(--text2)');
+    if(missing.length)html+=`<div style="font-size:10px;color:var(--warn);margin-top:3px">Outstanding: ${missing.join(', ')}</div>`;
+  }
+  return html+'</div>';
+}
+
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
 function calcScore(codes,rows,closedDays){
   const reg=codes.map(c=>portalReg(c)).filter(Boolean);
@@ -765,6 +820,10 @@ function calcScore(codes,rows,closedDays){
       }
     }
 
+    else if(sreg.scoring==='store-monthly'){
+      const f=storeTakes(rows);exp+=f.exp;ot+=f.ot;
+    }
+
     else if(sreg.scoring==='inn-dual'){
       const f=innDays(rows);exp+=f.exp;ot+=f.ot;
     }
@@ -820,7 +879,7 @@ function renderDepartments(procKpi, procRecon){
   // Missed today (daily portals in season, not closed)
   const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
   const missedToday=PORTAL_REGISTRY.filter(p=>{
-    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage'||p.scoring==='inn-dual')return false;
+    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage'||p.scoring==='inn-dual'||p.scoring==='store-monthly')return false;
     if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
     if(p.scoring==='hm'&&!isWinterDay(now))return false;
     if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
@@ -979,6 +1038,8 @@ function renderDepartments(procKpi, procRecon){
             ${breakdownHtml}
           </div>
         </div>`:'<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--green)">All approved PRFs reconciled</div>'}`;
+    }else if(dept.id==='technical'){
+      procBodyHtml=storeDetailHtml(storeTakes(rows));
     }else if(dept.id==='procurement'){
       scorePct=null;grade=null;scoreDisplay='–';scoreCls='event';
       procBodyHtml='<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--warn)">Procurement Hub data did not load. Tap Refresh.</div>';
