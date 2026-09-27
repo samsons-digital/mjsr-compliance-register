@@ -656,14 +656,21 @@ function innDays(rows){
     const ok=p.h<12||p.h>=20;
     status[p.key]=status[p.key]||ok;
   });
-  let exp=0,ot=0;
+  let exp=0,ot=0,late=0,missed=0;
   for(let d=new Date(FY_START.getTime()+12*3600000);;d=new Date(d.getTime()+86400000)){
     const key=pktParts(d).key;
     if(key>today)break;
     if(key===today&&!status[key])continue;
-    exp++;if(status[key])ot++;
+    exp++;
+    if(status[key])ot++;
+    else if(status[key]===false)late++;
+    else missed++;
   }
-  return{exp,ot};
+  return{exp,ot,late,missed};
+}
+function innDetailHtml(f){
+  const line=(label,n,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${n} of ${f.exp} days</span></div>`;
+  return `<div style="margin-top:8px">${line('On time (before 12:00 or from 20:00)',f.ot,'var(--text2)')}${line('Late (12:00 to 19:59 only)',f.late,f.late?'var(--warn)':'var(--text2)')}${line('No submission',f.missed,f.missed?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 1 Jul 2026, PKT</div></div>`;
 }
 
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
@@ -882,6 +889,7 @@ function renderDepartments(procKpi, procRecon){
         // PROC-HUB sub-section: no longer used (Procurement is its own dept card)
         let procDetail='';
         if(sub.portals.includes('FB-STOCK'))procDetail=fnbDetailHtml(fnbKpis(rows,closedDays));
+        if(sub.portals.includes('INN-TRACK'))procDetail=innDetailHtml(innDays(rows));
         if(sub.portals.includes('FIXED-AS'))procDetail=faDetailHtml(faCoverage(rows));
         if(sub.portals.includes('PR-FUND'))procDetail=prBudgetDetailHtml(prBudgetData);
 
