@@ -320,7 +320,7 @@ const PORTAL_REGISTRY = [
   { code:'GEN-MAINT',  name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily'        },
   { code:'SALES-CL',   name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    season:'exclude', scoring:'exclude'      },
-  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    season:'all',     scoring:'inn-dual'     },
+  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'23:59',    season:'all',     scoring:'inn-dual'     },
   { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Daily',  deadline:'Same day', season:'all',     scoring:'fnb'          },
   { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
@@ -644,16 +644,17 @@ function fireSitesForMonth(fireRows,yr,mo){
 // Rows written by background watchers are not user activity
 function isActivityRow(r){return r.type!=='Coverage';}
 
-// ── SAMSONS INN DUAL DEADLINE (handover rule) ─────────────────────────
-// A day passes if the Inn submitted before 12:00, or at 20:00 or later (night closure).
-// Submissions between 12:00 and 20:00 are late. All-year, no closed-day exclusion. Times in PKT.
+// ── SAMSONS INN DAILY RULE (revised 27 Sep 2026) ──────────────────────
+// Set to the Inn's actual working pattern. A day passes if the Inn submitted at any
+// time that calendar day, up to 23:59 PKT. A day with no submission fails.
+// All-year, no closed-day exclusion.
 function pktParts(ts){const d=new Date(new Date(ts).getTime()+5*3600000);return{key:d.toISOString().slice(0,10),h:d.getUTCHours()};}
 function innDays(rows){
   const now=new Date();const today=pktParts(now).key;
   const status={};
   rows.filter(r=>r.code==='INN-TRACK'&&isActivityRow(r)).forEach(r=>{
     const p=pktParts(r.ts);if(isNaN(p.h))return;
-    const ok=p.h<12||p.h>=20;
+    const ok=true;
     status[p.key]=status[p.key]||ok;
   });
   let exp=0,ot=0,late=0,missed=0;
@@ -670,7 +671,7 @@ function innDays(rows){
 }
 function innDetailHtml(f){
   const line=(label,n,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${n} of ${f.exp} days</span></div>`;
-  return `<div style="margin-top:8px">${line('On time (before 12:00 or from 20:00)',f.ot,'var(--text2)')}${line('Late (12:00 to 19:59 only)',f.late,f.late?'var(--warn)':'var(--text2)')}${line('No submission',f.missed,f.missed?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 1 Jul 2026, PKT</div></div>`;
+  return `<div style="margin-top:8px">${line('Submitted by 23:59',f.ot,'var(--text2)')}${line('No submission',f.missed,f.missed?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Any time on the day counts. Scored from 1 Jul 2026, PKT</div></div>`;
 }
 
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
