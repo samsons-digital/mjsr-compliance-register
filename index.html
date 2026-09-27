@@ -301,6 +301,9 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
 const GAS_URL      = 'https://script.google.com/macros/s/AKfycbyP1rM-YRMsZyJiZzrnOKuIUNGa6M1tTYc_OxG3-XMRBIs19lnOtgfv_ri4eM4-eTLlnQ/exec';
 const PROCHUB_URL  = 'https://script.google.com/macros/s/AKfycby_M0NW85JpZBvJXCAoIM0p70V4YmD_ohwO1maXYjWme6_49rRKBp5JbSSPFiR0cQno/exec';
 const FY_START = new Date('2026-07-01T00:00:00+05:00');
+const PRFUND_URL   = 'https://script.google.com/macros/s/AKfycbxWqdyPxJ-mYOY3BZTPp2rur8JiqeyBhANuWeJJBxCYk6MBymNJfqpFJLynKRLXaJk/exec';
+const PR_MONTHLY_CAP = 233333;
+const PR_FY_CAP      = 2800000;
 
 // ── PORTAL REGISTRY ──────────────────────────────────────────────────
 const PORTAL_REGISTRY = [
@@ -384,6 +387,7 @@ const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL'];
 let allRows = [];
 let procKpiData = null;
 let procReconData = null;
+let prBudgetData = null;
 let logPage = 1;
 const PAGE_SIZE = 100;
 
@@ -406,15 +410,44 @@ async function postJson(url, body, isGood, tries) {
   return last;
 }
 
+// PR Fund MJSR spend per FY month, read live from the PR Fund Tracker backend
+function fyMonthsToDate(){
+  const out=[];const now=new Date();
+  for(let d=new Date(2026,6,1);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1)){
+    out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  return out;
+}
+async function loadPrBudget(){
+  const months=fyMonthsToDate();
+  const res=await Promise.all(months.map(m=>postJson(PRFUND_URL,{action:'getBudget',month:m},j=>j&&typeof j.totalSpend==='number',2)));
+  if(res.some(r=>!r))return null;
+  return res.map((r,i)=>({month:months[i],spend:r.totalSpend}));
+}
+function prBudgetDetailHtml(b){
+  if(!b)return '<div style="margin-top:8px;font-size:11px;color:var(--warn)">Budget data did not load. Tap Refresh.</div>';
+  const fmt=n=>'PKR '+Math.round(n).toLocaleString('en-US');
+  const cur=b[b.length-1];
+  const fy=b.reduce((a,x)=>a+x.spend,0);
+  const curPct=Math.round(cur.spend/PR_MONTHLY_CAP*100);
+  const fyPct=Math.round(fy/PR_FY_CAP*100);
+  const over=b.filter(x=>x.spend>PR_MONTHLY_CAP);
+  const col=p=>p>100?'var(--red)':p>=90?'var(--warn)':'var(--text2)';
+  const line=(label,val,c)=>`<div style="display:flex;justify-content:space-between;gap:6px;font-size:11px;color:${c||'var(--text2)'};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono);text-align:right">${val}</span></div>`;
+  return `<div style="margin-top:8px">${line('This month',fmt(cur.spend)+' ('+curPct+'%)',col(curPct))}${line('FY to date',fmt(fy)+' ('+fyPct+'%)',col(fyPct))}${line('Months over cap',over.length?over.map(x=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(x.month.slice(5))-1]).join(', '):'None',over.length?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Caps ${fmt(PR_MONTHLY_CAP)} a month, ${fmt(PR_FY_CAP)} a year</div></div>`;
+}
+
 async function loadData() {
   document.getElementById('lastRefresh').textContent = 'Loading...';
   document.querySelector('.live-dot').style.background = '#f59e0b';
   try {
-    const [json, pj, rj] = await Promise.all([
+    const [json, pj, rj, prb] = await Promise.all([
       postJson(GAS_URL, {action:'getComplianceData'}, j => j && j.ok && Array.isArray(j.rows) && j.rows.length > 0, 4),
       postJson(PROCHUB_URL, {action:'getKpiData'}, j => j && j.status === 'ok', 3),
-      postJson(PROCHUB_URL, {action:'getReconciliation'}, j => j && j.status === 'ok', 3)
+      postJson(PROCHUB_URL, {action:'getReconciliation'}, j => j && j.status === 'ok', 3),
+      loadPrBudget()
     ]);
+    prBudgetData = prb;
     if (!json) throw new Error('No response from the Compliance Register. Tap Refresh.');
     if (!json.ok) throw new Error(json.error || 'Unknown error');
     if (!Array.isArray(json.rows) || json.rows.length === 0) throw new Error('The Submission Log came back empty. Tap Refresh.');
@@ -824,6 +857,7 @@ function renderDepartments(procKpi, procRecon){
         let procDetail='';
         if(sub.portals.includes('FB-STOCK'))procDetail=fnbDetailHtml(fnbKpis(rows,closedDays));
         if(sub.portals.includes('FIXED-AS'))procDetail=faDetailHtml(faCoverage(rows));
+        if(sub.portals.includes('PR-FUND'))procDetail=prBudgetDetailHtml(prBudgetData);
 
         subHtml+=`<div class="sub-section">
           <div class="sub-label">${sub.label}</div>
