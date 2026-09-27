@@ -217,6 +217,9 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
 
 @media(max-width:1100px){.summary-strip{grid-template-columns:repeat(3,1fr);}.analytics-grid{grid-template-columns:1fr;}main{padding:16px;}}
 @media(max-width:600px){.summary-strip{grid-template-columns:1fr 1fr;}.dept-grid,.portal-grid{grid-template-columns:1fr;}.sub-sections.two-col,.sub-sections.three-col{grid-template-columns:1fr;}}
+details.tile-collapse[open] .tc-arrow{transform:rotate(180deg)}
+details.tile-collapse summary::-webkit-details-marker{display:none}
+details.tile-collapse summary:hover{background:var(--bg2,rgba(0,0,0,.02))}
 </style>
 </head>
 <body>
@@ -690,6 +693,10 @@ function innDetailHtml(f){
 // of the following month (23:59 PKT on the 1st). Scored per store per month from FY start.
 // A month is scored once its deadline has passed; the current month only counts stores already done.
 const STORES=[['chairlift','Chairlift'],['civil','Civil'],['pistenbully','PistenBully'],['electrical','Electrical'],['zipline','Zipline'],['giantswing','Giant Swing'],['snowmaking','Snowmaking']];
+// Collapsible block used on the Technical card (closed by default)
+function collapseBlock(title,summary,summaryColor,body){
+  return `<details class="tile-collapse" style="border-bottom:1px solid var(--border)"><summary style="list-style:none;cursor:pointer;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)">${title}</span><span style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;font-family:var(--mono);color:${summaryColor}">${summary}</span><span class="tc-arrow" style="font-size:10px;color:var(--text3);transition:transform .2s">&#9660;</span></span></summary><div style="padding:0 14px 8px">${body}</div></details>`;
+}
 function storeTakes(rows){
   const done={};
   rows.filter(r=>r.code==='STORE-CHK').forEach(r=>{
@@ -721,17 +728,19 @@ function storeDetailHtml(f){
   const last=closed[closed.length-1];
   const open=f.months.find(m=>!m.closed);
   const cnt=m=>STORES.filter(([s])=>f.done[s+'|'+m.key]).length;
-  let html='<div style="padding:8px 14px;border-bottom:1px solid var(--border)"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px">Stores monthly stock take</div>';
   const line=(label,val,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:3px"><span>${label}</span><span style="font-family:var(--mono)">${val}</span></div>`;
-  if(last){const n=cnt(last);html+=line(lbl(last.key)+' (deadline passed)',n+' of 7 stores',n<7?'var(--red)':'var(--text2)');}
+  let body='',summary='',sc='var(--text2)';
+  if(last){const n=cnt(last);body+=line(lbl(last.key)+' (deadline passed)',n+' of 7 stores',n<7?'var(--red)':'var(--text2)');}
   if(open){
     const n=cnt(open);
     const missing=STORES.filter(([s])=>!f.done[s+'|'+open.key]).map(([,l])=>l);
     const dl=open.deadline.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-    html+=line(lbl(open.key)+' (due '+dl+')',n+' of 7 stores','var(--text2)');
-    if(missing.length)html+=`<div style="font-size:10px;color:var(--warn);margin-top:3px">Outstanding: ${missing.join(', ')}</div>`;
-  }
-  return html+'</div>';
+    body+=line(lbl(open.key)+' (due '+dl+')',n+' of 7 stores','var(--text2)');
+    if(missing.length)body+=`<div style="font-size:10px;color:var(--warn);margin-top:3px">Outstanding: ${missing.join(', ')}</div>`;
+    summary=names[Number(open.key.slice(5))-1]+' '+n+'/7, due '+dl;
+    sc=n<7?'var(--warn)':'var(--green)';
+  }else if(last){const n=cnt(last);summary=names[Number(last.key.slice(5))-1]+' '+n+'/7';sc=n<7?'var(--red)':'var(--green)';}
+  return collapseBlock('Stores monthly stock take',summary,sc,body);
 }
 
 // ── ANNUAL CERTIFICATIONS (agreed 27 Sep 2026) ────────────────────────
@@ -756,12 +765,13 @@ function certDetailHtml(f){
   const parts=f.latest.notes.split(' | ');
   const bad=(parts.find(p=>p.startsWith('Not valid:'))||'').replace('Not valid: ','');
   const soon=(parts.find(p=>p.startsWith('Expiring within'))||'').replace(/Expiring within \d+ days: /,'');
-  const line=(label,val,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:3px"><span>${label}</span><span style="font-family:var(--mono)">${val}</span></div>`;
-  let h='<div style="padding:8px 14px;border-bottom:1px solid var(--border)"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px">Annual certifications and inspections</div>';
-  h+=line('Valid today',f.latest.valid+' of '+f.latest.total,f.latest.valid<f.latest.total?'var(--red)':'var(--text2)');
-  if(bad&&bad!=='none')h+=`<div style="font-size:10px;color:var(--red);margin-top:3px">Not valid: ${bad}</div>`;
-  h+=`<div style="font-size:10px;color:${soon&&soon!=='none'?'var(--warn)':'var(--text3)'};margin-top:3px">Expiring within 60 days: ${soon||'none'}</div>`;
-  return h+'</div>';
+  let body='';
+  if(bad&&bad!=='none')body+=`<div style="font-size:10px;color:var(--red);margin-top:3px">Not valid: ${bad}</div>`;
+  body+=`<div style="font-size:10px;color:${soon&&soon!=='none'?'var(--warn)':'var(--text3)'};margin-top:3px">Expiring within 60 days: ${soon||'none'}</div>`;
+  const allOk=f.latest.valid>=f.latest.total;
+  const warn=soon&&soon!=='none';
+  const summary=f.latest.valid+'/'+f.latest.total+' valid'+(warn?', renewals due':'');
+  return collapseBlock('Annual certifications',summary,allOk?(warn?'var(--warn)':'var(--green)'):'var(--red)',body);
 }
 
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
