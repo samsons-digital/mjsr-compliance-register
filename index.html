@@ -318,7 +318,7 @@ const PORTAL_REGISTRY = [
   { code:'SALES-CL',   name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
   { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    season:'exclude', scoring:'exclude'      },
   { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'12:00',    season:'all',     scoring:'daily'        },
-  { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Daily',  deadline:'Same day', season:'all',     scoring:'fnb'          },
   { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
   { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
@@ -521,6 +521,40 @@ function portalRag(code,rows){
   return h<=72?'green':h<=168?'yellow':'red';
 }
 
+// ── F&B KPIs (agreed 27 Sep 2026) ──────────────────────────────────────
+// KPI 1  Receipts reconciled same day   (Stock In rows submitted on the filed date)
+// KPI 2  Date accuracy                  (all stock rows submitted on the filed date)
+// KPI 3  Daily activity                 (at least one stock entry every open day, closed days excused)
+// F&B score = average of the KPIs that have data. Scoring starts on the write-back go-live date.
+const FNB_KPI_START = new Date('2026-09-27T00:00:00+05:00');
+const FNB_DAY_LOOP_START = new Date('2026-09-27T12:00:00+05:00'); // midday so the date is the same in PKT and Dubai
+function fnbKpis(rows, closedDays){
+  const now=new Date();
+  const fnbRows=rows.filter(r=>r.code==='FB-STOCK'&&new Date(r.ts)>=FNB_KPI_START);
+  const isOk=r=>String(r.onTime)==='TRUE'||r.onTime===true;
+  const receipts=fnbRows.filter(r=>r.type==='Stock In');
+  const entries=fnbRows.filter(r=>r.type==='Stock In'||r.type==='Stock Out');
+  const k1={ok:receipts.filter(isOk).length,tot:receipts.length};
+  const k2={ok:entries.filter(isOk).length,tot:entries.length};
+  const activeDays=new Set(fnbRows.map(r=>new Date(r.ts).toDateString()));
+  let open=0,active=0;
+  const todayStr=now.toDateString();
+  for(let d=new Date(FNB_DAY_LOOP_START);d.toDateString()!==new Date(now.getTime()+86400000).toDateString()&&d<=new Date(now.getTime()+86400000);d=new Date(d.getTime()+86400000)){
+    const ds=d.toDateString();
+    if(ds===todayStr){ if(activeDays.has(ds)){open++;active++;} continue; }
+    if(closedDays.has(ds))continue;
+    open++; if(activeDays.has(ds))active++;
+  }
+  const k3={ok:active,tot:open};
+  const pcts=[k1,k2,k3].filter(k=>k.tot>0).map(k=>(k.ok/k.tot)*100);
+  const pct=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
+  return{k1,k2,k3,pct,weight:Math.max(open,1)};
+}
+function fnbDetailHtml(f){
+  const line=(label,k)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+'/'+k.tot+')':'–'}</span></div>`;
+  return `<div style="margin-top:8px">${line('Receipts same day',f.k1)}${line('Date accuracy',f.k2)}${line('Active open days',f.k3)}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 27 Sep 2026</div></div>`;
+}
+
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
 function calcScore(codes,rows,closedDays){
   const reg=codes.map(c=>portalReg(c)).filter(Boolean);
@@ -618,6 +652,11 @@ function calcScore(codes,rows,closedDays){
       }
     }
 
+    else if(sreg.scoring==='fnb'){
+      const f=fnbKpis(rows,closedDays);
+      if(f.pct!==null){exp+=f.weight;ot+=f.weight*f.pct/100;}
+    }
+
     else if(sreg.scoring==='weekly'){
       // At least one submission per 7-day window
       const weekWindows=Math.ceil(days/7);
@@ -634,6 +673,7 @@ function calcScore(codes,rows,closedDays){
     }
   }
 
+  if(exp===0&&scoredRegs.every(r=>r.scoring==='fnb'))return null;
   return{pct:exp>0?Math.round((ot/exp)*100):100,ot,exp};
 }
 
@@ -658,7 +698,7 @@ function renderDepartments(procKpi, procRecon){
   // Missed today (daily portals in season, not closed)
   const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
   const missedToday=PORTAL_REGISTRY.filter(p=>{
-    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly')return false;
+    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb')return false;
     if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
     if(p.scoring==='hm'&&!isWinterDay(now))return false;
     if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
@@ -727,6 +767,7 @@ function renderDepartments(procKpi, procRecon){
 
         // PROC-HUB sub-section: no longer used (Procurement is its own dept card)
         let procDetail='';
+        if(sub.portals.includes('FB-STOCK'))procDetail=fnbDetailHtml(fnbKpis(rows,closedDays));
 
         subHtml+=`<div class="sub-section">
           <div class="sub-label">${sub.label}</div>
