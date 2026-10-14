@@ -376,7 +376,7 @@ const PORTAL_REGISTRY = [
   { code:'FIXED-AS',   name:'Fixed Asset Verification System',  type:'Event',  deadline:'Variable', season:'all',     scoring:'fa-coverage'  },
   { code:'VH-FLEET',   name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'FIRE-EX',    name:'Fire Extinguisher Management',    type:'Event',  deadline:'Monthly',  season:'all',     scoring:'monthly-fire' },
-  { code:'PR-FUND',    name:'PR Fund Tracker',                 type:'Event',  deadline:'Same day', season:'all',     scoring:'weekly'       },
+  { code:'PR-FUND',    name:'PR Fund Tracker',                 type:'Event',  deadline:'Same day', season:'all',     scoring:'prfund'       },
   { code:'SNOW-MK',    name:'Snowmaking Master Portal',        type:'Daily',  deadline:'07:00',    season:'winter',  scoring:'daily-winter' },
   { code:'PISTENBULL', name:'PistenBully Master Portal',       type:'Daily',  deadline:'07:00',    season:'winter',  scoring:'daily-winter' },
   { code:'GEN-MAINT',  name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily'        },
@@ -475,6 +475,7 @@ let allRows = [];
 let procKpiData = null;
 let procReconData = null;
 let prBudgetData = null;
+let prKpiData = null;
 let logPage = 1;
 const PAGE_SIZE = 100;
 
@@ -524,14 +525,16 @@ async function loadData() {
   document.getElementById('lastRefresh').textContent = 'Loading...';
   document.querySelector('.live-dot').style.background = '#f59e0b';
   try {
-    const [json, pj, rj, prb, cal] = await Promise.all([
+    const [json, pj, rj, prb, cal, prk] = await Promise.all([
       postJson(GAS_URL, {action:'getComplianceData', limit:20000}, j => j && j.ok && Array.isArray(j.rows) && j.rows.length > 0, 4),
       postJson(PROCHUB_URL, {action:'getKpiData'}, j => j && j.status === 'ok', 3),
       postJson(PROCHUB_URL, {action:'getReconciliation'}, j => j && j.status === 'ok', 3),
       loadPrBudget(),
-      postJson(GAS_URL, {action:'getResortCalendar'}, j => j && j.ok && Array.isArray(j.closed), 3)
+      postJson(GAS_URL, {action:'getResortCalendar'}, j => j && j.ok && Array.isArray(j.closed), 3),
+      postJson(PRFUND_URL, {action:'getComplianceKpis'}, j => j && j.status === 'ok' && Array.isArray(j.entries), 3)
     ]);
     prBudgetData = prb;
+    prKpiData = (prk && prk.status === 'ok') ? prk : null;
     resortClosedKeys = new Set((cal && cal.ok && Array.isArray(cal.closed)) ? cal.closed : []);
     resortCalendarOk = !!(cal && cal.ok);
     siteClosedKeys = {};
@@ -706,6 +709,59 @@ function fnbKpis(rows, closedDays){
 function fnbDetailHtml(f){
   const line=(label,k)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+'/'+k.tot+')':'–'}</span></div>`;
   return `<div style="margin-top:8px">${line('Receipts same day',f.k1)}${line('Date accuracy',f.k2)}${line('Active open days',f.k3)}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 1 Jul 2026</div></div>`;
+}
+
+// ── PR FUND KPIs (agreed 14 Oct 2026) ──────────────────────────────────
+// KPI 1  Entries on time        each entry submitted on the same PKT day as the date recorded on it
+//                               (BACKFILLED and HISTORICAL rows are excluded, their timestamps are not real)
+// KPI 2  MJSR budget cap        MJSR spend at or under PKR 233,333 each month. A month over the cap fails at once,
+//                               a month under the cap counts once it has ended
+// KPI 3  Credit and IOU cleared every credit transaction and every Islamabad IOU bill for a month cleared by the
+//                               end of the following month. Scored once that deadline passes, or earlier if cleared.
+//                               A month with nothing to clear is not scored
+// PR Fund score = average of the KPIs that have something scored. Data read live from the PR Fund Tracker.
+function lastDayOfMonth(mk){const nm=nextMonthKey(mk);return new Date(new Date(nm+'-01T12:00:00Z').getTime()-86400000).toISOString().slice(0,10);}
+function prFundKpis(){
+  const d=prKpiData;if(!d)return null;
+  const cap=d.cap||PR_MONTHLY_CAP;const tk=todayKey();const curMonth=tk.slice(0,7);
+  const inW=k=>k&&k>=winFrom()&&k<=winTo();
+  const months=fyMonthKeys();
+  // KPI 1
+  const live=d.entries.filter(e=>!/BACKFILLED|HISTORICAL/i.test(e.billStatus)&&e.ts&&e.date);
+  const lateList=[];let k1ok=0,k1tot=0;
+  live.forEach(e=>{const sk=pktKey(e.ts);if(!inW(e.date))return;k1tot++;if(sk===e.date)k1ok++;else lateList.push({date:e.date,sub:sk,amount:e.amount,requester:e.requester});});
+  // KPI 2
+  const spend={},isbSpend={};
+  d.entries.forEach(e=>{if(e.office==='MJSR')spend[e.month]=(spend[e.month]||0)+e.amount;else if(e.office==='ISB')isbSpend[e.month]=(isbSpend[e.month]||0)+e.amount;});
+  const capMonths=[];let k2ok=0,k2tot=0;
+  months.forEach(mk=>{const sp=spend[mk]||0;const over=sp>cap;
+    if(mk===curMonth&&!over){capMonths.push({mk,sp,over,open:true});return;}
+    k2tot++;if(!over)k2ok++;capMonths.push({mk,sp,over,open:false});});
+  // KPI 3
+  const clearMonths=[];let k3ok=0,k3tot=0;
+  months.forEach(mk=>{
+    const due=lastDayOfMonth(nextMonthKey(mk));const passed=tk>due;const items=[];
+    d.credits.filter(c=>c.dateLogged.slice(0,7)===mk).forEach(c=>{
+      const ok=c.cleared&&(!c.clearedOn||c.clearedOn<=due);
+      items.push({label:'Credit '+c.requestNo+' ('+c.account+', PKR '+Math.round(c.value).toLocaleString('en-US')+')',ok,open:!ok&&!passed,late:c.cleared&&c.clearedOn>due});});
+    if((isbSpend[mk]||0)>0){
+      const b=d.isbBills.find(x=>x.month===mk);const paidOn=b&&b.paid?(b.paidOn||pktKey(b.ts)):'';
+      const ok=!!(b&&b.paid&&paidOn&&paidOn<=due);
+      items.push({label:'Islamabad IOU bill PKR '+Math.round(isbSpend[mk]).toLocaleString('en-US'),ok,open:!ok&&!passed,late:!!(b&&b.paid&&paidOn>due)});}
+    if(!items.length)return;
+    const allOk=items.every(i=>i.ok);
+    if(!passed&&!allOk){clearMonths.push({mk,due,items,status:'open'});return;}
+    k3tot++;if(allOk)k3ok++;clearMonths.push({mk,due,items,status:allOk?'ok':'fail'});
+  });
+  const k1={ok:k1ok,tot:k1tot},k2={ok:k2ok,tot:k2tot},k3={ok:k3ok,tot:k3tot};
+  const pcts=[k1,k2,k3].filter(k=>k.tot>0).map(k=>k.ok/k.tot*100);
+  const pct=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
+  return{k1,k2,k3,pct,weight:Math.max(months.length*3,1),lateList,capMonths,clearMonths,cap};
+}
+function prKpiDetailHtml(f){
+  if(!f)return '<div style="margin-top:8px;font-size:11px;color:var(--warn)">PR Fund KPI data did not load. Tap Refresh.</div>';
+  const line=(label,k)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${k.tot&&k.ok<k.tot?'var(--red)':'var(--text2)'};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+'/'+k.tot+')':'–'}</span></div>`;
+  return `<div style="margin-top:8px">${line('Entries on time',f.k1)}${line('Months within MJSR cap',f.k2)}${line('Credit and IOU cleared',f.k3)}</div>`;
 }
 
 // ── FIXED ASSETS COVERAGE (agreed 27 Sep 2026) ────────────────────────
@@ -982,6 +1038,11 @@ function calcScore(codes,rows,closedDays){
       if(f.pct!==null){exp+=f.weight;ot+=f.weight*f.pct/100;}
     }
 
+    else if(sreg.scoring==='prfund'){
+      const f=prFundKpis();
+      if(f&&f.pct!==null){exp+=f.weight;ot+=f.weight*f.pct/100;}
+    }
+
     else if(sreg.scoring==='weekly'){
       // At least one submission in each 7-day window from 1 Jul. The current window
       // only counts once it closes, or earlier if a submission is already in.
@@ -1112,7 +1173,7 @@ function renderDepartments(procKpi, procRecon){
         if(sub.portals.includes('FB-STOCK'))procDetail=fnbDetailHtml(fnbKpis(rows,closedDays));
         if(sub.portals.includes('INN-TRACK'))procDetail=innDetailHtml(innDays(rows));
         if(sub.portals.includes('FIXED-AS'))procDetail=faDetailHtml(faCoverage(rows));
-        if(sub.portals.includes('PR-FUND'))procDetail=prBudgetDetailHtml(prBudgetData);
+        if(sub.portals.includes('PR-FUND'))procDetail=prKpiDetailHtml(prFundKpis())+prBudgetDetailHtml(prBudgetData);
 
         subHtml+=`<div class="sub-section">
           <div class="sub-label">${sub.label}</div>
@@ -1438,6 +1499,7 @@ function fyTotalUnits(reg){
     case 'store-monthly':return 12*STORES.length;
     case 'fa-coverage':return 4*FA_QUARTER_WEIGHT;
     case 'inn-dual':case 'cert-daily':case 'fnb':return all.length;
+    case 'prfund':return 36;
     case 'weekly':return Math.ceil(all.length/7);
   }
   return 0;
@@ -1533,6 +1595,28 @@ function kpiFindings(code,rows,closedDays){
     out.why.push('Receipts entered same day '+pc(f.k1));out.why.push('Date accuracy '+pc(f.k2));out.why.push('Active open days '+pc(f.k3));
     const ks=[['enter every receipt (Stock In) on the day it arrives',f.k1],['file every stock entry on the date it happened',f.k2],['make at least one stock entry every open day',f.k3]].filter(([,k])=>k.tot).sort((a,b)=>a[1].ok/a[1].tot-b[1].ok/b[1].tot);
     if(ks.length&&ks[0][1].ok<ks[0][1].tot)out.action='Biggest gap, '+ks[0][0];
+    return out;
+  }
+  if(reg.scoring==='prfund'){
+    const f=prFundKpis();
+    if(!f){out.why.push('<span class="miss">PR Fund KPI data did not load. Tap Refresh.</span>');return out;}
+    const pc=k=>k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+' of '+k.tot+')':'nothing due yet';
+    out.why.push('Entries on time '+pc(f.k1));
+    if(f.lateList.length)out.why.push('<span class="miss">Entered late</span> '+f.lateList.slice(-6).map(l=>fmtDay(l.date)+' entered '+fmtDay(l.sub)).join(', ')+(f.lateList.length>6?' (latest 6 of '+f.lateList.length+')':''));
+    out.why.push('Months within MJSR cap '+pc(f.k2));
+    const fmtP=n=>'PKR '+Math.round(n).toLocaleString('en-US');
+    f.capMonths.forEach(m=>{if(m.over)out.why.push('<span class="miss">'+fmtMon(m.mk)+' over the cap, '+fmtP(m.sp)+' (by '+fmtP(m.sp-f.cap)+')</span>');});
+    const cur=f.capMonths.find(m=>m.open);if(cur)out.why.push(fmtMon(cur.mk)+' to date '+fmtP(cur.sp)+' of '+fmtP(f.cap)+' ('+Math.round(cur.sp/f.cap*100)+'%)');
+    out.why.push('Credit and IOU cleared '+pc(f.k3));
+    f.clearMonths.forEach(m=>{const bad=m.items.filter(i=>!i.ok);if(!bad.length)return;
+      const txt=fmtMon(m.mk)+' '+bad.map(i=>i.label+(i.late?' cleared late':' not cleared')).join(', ')+', due '+fmtDay(m.due);
+      out.why.push(m.status==='open'?txt:'<span class="miss">'+txt+'</span>');});
+    const gaps=[];
+    if(f.clearMonths.some(m=>m.status==='fail'))gaps.push([f.k3,'Clear every credit transaction and pay each Islamabad IOU bill by the end of the following month, and mark it paid in the PR Fund Tracker']);
+    if(f.capMonths.some(m=>m.over))gaps.push([f.k2,'Keep MJSR PR spend at or under PKR 233,333 every month']);
+    if(f.lateList.length)gaps.push([f.k1,'Enter every PR entry on the same day it happens']);
+    gaps.sort((a,b)=>a[0].ok/(a[0].tot||1)-b[0].ok/(b[0].tot||1));
+    if(gaps.length)out.action=gaps[0][1];
     return out;
   }
   if(reg.scoring==='fa-coverage'){
