@@ -364,6 +364,8 @@ const GAS_URL      = 'https://script.google.com/macros/s/AKfycbyP1rM-YRMsZyJiZzr
 const PROCHUB_URL  = 'https://script.google.com/macros/s/AKfycby_M0NW85JpZBvJXCAoIM0p70V4YmD_ohwO1maXYjWme6_49rRKBp5JbSSPFiR0cQno/exec';
 const FY_START = new Date('2026-07-01T00:00:00+05:00');
 const PRFUND_URL   = 'https://script.google.com/macros/s/AKfycbxWqdyPxJ-mYOY3BZTPp2rur8JiqeyBhANuWeJJBxCYk6MBymNJfqpFJLynKRLXaJk/exec';
+const SALES_URL    = 'https://script.google.com/macros/s/AKfycbwyXOISC870jhSuP7xBlIu6iUiw9KleAcFYabXLPgbtgY-omSyWkt2TxbEG-zYELxeCUw/exec';
+const LOYALTY_URL  = 'https://script.google.com/macros/s/AKfycbzrMvFCmcJXcqRqqzZq6rOUirhEYUYr4KGdqgltmH5brAf9BRIecTIoaodfNfw_Z3x_/exec';
 const PR_MONTHLY_CAP = 233333;
 const PR_FY_CAP      = 2800000;
 
@@ -387,7 +389,7 @@ const PORTAL_REGISTRY = [
   { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
   { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
   { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
-  { code:'LOYALTY',    name:'MJSR Loyalty Programme',          type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'LOYALTY',    name:'MJSR Loyalty Programme',          type:'Daily',  deadline:'20% of customers', season:'all', scoring:'loyalty-share' },
   { code:'GEN-CHECKS', name:'Generator Daily Checks (Legacy)', type:'Daily',  deadline:'10:30',    season:'exclude', scoring:'exclude'      },
   { code:'STORE-CHK',  name:'Technical Stores Stock Take',     type:'Monthly',deadline:'1st 23:59',season:'all',     scoring:'store-monthly'},
   { code:'CERT-VALID', name:'Annual Certifications and Inspections', type:'Daily', deadline:'Continuous', season:'all', scoring:'cert-daily' },
@@ -476,6 +478,7 @@ let procKpiData = null;
 let procReconData = null;
 let prBudgetData = null;
 let prKpiData = null;
+let loyaltyData = null; // {customers:{date:n}, members:{date:n}, salesOk, visitsOk}
 let logPage = 1;
 const PAGE_SIZE = 100;
 
@@ -525,14 +528,23 @@ async function loadData() {
   document.getElementById('lastRefresh').textContent = 'Loading...';
   document.querySelector('.live-dot').style.background = '#f59e0b';
   try {
-    const [json, pj, rj, prb, cal, prk] = await Promise.all([
+    const [json, pj, rj, prb, cal, prk, sales, lv] = await Promise.all([
       postJson(GAS_URL, {action:'getComplianceData', limit:20000}, j => j && j.ok && Array.isArray(j.rows) && j.rows.length > 0, 4),
       postJson(PROCHUB_URL, {action:'getKpiData'}, j => j && j.status === 'ok', 3),
       postJson(PROCHUB_URL, {action:'getReconciliation'}, j => j && j.status === 'ok', 3),
       loadPrBudget(),
       postJson(GAS_URL, {action:'getResortCalendar'}, j => j && j.ok && Array.isArray(j.closed), 3),
-      postJson(PRFUND_URL, {action:'getComplianceKpis'}, j => j && j.status === 'ok' && Array.isArray(j.entries), 3)
+      postJson(PRFUND_URL, {action:'getComplianceKpis'}, j => j && j.status === 'ok' && Array.isArray(j.entries), 3),
+      postJson(SALES_URL, {action:'DASHBOARD', from:'2026-07-01', to:todayKey()}, j => j && j.ok && Array.isArray(j.summary), 3),
+      postJson(LOYALTY_URL, {action:'DAILY_VISITS'}, j => j && j.ok && Array.isArray(j.days), 3)
     ]);
+    loyaltyData = null;
+    if (sales && sales.ok && lv && lv.ok) {
+      const customers = {}, members = {};
+      sales.summary.filter(x => x.Entity === 'Resort').forEach(x => { customers[String(x.Date).slice(0,10)] = Number(x.Customers) || 0; });
+      lv.days.filter(x => x.resort === 'MJSR').forEach(x => { members[x.date] = (members[x.date] || 0) + (Number(x.members) || 0); });
+      loyaltyData = { customers, members };
+    }
     prBudgetData = prb;
     prKpiData = (prk && prk.status === 'ok') ? prk : null;
     resortClosedKeys = new Set((cal && cal.ok && Array.isArray(cal.closed)) ? cal.closed : []);
@@ -762,6 +774,30 @@ function prKpiDetailHtml(f){
   if(!f)return '<div style="margin-top:8px;font-size:11px;color:var(--warn)">PR Fund KPI data did not load. Tap Refresh.</div>';
   const line=(label,k)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${k.tot&&k.ok<k.tot?'var(--red)':'var(--text2)'};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+'/'+k.tot+')':'–'}</span></div>`;
   return `<div style="margin-top:8px">${line('Entries on time',f.k1)}${line('Months within MJSR cap',f.k2)}${line('Credit and IOU cleared',f.k3)}</div>`;
+}
+
+// ── LOYALTY SHARE OF CUSTOMERS (agreed 14 Oct 2026) ────────────────────
+// Target: loyalty members checked in for at least 20% of the day's resort customers.
+// Customers come from the Daily Sales Reconciliation (Resort line), check-ins from the Loyalty Programme
+// (unique MJSR members per day). Partial credit, a day at 10% scores 50%, 20% or more scores 100%.
+// Scored from 1 Aug 2026 (first month with sales data). Today is not scored until its sales are uploaded
+// and the day has ended. Days with no sales upload cannot be scored and are listed separately.
+const LOYALTY_TARGET=0.20;
+const LOYALTY_START='2026-08-01';
+function loyaltyShare(){
+  const d=loyaltyData;if(!d)return null;
+  const tk=todayKey();const days=[];const noSales=[];
+  fyDayKeys().forEach(k=>{
+    if(k<LOYALTY_START||k>=tk)return;
+    const c=d.customers[k];
+    if(c===undefined){noSales.push(k);return;}
+    if(!c)return; // no customers, nothing to measure
+    const m=d.members[k]||0;const share=m/c;
+    days.push({k,c,m,share,score:Math.min(1,share/LOYALTY_TARGET)});
+  });
+  const ot=days.reduce((a,x)=>a+x.score,0);
+  const tc=days.reduce((a,x)=>a+x.c,0),tm=days.reduce((a,x)=>a+x.m,0);
+  return{days,noSales,exp:days.length,ot,pct:days.length?Math.round(ot/days.length*100):null,share:tc?tm/tc:0,tc,tm};
 }
 
 // ── FIXED ASSETS COVERAGE (agreed 27 Sep 2026) ────────────────────────
@@ -1036,6 +1072,11 @@ function calcScore(codes,rows,closedDays){
     else if(sreg.scoring==='fnb'){
       const f=fnbKpis(rows,closedDays);
       if(f.pct!==null){exp+=f.weight;ot+=f.weight*f.pct/100;}
+    }
+
+    else if(sreg.scoring==='loyalty-share'){
+      const f=loyaltyShare();
+      if(f&&f.exp){exp+=f.exp;ot+=f.ot;}
     }
 
     else if(sreg.scoring==='prfund'){
@@ -1500,6 +1541,7 @@ function fyTotalUnits(reg){
     case 'fa-coverage':return 4*FA_QUARTER_WEIGHT;
     case 'inn-dual':case 'cert-daily':case 'fnb':return all.length;
     case 'prfund':return 36;
+    case 'loyalty-share':return all.filter(k=>k>=LOYALTY_START).length;
     case 'weekly':return Math.ceil(all.length/7);
   }
   return 0;
@@ -1597,6 +1639,22 @@ function kpiFindings(code,rows,closedDays){
     if(ks.length&&ks[0][1].ok<ks[0][1].tot)out.action='Biggest gap, '+ks[0][0];
     return out;
   }
+  if(reg.scoring==='loyalty-share'){
+    const f=loyaltyShare();
+    if(!f){out.why.push('<span class="miss">Daily Sales or Loyalty data did not load. Tap Refresh.</span>');return out;}
+    if(!f.exp){out.why.push('No days with sales data in this period');}
+    else{
+      const pct=x=>(Math.round(x*1000)/10)+'%';
+      out.why.push(f.exp+' days scored, loyalty members were '+pct(f.share)+' of customers ('+f.tm.toLocaleString('en-US')+' of '+f.tc.toLocaleString('en-US')+'), target 20%');
+      const hit=f.days.filter(x=>x.share>=LOYALTY_TARGET).length;const zero=f.days.filter(x=>!x.m).length;
+      out.why.push((hit?hit+' day'+(hit>1?'s':'')+' at or above 20%':'<span class="miss">No day reached 20%</span>')+(zero?', <span class="miss">no loyalty check-ins on '+zero+' days</span>':''));
+      const best=f.days.slice().sort((a,b)=>b.share-a.share)[0];if(best&&best.m)out.why.push('Best day '+fmtDay(best.k)+', '+best.m+' of '+best.c+' customers ('+pct(best.share)+')');
+    }
+    if(f.noSales.length)out.why.push('<span class="miss">No Daily Sales upload for '+f.noSales.length+' day'+(f.noSales.length>1?'s':'')+', not scored</span> ('+listDays(f.noSales,6)+')');
+    if(f.exp&&f.pct<100)out.action='Check in loyalty members for at least 1 in 5 resort customers every day (enrol at the ticket booth and scan at each activity)';
+    else if(f.noSales.length)out.action='Upload the Daily Sales Reconciliation every day so loyalty can be scored';
+    return out;
+  }
   if(reg.scoring==='prfund'){
     const f=prFundKpis();
     if(!f){out.why.push('<span class="miss">PR Fund KPI data did not load. Tap Refresh.</span>');return out;}
@@ -1635,7 +1693,6 @@ function kpiFindings(code,rows,closedDays){
     }
     out.why.push(due+' weeks due, '+(due-miss.length)+' with activity');
     if(miss.length){out.why.push('<span class="miss">No activity in the week starting '+miss.slice(-6).map(fmtDay).join(', ')+(miss.length>6?' (latest 6 of '+miss.length+')':'')+'</span>');out.action='Log activity in the portal at least once every week';}
-    if(code==='LOYALTY')out.why.push('Target rule (loyalty visits for 20% of daily customers) not yet measured, weekly activity is scored for now');
     return out;
   }
   return out;
