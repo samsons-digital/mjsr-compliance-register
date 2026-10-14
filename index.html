@@ -220,6 +220,55 @@ tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
 details.tile-collapse[open] .tc-arrow{transform:rotate(180deg)}
 details.tile-collapse summary::-webkit-details-marker{display:none}
 details.tile-collapse summary:hover{background:var(--bg2,rgba(0,0,0,.02))}
+
+/* ── PERFORMANCE REVIEW ── */
+.rv-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;box-shadow:var(--shadow);}
+.rv-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rv-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);}
+.rv-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.rv-chip{border:1px solid var(--border2);background:var(--surface);color:var(--text2);font-family:var(--sans);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;cursor:pointer;}
+.rv-chip.active{background:var(--slate);color:#fff;border-color:var(--slate);}
+.rv-chip:disabled{opacity:.4;cursor:default;}
+#rvDept{font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);}
+.rv-print{margin-left:auto;background:var(--slate);color:#fff;border:none;font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;}
+.rv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;page-break-inside:avoid;}
+.rv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.rv-name{font-size:16px;font-weight:700;color:var(--slate);}
+.rv-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.rv-score{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1;text-align:right;}
+.rv-status{display:inline-block;margin-top:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:4px;}
+.rv-status.ok{background:var(--green-dim);color:var(--green);}
+.rv-status.watch{background:var(--warn-dim);color:var(--warn);}
+.rv-status.risk{background:var(--red-dim);color:var(--red);}
+.rv-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.rv-fact{font-size:11px;color:var(--text2);}
+.rv-fact b{display:block;font-family:var(--mono);font-size:15px;color:var(--slate);}
+.rv-section{padding:12px 16px;border-bottom:1px solid var(--border);}
+.rv-section:last-child{border-bottom:none;}
+.rv-stitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;}
+.rv-table{width:100%;border-collapse:collapse;font-size:12px;}
+.rv-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.rv-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
+.rv-table tr:last-child td{border-bottom:none;}
+.rv-table .num{font-family:var(--mono);text-align:right;white-space:nowrap;}
+.rv-why{font-size:11px;color:var(--text2);}
+.rv-why .miss{color:var(--red);}
+.rv-actions{margin:0;padding-left:18px;font-size:12px;color:var(--text);}
+.rv-actions li{margin-bottom:6px;}
+.rv-trend{display:flex;gap:8px;flex-wrap:wrap;}
+.rv-q{border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;min-width:90px;}
+.rv-q span{display:block;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.rv-q b{font-family:var(--mono);font-size:16px;}
+.rv-note{font-size:10px;color:var(--text3);padding:8px 16px 12px;}
+@media (max-width:700px){.rv-table .hide-m{display:none;}main{padding:16px;}}
+@media print{
+  header,nav,.no-print{display:none !important;}
+  body{background:#fff;}
+  main{padding:0;}
+  .view{display:none !important;}
+  #view-review{display:block !important;}
+  .rv-card{box-shadow:none;}
+}
 </style>
 </head>
 <body>
@@ -244,6 +293,7 @@ details.tile-collapse summary:hover{background:var(--bg2,rgba(0,0,0,.02))}
   <div class="nav-tab" onclick="switchTab('portals')">All Portals</div>
   <div class="nav-tab" onclick="switchTab('log')">Submission Log</div>
   <div class="nav-tab" onclick="switchTab('analytics')">Analytics</div>
+  <div class="nav-tab" onclick="switchTab('review')">Performance Review</div>
 </nav>
 
 <main>
@@ -296,6 +346,15 @@ details.tile-collapse summary:hover{background:var(--bg2,rgba(0,0,0,.02))}
       <div class="analytics-card"><div class="analytics-title">Daily Volume, Last 14 Days</div><div id="chartDaily"></div></div>
       <div class="analytics-card"><div class="analytics-title">On-Time Rate by Portal (FY 2026-27)</div><div id="chartOnTime"></div></div>
     </div>
+  </div>
+
+  <div class="view" id="view-review">
+    <div class="rv-bar no-print">
+      <div class="rv-group"><span class="rv-lbl">Period</span><div id="rvPeriods" class="rv-chips"></div></div>
+      <div class="rv-group"><span class="rv-lbl">Department</span><select id="rvDept" onchange="renderReview()"></select></div>
+      <button class="rv-print" onclick="window.print()">Print</button>
+    </div>
+    <div id="rvBody"><div class="loading-state"><div class="spinner"></div><div class="loading-label">Loading...</div></div></div>
   </div>
 
 </main>
@@ -484,6 +543,7 @@ async function loadData() {
     renderPortals();
     renderLog();
     renderAnalytics();
+    renderReview();
   } catch(err) {
     document.getElementById('lastRefresh').textContent = 'Error';
     document.querySelector('.live-dot').style.background = '#b91c1c';
@@ -492,7 +552,7 @@ async function loadData() {
 }
 
 function switchTab(tab) {
-  const tabs=['departments','portals','log','analytics'];
+  const tabs=['departments','portals','log','analytics','review'];
   document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+tab).classList.add('active');
@@ -509,9 +569,17 @@ function todayKey(){return pktKey(new Date());}
 function nextKey(k){return new Date(new Date(k+'T12:00:00Z').getTime()+86400000).toISOString().slice(0,10);}
 function prevMonthKey(mk){let y=Number(mk.slice(0,4)),m=Number(mk.slice(5,7))-1;if(m===0){m=12;y--;}return y+'-'+String(m).padStart(2,'0');}
 function nextMonthKey(mk){let y=Number(mk.slice(0,4)),m=Number(mk.slice(5,7))+1;if(m===13){m=1;y++;}return y+'-'+String(m).padStart(2,'0');}
-// Every PKT day from 1 Jul 2026 up to and including today
-function fyDayKeys(){const out=[];const t=todayKey();for(let k='2026-07-01';k<=t;k=nextKey(k))out.push(k);return out;}
-function fyMonthKeys(){const out=[];const t=todayKey().slice(0,7);for(let k='2026-07';k<=t;k=nextMonthKey(k))out.push(k);return out;}
+// Scoring window. null means FY to date. The Performance Review tab sets a quarter
+// ({from,to} PKT date keys) while it calculates, then clears it again.
+let SCORE_WIN=null;
+const FY_END_KEY='2027-06-30';
+function winFrom(){return SCORE_WIN?SCORE_WIN.from:'2026-07-01';}
+function winEndNominal(){return SCORE_WIN?SCORE_WIN.to:FY_END_KEY;}
+function winTo(){const t=todayKey();return winEndNominal()<t?winEndNominal():t;}
+function inWin(ts){const k=pktKey(ts);return k>=winFrom()&&k<=winTo();}
+// Every PKT day in the scoring window, up to and including today
+function fyDayKeys(){const out=[];const t=winTo();for(let k=winFrom();k<=t;k=nextKey(k))out.push(k);return out;}
+function fyMonthKeys(){const out=[];const t=winTo().slice(0,7);for(let k=winFrom().slice(0,7);k<=t;k=nextMonthKey(k))out.push(k);return out;}
 function deadlineMins(dl){const m=String(dl||'').match(/^(\d{1,2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):23*60+59;}
 function isToday(ts){return pktKey(ts)===todayKey();}
 function isThisWeek(ts){try{return(new Date()-new Date(ts))<7*86400000;}catch(e){return false;}}
@@ -604,7 +672,7 @@ function portalRag(code,rows){
 const FNB_KPI_START = new Date('2026-07-01T00:00:00+05:00');
 function fnbKpis(rows, closedDays){
   const now=new Date();
-  const fnbRows=rows.filter(r=>r.code==='FB-STOCK'&&new Date(r.ts)>=FNB_KPI_START);
+  const fnbRows=rows.filter(r=>r.code==='FB-STOCK'&&new Date(r.ts)>=FNB_KPI_START&&inWin(r.ts));
   const isOk=r=>String(r.onTime)==='TRUE'||r.onTime===true;
   const receipts=fnbRows.filter(r=>r.type==='Stock In');
   const entries=fnbRows.filter(r=>r.type==='Stock In'||r.type==='Stock Out');
@@ -654,8 +722,9 @@ function faCoverage(rows){
     const closed=now>q.end;
     const c=latest[q.label];
     const pct=c&&c.total>0?Math.round(c.count/c.total*1000)/10:(closed?0:null);
-    return{label:q.label.replace('FY2026-27 ',''),started,closed,count:c?c.count:0,total:c?c.total:627,pct};
-  }).filter(q=>q.started);
+    const endKey=pktKey(q.end);
+    return{label:q.label.replace('FY2026-27 ',''),started,closed,count:c?c.count:0,total:c?c.total:627,pct,endKey};
+  }).filter(q=>q.started&&q.endKey>=winFrom()&&q.endKey<=winEndNominal());
   const closedQ=quarters.filter(q=>q.closed);
   const pct=closedQ.length?Math.round(closedQ.reduce((a,q)=>a+(q.pct||0),0)/closedQ.length):null;
   return{quarters,closedCount:closedQ.length,pct};
@@ -681,24 +750,18 @@ function isActivityRow(r){return r.type!=='Coverage';}
 // time that calendar day, up to 23:59 PKT. A day with no submission fails.
 // All-year, no closed-day exclusion.
 function innDays(rows){
-  const now=new Date();const today=pktParts(now).key;
+  const today=todayKey();
   const status={};
   rows.filter(r=>r.code==='INN-TRACK'&&isActivityRow(r)).forEach(r=>{
-    const p=pktParts(r.ts);if(isNaN(p.h))return;
-    const ok=true;
-    status[p.key]=status[p.key]||ok;
+    const k=pktKey(r.ts);if(k)status[k]=true;
   });
-  let exp=0,ot=0,late=0,missed=0;
-  for(let d=new Date(FY_START.getTime()+12*3600000);;d=new Date(d.getTime()+86400000)){
-    const key=pktParts(d).key;
-    if(key>today)break;
-    if(key===today&&!status[key])continue;
+  let exp=0,ot=0,late=0,missed=0;const missedKeys=[];
+  fyDayKeys().forEach(key=>{
+    if(key===today&&!status[key])return;
     exp++;
-    if(status[key])ot++;
-    else if(status[key]===false)late++;
-    else missed++;
-  }
-  return{exp,ot,late,missed};
+    if(status[key])ot++;else{missed++;missedKeys.push(key);}
+  });
+  return{exp,ot,late,missed,missedKeys};
 }
 function innDetailHtml(f){
   const line=(label,n,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${n} of ${f.exp} days</span></div>`;
@@ -732,7 +795,7 @@ function storeTakes(rows){
     const deadline=new Date(ny+'-'+String(nm).padStart(2,'0')+'-01T23:59:00+05:00');
     const start=new Date(key+'-01T00:00:00+05:00');
     if(start>now)break;
-    months.push({key,deadline,closed:now>deadline});
+    if(key>=winFrom().slice(0,7)&&key<=winEndNominal().slice(0,7))months.push({key,deadline,closed:now>deadline});
     y=ny;mo=nm;
   }
   let exp=0,ot=0;
@@ -772,7 +835,7 @@ function certDays(rows){
   const byDay={};
   rows.filter(r=>r.code==='CERT-VALID').forEach(r=>{
     const m=String(r.notes||'').match(/Certificates (\d+) of (\d+) valid/);
-    if(!m)return;
+    if(!m||!inWin(r.ts))return;
     const key=pktParts(r.ts).key;
     if(!byDay[key]||new Date(r.ts)>new Date(byDay[key].ts))byDay[key]={ts:r.ts,valid:Number(m[1]),total:Number(m[2]),notes:String(r.notes)};
   });
@@ -850,7 +913,8 @@ function calcScore(codes,rows,closedDays){
       // Pre-winter service, due by 31 Oct. Scored once done, or as a fail once the deadline passes.
       const preWinterDeadline=new Date('2026-10-31T23:59:59+05:00');
       const preWinterDone=fyRows.some(r=>r.code==='HM-CHECKS'&&new Date(r.ts)<=preWinterDeadline);
-      if(preWinterDone||now>preWinterDeadline){exp++;if(preWinterDone)ot++;}
+      const pwInWin=winFrom()<='2026-10-31'&&winEndNominal()>='2026-10-31';
+      if(pwInWin&&(preWinterDone||now>preWinterDeadline)){exp++;if(preWinterDone)ot++;}
       // Winter daily checks
       const dlm=deadlineMins(sreg.deadline);
       dayKeys.forEach(k=>{
@@ -910,6 +974,7 @@ function calcScore(codes,rows,closedDays){
       // only counts once it closes, or earlier if a submission is already in.
       for(let wStart=new Date(FY_START);wStart<=now;wStart=new Date(wStart.getTime()+7*86400000)){
         const wEnd=new Date(wStart.getTime()+7*86400000);
+        const wk=pktKey(wStart);if(wk<winFrom()||wk>winTo())continue;
         const has=fyRows.some(r=>r.code===code&&isActivityRow(r)&&new Date(r.ts)>=wStart&&new Date(r.ts)<wEnd);
         if(wEnd>now&&!has)continue;
         exp++;if(has)ot++;
@@ -1315,6 +1380,264 @@ function renderAnalytics(){
   document.getElementById('chartOnTime').innerHTML=otE.length
     ?otE.map(([code,pct])=>`<div class="bar-row"><div class="bar-label">${code}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=95?'var(--green)':pct>=85?'var(--warn)':pct>=75?'var(--orange)':'var(--red)'}"></div></div><div class="bar-count">${pct}%</div></div>`).join('')
     :'<div class="empty-state">No FY 2026-27 scored data yet</div>';
+}
+
+// ── PERFORMANCE REVIEW TAB ───────────────────────────────────────────
+// Explains each department score KPI by KPI for the quarterly reviews with
+// department leads. Uses the same scoring engine as the Departments tab.
+const BONUS_LINE=75;
+const RV_PERIODS=[
+  {id:'fy',label:'FY to date',from:'2026-07-01',to:FY_END_KEY},
+  {id:'q1',label:'Q1 Jul to Sep',from:'2026-07-01',to:'2026-09-30'},
+  {id:'q2',label:'Q2 Oct to Dec',from:'2026-10-01',to:'2026-12-31'},
+  {id:'q3',label:'Q3 Jan to Mar',from:'2027-01-01',to:'2027-03-31'},
+  {id:'q4',label:'Q4 Apr to Jun',from:'2027-04-01',to:'2027-06-30'}
+];
+let rvPeriod='fy';
+// Agreement weights outside the register (scored at the review from the Procurement Hub)
+const GRN_WEIGHT={technical:10,adventure:10,commercial:10,hospitality:10,admin:10,procurement:30,clinic:10};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtDay=k=>Number(k.slice(8,10))+' '+MON[Number(k.slice(5,7))-1];
+const fmtMon=k=>MON[Number(k.slice(5,7))-1]+' '+k.slice(0,4);
+function listDays(keys,max){
+  if(!keys.length)return '';
+  const shown=keys.slice(-max).map(fmtDay).join(', ');
+  return (keys.length>max?'latest '+max+' of '+keys.length+': ':'')+shown;
+}
+function withWin(period,fn){
+  const prev=SCORE_WIN;
+  SCORE_WIN=period&&period.id!=='fy'?{from:period.from,to:period.to}:null;
+  try{return fn();}finally{SCORE_WIN=prev;}
+}
+// Units a KPI is scored on across the whole FY, used for the year-end projection
+function fyTotalUnits(reg){
+  const all=[];for(let k='2026-07-01';k<=FY_END_KEY;k=nextKey(k))all.push(k);
+  const winterDays=all.filter(isWinterKey).length;
+  switch(reg.scoring){
+    case 'daily':case 'daily-closed':return all.length-[...resortClosedKeys].filter(k=>k>='2026-07-01'&&k<=FY_END_KEY).length*(reg.scoring==='daily-closed'?1:0);
+    case 'daily-winter':return winterDays;
+    case 'hm':return winterDays+1;
+    case 'monthly-fire':return 12;
+    case 'store-monthly':return 12*STORES.length;
+    case 'fa-coverage':return 4*FA_QUARTER_WEIGHT;
+    case 'inn-dual':case 'cert-daily':case 'fnb':return all.length;
+    case 'weekly':return Math.ceil(all.length/7);
+  }
+  return 0;
+}
+// Why a KPI scored what it did: plain-language findings for the review
+function kpiFindings(code,rows,closedDays){
+  const reg=portalReg(code);const out={why:[],action:''};
+  const tk=todayKey();const nowMins=pktNowMins();
+  if(['daily','daily-closed','daily-winter','hm'].includes(reg.scoring)){
+    const rowsByDay={};
+    rows.filter(r=>r.code===code&&isInFY(r.ts)).forEach(r=>{const k=pktKey(r.ts);(rowsByDay[code+'|'+k]=rowsByDay[code+'|'+k]||[]).push(r);});
+    const dlm=code==='CL-CHECKS'?23*60+59:deadlineMins(reg.deadline);
+    const winterOnly=reg.scoring==='daily-winter'||reg.scoring==='hm';
+    const none=[],late=[],partial=[];const actMiss={};const clMiss={start:0,end:0};
+    let days=0;
+    fyDayKeys().forEach(k=>{
+      if(winterOnly&&!isWinterKey(k))return;
+      if(reg.scoring==='daily-closed'&&closedDays.has(k))return;
+      const sc=dailyDayScore(code,k,rowsByDay);
+      if(k===tk&&nowMins<dlm&&sc<1)return;
+      days++;
+      if(sc>=1)return;
+      const dr=rowsByDay[code+'|'+k]||[];
+      if(code==='CL-CHECKS'){
+        const n=dr.map(r=>String(r.notes||'').toLowerCase());
+        if(!n.some(x=>x.includes('start of day')))clMiss.start++;
+        if(!n.some(x=>x.includes('end of day')))clMiss.end++;
+        (dr.length?partial:none).push(k);return;
+      }
+      const acts=DAILY_ACTIVITIES[code];
+      if(acts){
+        const ok=dr.filter(isOnTime).map(r=>String(r.notes||'').trim().toLowerCase());
+        acts.forEach(a=>{if(!ok.includes(a.toLowerCase()))actMiss[a]=(actMiss[a]||0)+1;});
+        (dr.length?partial:none).push(k);return;
+      }
+      (dr.length?late:none).push(k);
+    });
+    if(reg.scoring==='hm'){
+      const pw=rows.some(r=>r.code==='HM-CHECKS'&&isInFY(r.ts)&&new Date(r.ts)<=new Date('2026-10-31T23:59:59+05:00'));
+      const pwIn=winFrom()<='2026-10-31'&&winEndNominal()>='2026-10-31';
+      if(pwIn)out.why.push(pw?'Pre-winter service check logged':(new Date()>new Date('2026-10-31T23:59:59+05:00')?'<span class="miss">Pre-winter service check not logged by 31 Oct</span>':'Pre-winter service check due by 31 Oct, not logged yet'));
+      if(!pw)out.action='Log the pre-winter service check for every machine before 31 Oct';
+    }
+    if(winterOnly&&!days){out.why.push('Winter KPI, scored 15 Dec to 15 Mar');return out;}
+    const missedN=none.length+late.length+partial.length;
+    out.why.push(days+' days due, '+(days-missedN)+' fully on time');
+    if(none.length)out.why.push('<span class="miss">No submission on '+none.length+' day'+(none.length>1?'s':'')+'</span> ('+listDays(none,6)+')');
+    if(late.length)out.why.push('<span class="miss">Submitted late on '+late.length+' day'+(late.length>1?'s':'')+'</span> ('+listDays(late,6)+')');
+    if(code==='CL-CHECKS'){const cm=[];if(clMiss.start)cm.push('Start of Day check missing on '+clMiss.start+' day'+(clMiss.start>1?'s':''));if(clMiss.end)cm.push('End of Day check missing on '+clMiss.end+' day'+(clMiss.end>1?'s':''));if(cm.length)out.why.push('<span class="miss">'+cm.join(', ')+'</span>');}
+    const am=Object.entries(actMiss).sort((a,b)=>b[1]-a[1]);
+    if(am.length)out.why.push('<span class="miss">Activities not checked on time</span> '+am.map(([a,n])=>a+' '+n+' day'+(n>1?'s':'')).join(', '));
+    if(!out.action&&missedN){
+      if(code==='CL-CHECKS')out.action='Log both the Start of Day (by 10:30) and End of Day check every open day';
+      else if(DAILY_ACTIVITIES[code])out.action='Check every activity ('+DAILY_ACTIVITIES[code].join(', ')+') by '+reg.deadline+' each open day'+(am.length?', weakest is '+am[0][0]:'');
+      else out.action='Submit by '+reg.deadline+' every '+(reg.scoring==='daily-closed'?'open ':'')+'day'+(late.length>none.length?', most misses are late submissions':'');
+    }
+    return out;
+  }
+  if(reg.scoring==='monthly-fire'){
+    const fr=rows.filter(r=>r.code==='FIRE-EX'&&isInFY(r.ts));const cur=tk.slice(0,7);const gaps=[];
+    const names={MJSR:'MJSR',SI:'Samsons Inn',GV:'Green Valley',VM:'Vehicles'};
+    fyMonthKeys().forEach(mk=>{const st=fireSitesForMonth(fr,mk);const miss=FIRE_SITES.filter(x=>!st.has(x));
+      if(mk===cur){out.why.push(fmtMon(mk)+' in progress, '+(miss.length?'still to inspect '+miss.map(x=>names[x]).join(', '):'all 4 done'));return;}
+      if(miss.length)gaps.push(fmtMon(mk)+' missing '+(miss.length===4?'all 4 sites':miss.map(x=>names[x]).join(', ')));});
+    out.why.push(gaps.length?'<span class="miss">'+gaps.join('; ')+'</span>':'Every closed month complete');
+    if(gaps.length)out.action='Inspect all 4 sites (MJSR, Samsons Inn, Green Valley, Vehicles) every calendar month';
+    return out;
+  }
+  if(reg.scoring==='store-monthly'){
+    const f=storeTakes(rows);const gaps=[];
+    f.months.forEach(m=>{const miss=STORES.filter(([x])=>!f.done[x+'|'+m.key]).map(([,l])=>l);
+      if(!m.closed){out.why.push(fmtMon(m.key)+' due '+m.deadline.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+', '+(STORES.length-miss.length)+' of 7 done');return;}
+      gaps.push(fmtMon(m.key)+' '+(STORES.length-miss.length)+' of 7'+(miss.length&&miss.length<7?' (missing '+miss.join(', ')+')':''));});
+    if(gaps.length)out.why.push(gaps.map(g=>/ 7 of 7/.test(g)?g:'<span class="miss">'+g+'</span>').join('; '));
+    if(gaps.some(g=>!/ 7 of 7/.test(g)))out.action='Finalise the stock take for all 7 stores by 23:59 on the 1st of each month';
+    return out;
+  }
+  if(reg.scoring==='cert-daily'){
+    const f=certDays(rows);if(!f.latest){out.why.push('No certificate checks in this period');return out;}
+    out.why.push(f.count+' daily checks, latest '+f.latest.valid+' of '+f.latest.total+' valid');
+    const bad=(f.latest.notes.split(' | ').find(p=>p.startsWith('Not valid:'))||'').replace('Not valid: ','');
+    if(bad&&bad!=='none'){out.why.push('<span class="miss">Not valid '+bad+'</span>');out.action='Record or renew the missing certificates in the Annual_Certifications tab';}
+    return out;
+  }
+  if(reg.scoring==='inn-dual'){
+    const f=innDays(rows);out.why.push(f.exp+' days due, '+f.ot+' submitted');
+    if(f.missed){out.why.push('<span class="miss">No submission on '+f.missed+' day'+(f.missed>1?'s':'')+'</span> ('+listDays(f.missedKeys,6)+')');out.action='Submit the Inn tracker every day by 23:59';}
+    return out;
+  }
+  if(reg.scoring==='fnb'){
+    const f=fnbKpis(rows,closedDays);const pc=k=>k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+' of '+k.tot+')':'no data';
+    out.why.push('Receipts entered same day '+pc(f.k1));out.why.push('Date accuracy '+pc(f.k2));out.why.push('Active open days '+pc(f.k3));
+    const ks=[['enter every receipt (Stock In) on the day it arrives',f.k1],['file every stock entry on the date it happened',f.k2],['make at least one stock entry every open day',f.k3]].filter(([,k])=>k.tot).sort((a,b)=>a[1].ok/a[1].tot-b[1].ok/b[1].tot);
+    if(ks.length&&ks[0][1].ok<ks[0][1].tot)out.action='Biggest gap, '+ks[0][0];
+    return out;
+  }
+  if(reg.scoring==='fa-coverage'){
+    const f=faCoverage(rows);
+    f.quarters.forEach(q=>out.why.push((q.closed&&q.pct<100?'<span class="miss">':'<span>')+q.label+' '+(q.closed?'final':'to date')+', '+q.count+' of '+q.total+' assets verified ('+(q.pct||0)+'%)</span>'));
+    if(!f.quarters.length)out.why.push('No quarter in this period');
+    if(f.quarters.some(q=>(q.pct||0)<100))out.action='Verify every asset once each quarter, about '+Math.ceil(627/13)+' assets a week';
+    return out;
+  }
+  if(reg.scoring==='weekly'){
+    const now=new Date();const miss=[];let due=0;
+    for(let w=new Date(FY_START);w<=now;w=new Date(w.getTime()+7*86400000)){
+      const we=new Date(w.getTime()+7*86400000);const wk=pktKey(w);if(wk<winFrom()||wk>winTo())continue;
+      const has=rows.some(r=>r.code===code&&isActivityRow(r)&&new Date(r.ts)>=w&&new Date(r.ts)<we);
+      if(we>now&&!has)continue;due++;if(!has)miss.push(wk);
+    }
+    out.why.push(due+' weeks due, '+(due-miss.length)+' with activity');
+    if(miss.length){out.why.push('<span class="miss">No activity in the week starting '+miss.slice(-6).map(fmtDay).join(', ')+(miss.length>6?' (latest 6 of '+miss.length+')':'')+'</span>');out.action='Log activity in the portal at least once every week';}
+    if(code==='LOYALTY')out.why.push('Target rule (loyalty visits for 20% of daily customers) not yet measured, weekly activity is scored for now');
+    return out;
+  }
+  return out;
+}
+function rvStatus(pct){
+  if(pct===null)return{cls:'watch',label:'Not scored'};
+  if(pct<BONUS_LINE)return{cls:'risk',label:'Below bonus line'};
+  if(pct<85)return{cls:'watch',label:'Just above bonus line'};
+  return{cls:'ok',label:'Above bonus line'};
+}
+function renderReview(){
+  const body=document.getElementById('rvBody');if(!body)return;
+  const rows=allRows.map(parseRow);const closedDays=buildClosedDays(rows);
+  const tk=todayKey();
+  // Period chips
+  document.getElementById('rvPeriods').innerHTML=RV_PERIODS.map(p=>`<button class="rv-chip${p.id===rvPeriod?' active':''}" ${p.from>tk?'disabled':''} onclick="rvPeriod='${p.id}';renderReview()">${p.label}</button>`).join('');
+  const sel=document.getElementById('rvDept');
+  if(!sel.options.length){sel.innerHTML='<option value="">All departments</option>'+DEPARTMENTS.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');}
+  const period=RV_PERIODS.find(p=>p.id===rvPeriod)||RV_PERIODS[0];
+  const depts=DEPARTMENTS.filter(d=>!sel.value||d.id===sel.value);
+  const startedQ=RV_PERIODS.filter(p=>p.id!=='fy'&&p.from<=tk);
+  const periodText=period.id==='fy'?'1 Jul 2026 to '+fmtDay(tk)+' '+tk.slice(0,4):period.label+(period.to>tk?' (to '+fmtDay(tk)+')':'');
+  let html='';
+  depts.forEach(dept=>{
+    const custodians=`<div class="rv-sub">${dept.custodians}</div>`;
+    if(dept.id==='clinic'){
+      html+=`<div class="rv-card"><div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}</div><div><div class="rv-score" style="color:var(--text3)">–</div><span class="rv-status watch">Monitoring</span></div></div><div class="rv-section rv-why">Clinic Dispensary Portal is monitored, not scored, until the review on 24 Oct 2026.</div></div>`;
+      return;
+    }
+    if(dept.id==='procurement'){
+      const pr=procReconData;
+      if(!pr){html+=`<div class="rv-card"><div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}</div></div><div class="rv-section rv-why">Procurement Hub data did not load. Tap Refresh.</div></div>`;return;}
+      const st=rvStatus(pr.healthScore);const g=kpiGrade(pr.healthScore);
+      const top=(pr.requesterBreakdown||[]).slice().sort((a,b)=>b.count-a.count).slice(0,8);
+      html+=`<div class="rv-card"><div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}<div class="rv-sub">Live position today (period filter does not apply)</div></div><div style="text-align:right"><div class="rv-score" style="color:${barColor(g.cls)}">${pr.healthScore}%</div><span class="rv-status ${st.cls}">${st.label}</span></div></div>
+      <div class="rv-facts"><div class="rv-fact"><b>${pr.noGrnSubmitted||0}</b>approved PRFs with no GRN</div><div class="rv-fact"><b>${pr.awaitingFinance||0}</b>awaiting Finance</div><div class="rv-fact"><b>${pr.awaitingGM||0}</b>awaiting GM</div><div class="rv-fact"><b>${pr.reconciled||0}</b>reconciled</div></div>
+      <div class="rv-section"><div class="rv-stitle">Why the score is ${pr.healthScore}%</div><div class="rv-why">The Procurement Hub health score falls with every approved PRF that has no GRN logged. Requesters with the most open PRFs</div>
+      <table class="rv-table" style="margin-top:6px"><thead><tr><th>Requester</th><th class="num">Open PRFs</th><th class="num">Oldest</th></tr></thead><tbody>${top.map(t=>`<tr><td>${t.name}</td><td class="num">${t.count}</td><td class="num" style="color:${t.oldest>=30?'var(--red)':'inherit'}">${t.oldest} days</td></tr>`).join('')}</tbody></table></div>
+      <div class="rv-section"><div class="rv-stitle">What to improve</div><ol class="rv-actions"><li>Chase every requester above to log the GRN on delivery; none should stay open more than 30 days</li><li>Clear the Finance and GM approval queues weekly</li></ol></div></div>`;
+      return;
+    }
+    // Scored departments
+    const res=withWin(period,()=>{
+      const kpis=dept.portals.filter(c=>DEPT_WEIGHTS[c]).map(code=>{
+        const reg=portalReg(code);const sc=calcScore([code],rows,closedDays);
+        return{code,reg,w:DEPT_WEIGHTS[code],sc,f:kpiFindings(code,rows,closedDays)};
+      });
+      return{kpis,ds:deptScore(dept.portals,rows,closedDays)};
+    });
+    const kpis=res.kpis;const pct=res.ds?res.ds.pct:null;
+    const g=pct!==null?kpiGrade(pct):null;const st=rvStatus(pct);
+    const scored=kpis.filter(k=>k.sc);
+    // Points lost are on the same scale as the department score, so they add up to 100 minus the score
+    const wScored=scored.reduce((a,k)=>a+k.w,0)||1;
+    kpis.forEach(k=>{k.lost=k.sc?k.w/wScored*(100-k.sc.pct):0;});
+    const lostTotal=scored.reduce((a,k)=>a+k.lost,0);
+    const worst=scored.slice().sort((a,b)=>b.lost-a.lost)[0];
+    // Year-end projection (FY view only)
+    let proj='';
+    if(period.id==='fy'){
+      let W=0,base=0,slope=0,best=0;
+      kpis.forEach(k=>{
+        const exp=k.sc?k.sc.exp:0,ot=k.sc?k.sc.ot:0;
+        const rem=Math.max(0,fyTotalUnits(k.reg)-exp);const n=exp+rem;if(!n)return;
+        W+=k.w;base+=k.w*ot/n;slope+=k.w*rem/n;best+=k.w*(ot+rem)/n;
+      });
+      if(W&&slope){
+        const need=t=>(t/100*W-base)/slope*100;
+        const bestPct=Math.round(best/W*100);
+        const n75=need(BONUS_LINE),n95=need(95);
+        const txt=(n,label)=>n<=0?`${label} already secured`:n>100?`<span class="miss">${label} no longer reachable</span>`:`${label} needs ${Math.ceil(n)}% on time from today`;
+        proj=`<div class="rv-fact"><b>${bestPct}%</b>best possible FY result if every KPI is on time from today</div><div class="rv-fact">${txt(n75,'Bonus line (75%)')}</div><div class="rv-fact">${txt(n95,'On Track (95%)')}</div>`;
+      }
+    }
+    // Quarter trend
+    const trend=startedQ.map(q=>{const d=withWin(q,()=>deptScore(dept.portals,rows,closedDays));const v=d?d.pct:null;
+      return `<div class="rv-q"><span>${q.id.toUpperCase()}${q.to>tk?' to date':''}</span><b style="color:${v===null?'var(--text3)':barColor(kpiGrade(v).cls)}">${v===null?'–':v+'%'}</b></div>`;}).join('');
+    const table=kpis.map(k=>{
+      const v=k.sc?k.sc.pct:null;const gc=v===null?'var(--text3)':barColor(kpiGrade(v).cls);
+      return `<tr><td><div style="font-weight:600">${k.reg.name}</div><div style="font-family:var(--mono);font-size:10px;color:var(--text3)">${k.code}</div></td>
+      <td class="num">${k.w}%</td><td class="num" style="color:${gc};font-weight:700">${v===null?'–':v+'%'}</td>
+      <td class="num hide-m">${k.sc?(Math.round(k.lost*10)/10)+' pts':'–'}</td>
+      <td class="rv-why">${k.f.why.join('<br>')||'–'}</td></tr>`;}).join('');
+    const actions=kpis.filter(k=>k.sc&&k.lost>0.05&&k.f.action).sort((a,b)=>b.lost-a.lost).slice(0,4)
+      .map(k=>`<li><b>${k.reg.name}</b> (${k.code}, costs ${Math.round(k.lost*10)/10} pts). ${k.f.action}</li>`);
+    const pending=kpis.filter(k=>!k.sc&&k.f.action).map(k=>`<li><b>${k.reg.name}</b> (${k.code}, not scored yet). ${k.f.action}</li>`);
+    const grn=GRN_WEIGHT[dept.id]||0;
+    html+=`<div class="rv-card">
+      <div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}<div class="rv-sub">${periodText}</div></div>
+      <div style="text-align:right"><div class="rv-score" style="color:${g?barColor(g.cls):'var(--text3)'}">${pct===null?'–':pct+'%'}</div>${g?`<span class="rv-status ${st.cls}">${st.label}</span> <span class="grade-chip ${g.cls}" style="margin-left:4px">${g.label}</span>`:''}</div></div>
+      <div class="rv-facts">
+        <div class="rv-fact"><b>${pct===null?'–':pct+'%'}</b>register score, weighted by the signed agreement</div>
+        <div class="rv-fact"><b>${pct===null?'–':(pct>=BONUS_LINE?'+':'')+(pct-BONUS_LINE)+' pts'}</b>against the 75% bonus line</div>
+        <div class="rv-fact"><b>${Math.round(lostTotal*10)/10} pts</b>short of 100%${worst&&worst.lost>0.05?', most from '+worst.reg.name+' ('+Math.round(worst.lost*10)/10+' pts)':''}</div>
+        ${proj}
+      </div>
+      ${trend?`<div class="rv-section"><div class="rv-stitle">Quarter by quarter</div><div class="rv-trend">${trend}</div></div>`:''}
+      <div class="rv-section"><div class="rv-stitle">Why the score is ${pct===null?'not set':pct+'%'}</div>
+        <table class="rv-table"><thead><tr><th>KPI</th><th class="num">Weight</th><th class="num">Score</th><th class="num hide-m">Points lost</th><th>What the register shows</th></tr></thead><tbody>${table}</tbody></table></div>
+      <div class="rv-section"><div class="rv-stitle">Where to improve, biggest gain first</div>${actions.length||pending.length?`<ol class="rv-actions">${actions.join('')}${pending.join('')}</ol>`:'<div class="rv-why">No gaps in this period</div>'}</div>
+      <div class="rv-note">Points lost show how far each KPI pulls the department score below 100%, using the agreement weights. KPIs with nothing due yet are left out and the other weights rescaled. The final FY score also includes GRN closure on own PRFs (${grn}%) and the two Section 2 line manager ratings (20%), assessed at the quarterly review. A final score below 75% means no qualification for the end of FY bonus and/or increment.</div>
+    </div>`;
+  });
+  body.innerHTML=html||'<div class="empty-state">No department selected</div>';
 }
 </script>
 </body>
