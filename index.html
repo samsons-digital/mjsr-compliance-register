@@ -255,7 +255,7 @@ details.tile-collapse summary:hover{background:var(--bg2,rgba(0,0,0,.02))}
       <div class="stat-card"><div class="stat-label">Submissions Today</div><div class="stat-value" id="statToday">–</div><div class="stat-sub">across all portals</div></div>
       <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="statWeek">–</div><div class="stat-sub">last 7 days</div></div>
       <div class="stat-card"><div class="stat-label">On-Time Rate</div><div class="stat-value green" id="statOnTime">–</div><div class="stat-sub">scheduled submissions</div></div>
-      <div class="stat-card"><div class="stat-label">FY 2026-27 Score</div><div class="stat-value amber" id="statFyScore">–</div><div class="stat-sub">in-season portals only</div></div>
+      <div class="stat-card"><div class="stat-label">FY 2026-27 Score</div><div class="stat-value amber" id="statFyScore">–</div><div class="stat-sub">average of department scores</div></div>
       <div class="stat-card"><div class="stat-label">Missed Today</div><div class="stat-value red" id="statMissed">–</div><div class="stat-sub">daily portals</div></div>
     </div>
     <div id="missedStrip"></div>
@@ -384,10 +384,29 @@ const DEPARTMENTS = [
   }
 ];
 
-// Portals used as closed-day anchors
-const CLOSED_DAY_ANCHORS = ['CL-CHECKS','ADV-CHECKS'];
-// Portals that use closed-day exclusion
+// Signed KPI agreement weights (FY2026-27). A department score is the weighted average
+// of its portal scores. Portals with nothing to score yet (off-season, before a deadline)
+// are left out and the remaining weights are rescaled. GRN follow-up is scored in the Procurement card.
+const DEPT_WEIGHTS = {
+  'CL-CHECKS':10,'GEN-MAINT':5,'FIRE-EX':10,'HM-CHECKS':10,'STORE-CHK':10,'CERT-VALID':10,'SNOW-MK':7.5,'PISTENBULL':7.5,
+  'ADV-CHECKS':35,'GV-CHECKS':35,
+  'SALES-CL':30,'LOYALTY':20,'TOUR-OPS':20,
+  'INN-TRACK':35,'FB-STOCK':35,
+  'FIXED-AS':25,'VH-FLEET':20,'PR-FUND':25
+};
+
+// Adventure daily checks. Every activity must be checked on time for a full day.
+// Each activity is an equal share of the day.
+const DAILY_ACTIVITIES = {
+  'ADV-CHECKS':['Zipline','Giant Swing','Chairlift Rescue'],
+  'GV-CHECKS':['Ferris Wheel','Kids Zipline']
+};
+
+// Closed days come only from the Resort_Status tab (rows with the date and FALSE),
+// entered by Martin Schultz or Shahzad Alam. Every other day is an open day.
 const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL'];
+let resortClosedKeys = new Set();
+let resortCalendarOk = false;
 
 let allRows = [];
 let procKpiData = null;
@@ -417,11 +436,7 @@ async function postJson(url, body, isGood, tries) {
 
 // PR Fund MJSR spend per FY month, read live from the PR Fund Tracker backend
 function fyMonthsToDate(){
-  const out=[];const now=new Date();
-  for(let d=new Date(2026,6,1);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1)){
-    out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
-  }
-  return out;
+  return fyMonthKeys();
 }
 async function loadPrBudget(){
   const months=fyMonthsToDate();
@@ -446,13 +461,16 @@ async function loadData() {
   document.getElementById('lastRefresh').textContent = 'Loading...';
   document.querySelector('.live-dot').style.background = '#f59e0b';
   try {
-    const [json, pj, rj, prb] = await Promise.all([
+    const [json, pj, rj, prb, cal] = await Promise.all([
       postJson(GAS_URL, {action:'getComplianceData', limit:20000}, j => j && j.ok && Array.isArray(j.rows) && j.rows.length > 0, 4),
       postJson(PROCHUB_URL, {action:'getKpiData'}, j => j && j.status === 'ok', 3),
       postJson(PROCHUB_URL, {action:'getReconciliation'}, j => j && j.status === 'ok', 3),
-      loadPrBudget()
+      loadPrBudget(),
+      postJson(GAS_URL, {action:'getResortCalendar'}, j => j && j.ok && Array.isArray(j.closed), 3)
     ]);
     prBudgetData = prb;
+    resortClosedKeys = new Set((cal && cal.ok && Array.isArray(cal.closed)) ? cal.closed : []);
+    resortCalendarOk = !!(cal && cal.ok);
     if (!json) throw new Error('No response from the Compliance Register. Tap Refresh.');
     if (!json.ok) throw new Error(json.error || 'Unknown error');
     if (!Array.isArray(json.rows) || json.rows.length === 0) throw new Error('The Submission Log came back empty. Tap Refresh.');
@@ -482,12 +500,33 @@ function switchTab(tab) {
 
 // ── HELPERS ──────────────────────────────────────────────────────────
 function parseRow(r){return{ts:r[0],portal:r[1],code:r[2],by:r[3],type:r[4],deadline:r[5],onTime:r[6],devMins:r[7],notes:r[10]||''};}
-function isToday(ts){try{return new Date(ts).toDateString()===new Date().toDateString();}catch(e){return false;}}
+// All day and month boundaries are Pakistan time (UTC+5), whatever the viewer's timezone.
+function pktParts(ts){const d=new Date(new Date(ts).getTime()+5*3600000);return{key:d.toISOString().slice(0,10),h:d.getUTCHours(),m:d.getUTCMinutes()};}
+function pktKey(ts){try{return pktParts(ts).key;}catch(e){return '';}}
+function pktMonthKey(ts){return pktKey(ts).slice(0,7);}
+function pktNowMins(){const p=pktParts(new Date());return p.h*60+p.m;}
+function todayKey(){return pktKey(new Date());}
+function nextKey(k){return new Date(new Date(k+'T12:00:00Z').getTime()+86400000).toISOString().slice(0,10);}
+function prevMonthKey(mk){let y=Number(mk.slice(0,4)),m=Number(mk.slice(5,7))-1;if(m===0){m=12;y--;}return y+'-'+String(m).padStart(2,'0');}
+function nextMonthKey(mk){let y=Number(mk.slice(0,4)),m=Number(mk.slice(5,7))+1;if(m===13){m=1;y++;}return y+'-'+String(m).padStart(2,'0');}
+// Every PKT day from 1 Jul 2026 up to and including today
+function fyDayKeys(){const out=[];const t=todayKey();for(let k='2026-07-01';k<=t;k=nextKey(k))out.push(k);return out;}
+function fyMonthKeys(){const out=[];const t=todayKey().slice(0,7);for(let k='2026-07';k<=t;k=nextMonthKey(k))out.push(k);return out;}
+function deadlineMins(dl){const m=String(dl||'').match(/^(\d{1,2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):23*60+59;}
+function isToday(ts){return pktKey(ts)===todayKey();}
 function isThisWeek(ts){try{return(new Date()-new Date(ts))<7*86400000;}catch(e){return false;}}
 function isLast30(ts){try{return(new Date()-new Date(ts))<30*86400000;}catch(e){return false;}}
 function isInFY(ts){try{return new Date(ts)>=FY_START;}catch(e){return false;}}
 function hoursAgo(ts){try{return(new Date()-new Date(ts))/3600000;}catch(e){return Infinity;}}
-function isWinterDay(d){const m=d.getMonth()+1,day=d.getDate();return(m===12&&day>=15)||(m===1||m===2)||(m===3&&day<=15);}
+function isWinterKey(k){const m=Number(k.slice(5,7)),day=Number(k.slice(8,10));return(m===12&&day>=15)||(m===1||m===2)||(m===3&&day<=15);}
+function isWinterDay(d){return isWinterKey(pktKey(d));}
+function isOnTime(r){return String(r.onTime)==='TRUE'||r.onTime===true;}
+// Readable deadline for the Submission Log (ISO timestamps shown in PKT)
+function fmtDeadline(dl){
+  const s=String(dl||'');
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s)){const d=new Date(s);if(!isNaN(d)){const p=pktParts(d);const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(p.key.slice(5,7))-1];return Number(p.key.slice(8,10))+' '+mon+' '+String(p.h).padStart(2,'0')+':'+String(p.m).padStart(2,'0');}}
+  return s||'–';
+}
 
 function fmtTs(ts){
   if(!ts)return'–';
@@ -519,26 +558,8 @@ function barColor(cls){
 
 function portalReg(code){return PORTAL_REGISTRY.find(p=>p.code===code);}
 
-// Build set of closed days from FY start to now
-function buildClosedDays(rows){
-  const byDate={};
-  rows.forEach(r=>{
-    if(!isInFY(r.ts))return;
-    const ds=new Date(r.ts).toDateString();
-    if(!byDate[ds])byDate[ds]={};
-    CLOSED_DAY_ANCHORS.forEach(a=>{if(r.code===a)byDate[ds][a]=true;});
-  });
-  const closed=new Set();
-  const now=new Date();const start=new Date(FY_START);
-  const days=Math.floor((now-start)/86400000);
-  for(let i=0;i<days;i++){
-    const d=new Date(start.getTime()+i*86400000);
-    const ds=d.toDateString();
-    const anchors=byDate[ds]||{};
-    if(!CLOSED_DAY_ANCHORS.some(a=>anchors[a]))closed.add(ds);
-  }
-  return closed;
-}
+// Closed days (PKT date keys) entered on the Resort_Status tab
+function buildClosedDays(rows){return new Set(resortClosedKeys);}
 
 // Portal RAG status
 function portalRag(code,rows){
@@ -557,17 +578,16 @@ function portalRag(code,rows){
     return all(open)?'green':all(last)?'yellow':'red';
   }
   if(code==='FIRE-EX'){
-    const now=new Date();const fr=rows.filter(r=>r.code==='FIRE-EX');
-    const cur=fireSitesForMonth(fr,now.getFullYear(),now.getMonth());
+    const fr=rows.filter(r=>r.code==='FIRE-EX');const mk=todayKey().slice(0,7);
+    const cur=fireSitesForMonth(fr,mk);
     if(FIRE_SITES.every(s=>cur.has(s)))return'green';
-    const pm=new Date(now.getFullYear(),now.getMonth()-1,1);
-    const prev=fireSitesForMonth(fr,pm.getFullYear(),pm.getMonth());
+    const prev=fireSitesForMonth(fr,prevMonthKey(mk));
     return FIRE_SITES.every(s=>prev.has(s))?'yellow':'red';
   }
   const h=hoursAgo(last.ts);
   if(code==='SNOW-MK'||code==='PISTENBULL'){if(!isWinterDay(new Date()))return'grey';}
   if(code==='CL-CHECKS'){
-    const tr=rows.filter(r=>r.code==='CL-CHECKS'&&new Date(r.ts).toDateString()===new Date().toDateString());
+    const tr=rows.filter(r=>r.code==='CL-CHECKS'&&isToday(r.ts));
     const hs=tr.some(r=>(r.notes||'').toLowerCase().includes('start of day'));
     const hc=tr.some(r=>(r.notes||'').toLowerCase().includes('end of day'));
     if(hs&&hc)return'green';if(hs||hc)return'yellow';return h<=26?'yellow':'red';
@@ -582,7 +602,6 @@ function portalRag(code,rows){
 // KPI 3  Daily activity                 (at least one stock entry every open day, closed days excused)
 // F&B score = average of the KPIs that have data. Scored from FY start; Jul to Sep recovered by backfill.
 const FNB_KPI_START = new Date('2026-07-01T00:00:00+05:00');
-const FNB_DAY_LOOP_START = new Date('2026-07-01T12:00:00+05:00'); // midday so the date is the same in PKT and Dubai
 function fnbKpis(rows, closedDays){
   const now=new Date();
   const fnbRows=rows.filter(r=>r.code==='FB-STOCK'&&new Date(r.ts)>=FNB_KPI_START);
@@ -591,15 +610,14 @@ function fnbKpis(rows, closedDays){
   const entries=fnbRows.filter(r=>r.type==='Stock In'||r.type==='Stock Out');
   const k1={ok:receipts.filter(isOk).length,tot:receipts.length};
   const k2={ok:entries.filter(isOk).length,tot:entries.length};
-  const activeDays=new Set(fnbRows.map(r=>new Date(r.ts).toDateString()));
+  const activeDays=new Set(fnbRows.map(r=>pktKey(r.ts)));
   let open=0,active=0;
-  const todayStr=now.toDateString();
-  for(let d=new Date(FNB_DAY_LOOP_START);d.toDateString()!==new Date(now.getTime()+86400000).toDateString()&&d<=new Date(now.getTime()+86400000);d=new Date(d.getTime()+86400000)){
-    const ds=d.toDateString();
-    if(ds===todayStr){ if(activeDays.has(ds)){open++;active++;} continue; }
-    if(closedDays.has(ds))continue;
-    open++; if(activeDays.has(ds))active++;
-  }
+  const tk=todayKey();
+  fyDayKeys().forEach(k=>{
+    if(k===tk){ if(activeDays.has(k)){open++;active++;} return; }
+    if(closedDays.has(k))return;
+    open++; if(activeDays.has(k))active++;
+  });
   const k3={ok:active,tot:open};
   const pcts=[k1,k2,k3].filter(k=>k.tot>0).map(k=>(k.ok/k.tot)*100);
   const pct=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
@@ -650,9 +668,9 @@ function faDetailHtml(f){
 // ── FIRE-EX MONTHLY SITE COVERAGE ─────────────────────────────────────
 const FIRE_SITES=['MJSR','SI','GV','VM'];
 function fireSiteOf(r){const m=String(r.notes||'').match(/(MJSR|SI|GV|VM|MH|FG)\s*$/);return m?m[1]:null;}
-function fireSitesForMonth(fireRows,yr,mo){
+function fireSitesForMonth(fireRows,mk){
   const s=new Set();
-  fireRows.forEach(r=>{const d=new Date(r.ts);if(d.getFullYear()===yr&&d.getMonth()===mo){const site=fireSiteOf(r);if(site)s.add(site);}});
+  fireRows.forEach(r=>{if(pktMonthKey(r.ts)===mk){const site=fireSiteOf(r);if(site)s.add(site);}});
   return s;
 }
 // Rows written by background watchers are not user activity
@@ -662,7 +680,6 @@ function isActivityRow(r){return r.type!=='Coverage';}
 // Set to the Inn's actual working pattern. A day passes if the Inn submitted at any
 // time that calendar day, up to 23:59 PKT. A day with no submission fails.
 // All-year, no closed-day exclusion.
-function pktParts(ts){const d=new Date(new Date(ts).getTime()+5*3600000);return{key:d.toISOString().slice(0,10),h:d.getUTCHours()};}
 function innDays(rows){
   const now=new Date();const today=pktParts(now).key;
   const status={};
@@ -689,7 +706,7 @@ function innDetailHtml(f){
 }
 
 // ── TECHNICAL STORES MONTHLY STOCK TAKE (agreed 27 Sep 2026) ──────────
-// Each of the 7 stores must finalise its stock take for a month before the 2nd day
+// Each of the 7 stores must finalise its stock take for a month by the 1st day
 // of the following month (23:59 PKT on the 1st). Scored per store per month from FY start.
 // A month is scored once its deadline has passed; the current month only counts stores already done.
 const STORES=[['chairlift','Chairlift'],['civil','Civil'],['pistenbully','PistenBully'],['electrical','Electrical'],['zipline','Zipline'],['giantswing','Giant Swing'],['snowmaking','Snowmaking']];
@@ -702,7 +719,11 @@ function storeTakes(rows){
   rows.filter(r=>r.code==='STORE-CHK').forEach(r=>{
     const m=String(r.notes||'').match(/Stock take (\w+) (\d{4}-\d{2})/);
     if(!m)return;
-    if(String(r.onTime)==='TRUE'||r.onTime===true)done[m[1]+'|'+m[2]]=true;
+    // Credit goes by the PKT date the take was finalised. A take finalised on the 1st
+    // closes the previous month (deadline is 23:59 on the 1st), any other day counts for that month.
+    const k=pktKey(r.ts);if(!k)return;
+    const month=k.slice(8,10)==='01'?prevMonthKey(k.slice(0,7)):k.slice(0,7);
+    done[m[1]+'|'+month]=true;
   });
   const now=new Date();const months=[];
   for(let y=2026,mo=7;;){
@@ -775,93 +796,90 @@ function certDetailHtml(f){
 }
 
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
+// Rules applied to every portal:
+//  1. Days and months are Pakistan time.
+//  2. Nothing is scored before its deadline. Today counts once the deadline has passed
+//     (or earlier if already complete). The current week, month or pre-winter window
+//     only counts once it has closed, or earlier if already done.
+//  3. A missing submission scores zero for that day, week or month.
+function dailyDayScore(code,k,rowsByDay){
+  const dayRows=rowsByDay[code+'|'+k]||[];
+  if(code==='CL-CHECKS'){
+    const n=dayRows.map(r=>String(r.notes||'').toLowerCase());
+    return(n.some(x=>x.includes('start of day'))&&n.some(x=>x.includes('end of day')))?1:0;
+  }
+  const acts=DAILY_ACTIVITIES[code];
+  if(acts){
+    const okNotes=dayRows.filter(isOnTime).map(r=>String(r.notes||'').trim().toLowerCase());
+    const done=acts.filter(a=>okNotes.includes(a.toLowerCase())).length;
+    return done/acts.length;
+  }
+  return dayRows.some(isOnTime)?1:0;
+}
 function calcScore(codes,rows,closedDays){
   const reg=codes.map(c=>portalReg(c)).filter(Boolean);
   const scoredRegs=reg.filter(r=>r.scoring!=='exclude'&&r.scoring!=='pending');
   if(!scoredRegs.length)return null;
 
   const fyRows=rows.filter(r=>isInFY(r.ts));
-  const now=new Date();const start=new Date(FY_START);
-  const days=Math.max(1,Math.floor((now-start)/86400000));
+  const now=new Date();
+  const tk=todayKey();
+  const nowMins=pktNowMins();
+  const dayKeys=fyDayKeys();
 
   let exp=0,ot=0;
 
-  // Build submitted map for daily portals
-  const submitted={};
-  fyRows.forEach(r=>{
-    const key=r.code+'|'+new Date(r.ts).toDateString();
-    if(!submitted[key])submitted[key]=false;
-    if(String(r.onTime)==='TRUE'||r.onTime===true)submitted[key]=true;
-  });
-
-  // CL-CHECKS special: need both start and end
-  const clByDay={};
-  fyRows.filter(r=>r.code==='CL-CHECKS').forEach(r=>{
-    const ds=new Date(r.ts).toDateString();
-    if(!clByDay[ds])clByDay[ds]={start:false,end:false};
-    if((r.notes||'').toLowerCase().includes('start of day'))clByDay[ds].start=true;
-    if((r.notes||'').toLowerCase().includes('end of day'))clByDay[ds].end=true;
-  });
+  const rowsByDay={};
+  fyRows.forEach(r=>{const key=r.code+'|'+pktKey(r.ts);(rowsByDay[key]=rowsByDay[key]||[]).push(r);});
 
   for(const sreg of scoredRegs){
     const code=sreg.code;
 
     if(sreg.scoring==='daily'||sreg.scoring==='daily-closed'||sreg.scoring==='daily-winter'){
-      for(let i=0;i<days;i++){
-        const d=new Date(start.getTime()+i*86400000);
-        const ds=d.toDateString();
-        // Skip winter-only portals on non-winter days
-        if(sreg.scoring==='daily-winter'&&!isWinterDay(d))continue;
-        // Skip closed days for applicable portals
-        if(sreg.scoring==='daily-closed'&&closedDays.has(ds))continue;
-        exp++;
-        if(code==='CL-CHECKS'){if(clByDay[ds]&&clByDay[ds].start&&clByDay[ds].end)ot++;}
-        else{if(submitted[code+'|'+ds])ot++;}
-      }
+      const dlm=code==='CL-CHECKS'?23*60+59:deadlineMins(sreg.deadline);
+      dayKeys.forEach(k=>{
+        if(sreg.scoring==='daily-winter'&&!isWinterKey(k))return;
+        if(sreg.scoring==='daily-closed'&&closedDays.has(k))return;
+        const sc=dailyDayScore(code,k,rowsByDay);
+        if(k===tk&&nowMins<dlm&&sc<1)return; // today not yet due
+        exp++;ot+=sc;
+      });
     }
 
     else if(sreg.scoring==='hm'){
-      // Pre-winter pass/fail by 31 Oct
+      // Pre-winter service, due by 31 Oct. Scored once done, or as a fail once the deadline passes.
       const preWinterDeadline=new Date('2026-10-31T23:59:59+05:00');
-      exp++;
       const preWinterDone=fyRows.some(r=>r.code==='HM-CHECKS'&&new Date(r.ts)<=preWinterDeadline);
-      if(preWinterDone)ot++;
-      // Winter daily scoring
-      for(let i=0;i<days;i++){
-        const d=new Date(start.getTime()+i*86400000);
-        if(!isWinterDay(d))continue;
-        const ds=d.toDateString();
-        exp++;if(submitted['HM-CHECKS|'+ds])ot++;
-      }
+      if(preWinterDone||now>preWinterDeadline){exp++;if(preWinterDone)ot++;}
+      // Winter daily checks
+      const dlm=deadlineMins(sreg.deadline);
+      dayKeys.forEach(k=>{
+        if(!isWinterKey(k))return;
+        const sc=dailyDayScore('HM-CHECKS',k,rowsByDay);
+        if(k===tk&&nowMins<dlm&&sc<1)return;
+        exp++;ot+=sc;
+      });
     }
 
     else if(sreg.scoring==='monthly-fire'){
-      // FIRE-EX: all 4 properties (MJSR, Samsons Inn, Green Valley, Vehicles) must be inspected each calendar month.
+      // All 4 sites (MJSR, Samsons Inn, Green Valley, Vehicles) inspected each PKT calendar month.
       // A month is scored once it has ended, or earlier if all 4 are already done.
       const fireRows=fyRows.filter(r=>r.code==='FIRE-EX');
-      const months=[];
-      for(let d=new Date(start.getFullYear(),start.getMonth(),1);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1))months.push(d);
-      months.forEach(m=>{
-        const sites=fireSitesForMonth(fireRows,m.getFullYear(),m.getMonth());
+      const curMonth=tk.slice(0,7);
+      fyMonthKeys().forEach(mk=>{
+        const sites=fireSitesForMonth(fireRows,mk);
         const allDone=FIRE_SITES.every(s=>sites.has(s));
-        const monthEnded=new Date(m.getFullYear(),m.getMonth()+1,1)<=now;
-        if(!monthEnded&&!allDone)return;
+        if(mk===curMonth&&!allDone)return;
         exp++;if(allDone)ot++;
       });
     }
 
     else if(sreg.scoring==='quarterly'){
-      // Quarterly: at least one submission per 90-day window since FY start
-      const quarters=Math.ceil(days/90);
-      for(let q=0;q<quarters;q++){
-        const qStart=new Date(start.getTime()+q*90*86400000);
-        const qEnd=new Date(Math.min(qStart.getTime()+90*86400000,now.getTime()));
-        exp++;
-        const hasSubmission=fyRows.some(r=>{
-          if(r.code!==code)return false;
-          const ts=new Date(r.ts);return ts>=qStart&&ts<qEnd;
-        });
-        if(hasSubmission)ot++;
+      for(let qStart=new Date(FY_START);qStart<=now;qStart=new Date(qStart.getTime()+90*86400000)){
+        const qEnd=new Date(qStart.getTime()+90*86400000);
+        const has=fyRows.some(r=>r.code===code&&new Date(r.ts)>=qStart&&new Date(r.ts)<qEnd);
+        if(qEnd>now&&!has)continue;
+        exp++;if(has)ot++;
       }
     }
 
@@ -888,23 +906,33 @@ function calcScore(codes,rows,closedDays){
     }
 
     else if(sreg.scoring==='weekly'){
-      // At least one submission per 7-day window
-      const weekWindows=Math.ceil(days/7);
-      for(let w=0;w<weekWindows;w++){
-        const wStart=new Date(start.getTime()+w*7*86400000);
-        const wEnd=new Date(Math.min(wStart.getTime()+7*86400000,now.getTime()));
-        exp++;
-        const hasSubmission=fyRows.some(r=>{
-          if(r.code!==code)return false;
-          const ts=new Date(r.ts);return ts>=wStart&&ts<wEnd;
-        });
-        if(hasSubmission)ot++;
+      // At least one submission in each 7-day window from 1 Jul. The current window
+      // only counts once it closes, or earlier if a submission is already in.
+      for(let wStart=new Date(FY_START);wStart<=now;wStart=new Date(wStart.getTime()+7*86400000)){
+        const wEnd=new Date(wStart.getTime()+7*86400000);
+        const has=fyRows.some(r=>r.code===code&&isActivityRow(r)&&new Date(r.ts)>=wStart&&new Date(r.ts)<wEnd);
+        if(wEnd>now&&!has)continue;
+        exp++;if(has)ot++;
       }
     }
   }
 
-  if(exp===0&&scoredRegs.every(r=>r.scoring==='fnb'||r.scoring==='fa-coverage'||r.scoring==='cert-daily'))return null;
-  return{pct:exp>0?Math.round((ot/exp)*100):100,ot,exp};
+  if(exp===0)return null;
+  return{pct:Math.round((ot/exp)*100),ot:Math.round(ot*10)/10,exp};
+}
+
+// Department score, weighted by the signed KPI agreement.
+// Portals with nothing scored yet are left out and the other weights rescaled.
+function deptScore(codes,rows,closedDays){
+  let wSum=0,acc=0;const parts=[];
+  codes.forEach(code=>{
+    const w=DEPT_WEIGHTS[code];if(!w)return;
+    const sc=calcScore([code],rows,closedDays);
+    if(!sc)return;
+    wSum+=w;acc+=w*sc.pct;parts.push({code,w,pct:sc.pct});
+  });
+  if(!wSum)return null;
+  return{pct:Math.round(acc/wSum),parts,weightUsed:wSum};
 }
 
 // ── DEPARTMENTS ──────────────────────────────────────────────────────
@@ -921,25 +949,26 @@ function renderDepartments(procKpi, procRecon){
   const otPct=scheduled.length?Math.round((otCount/scheduled.length)*100):100;
   const activeCodes=new Set(rows.filter(r=>isThisWeek(r.ts)).map(r=>r.code)).size;
 
-  const allScoredCodes=PORTAL_REGISTRY.filter(p=>p.scoring!=='exclude'&&p.scoring!=='pending').map(p=>p.code);
-  const fyAll=calcScore(allScoredCodes,rows,closedDays);
-  const fyPct=fyAll?fyAll.pct:0;
-
-  // Missed today (daily portals in season, not closed)
-  const todayCodes=new Set(rows.filter(r=>isToday(r.ts)).map(r=>r.code));
+  // Missed today: daily portals in season, on an open day, whose deadline has passed (PKT)
+  const tk=todayKey();const nowMins=pktNowMins();
   const missedToday=PORTAL_REGISTRY.filter(p=>{
-    if(p.scoring==='exclude'||p.scoring==='pending'||p.scoring==='weekly'||p.scoring==='monthly-fire'||p.scoring==='quarterly'||p.scoring==='fnb'||p.scoring==='fa-coverage'||p.scoring==='inn-dual'||p.scoring==='store-monthly'||p.scoring==='cert-daily')return false;
-    if(p.scoring==='daily-winter'&&!isWinterDay(now))return false;
-    if(p.scoring==='hm'&&!isWinterDay(now))return false;
-    if(p.scoring==='daily-closed'&&closedDays.has(now.toDateString()))return false;
-    return !todayCodes.has(p.code);
+    if(!['daily','daily-closed','daily-winter','hm'].includes(p.scoring))return false;
+    if((p.scoring==='daily-winter'||p.scoring==='hm')&&!isWinterKey(tk))return false;
+    if(p.scoring==='daily-closed'&&closedDays.has(tk))return false;
+    const dlm=p.code==='CL-CHECKS'?deadlineMins('10:30'):deadlineMins(p.deadline);
+    if(nowMins<dlm)return false;
+    if(p.code==='CL-CHECKS')return !rows.some(r=>r.code==='CL-CHECKS'&&isToday(r.ts)&&String(r.notes||'').toLowerCase().includes('start of day'));
+    const acts=DAILY_ACTIVITIES[p.code];
+    const today=rows.filter(r=>r.code===p.code&&isToday(r.ts));
+    if(acts)return acts.some(a=>!today.some(r=>String(r.notes||'').trim().toLowerCase()===a.toLowerCase()));
+    return !today.length;
   }).map(p=>p.code);
+  const deptPcts=[];
 
   document.getElementById('statPortals').textContent=activeCodes;
   document.getElementById('statToday').textContent=todaySubs;
   document.getElementById('statWeek').textContent=weekSubs;
   document.getElementById('statOnTime').textContent=otPct+'%';
-  document.getElementById('statFyScore').textContent=fyPct+'%';
   document.getElementById('statMissed').textContent=missedToday.length;
 
   // Missed strip
@@ -964,6 +993,8 @@ function renderDepartments(procKpi, procRecon){
   }else{
     notes.push('Winter season active, SNOW-MK, PISTENBULL and HM-CHECKS included in daily scoring');
   }
+  if(!resortCalendarOk)notes.push('<strong style="color:var(--warn)">Resort calendar did not load, every day treated as open. Tap Refresh.</strong>');
+  else notes.push('Closed days this FY (Resort_Status) '+[...closedDays].filter(k=>k>='2026-07-01').length);
   sn.innerHTML=`<div class="seasonal-note">${notes.join(' &middot; ')}</div>`;
 
   // Build dept cards
@@ -972,8 +1003,8 @@ function renderDepartments(procKpi, procRecon){
 
   DEPARTMENTS.forEach(dept=>{
     const isPending=dept.id==='clinic';
-    const deptScore=isPending?null:calcScore(dept.portals,rows,closedDays);
-    let scorePct=deptScore?deptScore.pct:null;
+    const dScore=isPending?null:deptScore(dept.portals,rows,closedDays);
+    let scorePct=dScore?dScore.pct:null;
     let grade=scorePct!==null?kpiGrade(scorePct):null;
     let scoreDisplay=scorePct!==null?(scorePct+'%'):'–';
     let scoreCls=grade?grade.cls:(isPending?'pending':'event');
@@ -987,7 +1018,7 @@ function renderDepartments(procKpi, procRecon){
       const colClass=dept.split.length===3?'three-col':'two-col';
       subHtml=`<div class="sub-sections ${colClass}">`;
       dept.split.forEach(sub=>{
-        const subScore=calcScore(sub.portals,rows,closedDays);
+        const subScore=deptScore(sub.portals,rows,closedDays);
         let spct=subScore?subScore.pct:null;
         let sg=spct!==null?kpiGrade(spct):null;
         let scls=sg?sg.cls:'event';
@@ -1094,6 +1125,7 @@ function renderDepartments(procKpi, procRecon){
       procBodyHtml='<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--warn)">Procurement Hub data did not load. Tap Refresh.</div>';
     }
 
+    if(scorePct!==null&&!isPending)deptPcts.push(scorePct);
     const card=document.createElement('div');
     card.className='dept-card';
     const accentCls=isPending?'pending':(scoreCls||'event');
@@ -1117,6 +1149,8 @@ function renderDepartments(procKpi, procRecon){
       <div class="dept-portals">${portalRowsHtml}</div>`;
     grid.appendChild(card);
   });
+  const fyPct=deptPcts.length?Math.round(deptPcts.reduce((a,b)=>a+b,0)/deptPcts.length):0;
+  document.getElementById('statFyScore').textContent=fyPct+'%';
 }
 
 // ── ALL PORTALS ──────────────────────────────────────────────────────
@@ -1202,11 +1236,11 @@ function renderLog(){
     if(portal&&r.code!==portal)return false;
     if(type&&r.type!==type)return false;
     if(status!==''){const ot=String(r.onTime)==='TRUE'||r.onTime===true;if(status==='true'&&!ot)return false;if(status==='false'&&ot)return false;}
-    if(dateFrom){try{if(new Date(r.ts)<new Date(dateFrom))return false;}catch(e){}}
-    if(dateTo){try{if(new Date(r.ts)>new Date(dateTo+'T23:59:59'))return false;}catch(e){}}
+    if(dateFrom&&pktKey(r.ts)<dateFrom)return false;
+    if(dateTo&&pktKey(r.ts)>dateTo)return false;
     if(search){if(![r.portal,r.code,r.by,r.notes,r.type].join(' ').toLowerCase().includes(search))return false;}
     return true;
-  }).reverse();
+  }).sort((a,b)=>(new Date(b.ts).getTime()||0)-(new Date(a.ts).getTime()||0));
 
   const total=filtered.length;
   const page=filtered.slice((logPage-1)*PAGE_SIZE,logPage*PAGE_SIZE);
@@ -1225,7 +1259,7 @@ function renderLog(){
       <td class="td-code">${r.code||'–'}</td>
       <td>${r.by||'–'}</td>
       <td style="font-size:11px;color:var(--text3)">${r.type||'–'}</td>
-      <td style="font-size:11px;color:var(--text3)">${r.deadline||'–'}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:nowrap">${fmtDeadline(r.deadline)}</td>
       <td style="font-size:12px">${otStr}</td>
       <td style="font-size:12px">${devStr}</td>
       <td class="td-notes" title="${(r.notes||'').replace(/"/g,'&quot;')}">${r.notes||'–'}</td>
@@ -1252,7 +1286,7 @@ function renderAnalytics(){
   }).join('');
 
   const bySub={};
-  rows.filter(r=>isLast30(r.ts)).forEach(r=>{if(r.by)bySub[r.by]=(bySub[r.by]||0)+1;});
+  rows.filter(r=>isLast30(r.ts)&&isActivityRow(r)&&!/(system|watcher|backfill)/i.test(String(r.by||''))).forEach(r=>{if(r.by)bySub[r.by]=(bySub[r.by]||0)+1;});
   const sE=Object.entries(bySub).sort((a,b)=>b[1]-a[1]).slice(0,12);
   const maxS=sE[0]?.[1]||1;
   document.getElementById('chartBySubmitter').innerHTML=sE.length
@@ -1260,9 +1294,10 @@ function renderAnalytics(){
     :'<div class="empty-state">No data for last 30 days</div>';
 
   const dailyMap={};
-  for(let i=13;i>=0;i--){const d=new Date(now.getTime()-i*86400000);dailyMap[d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'})]=0;}
-  rows.forEach(r=>{try{const d=new Date(r.ts);if((now-d)<=14*86400000){const k=d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'});if(dailyMap[k]!==undefined)dailyMap[k]++;}}catch(e){}});
-  const dE=Object.entries(dailyMap);
+  const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for(let i=13;i>=0;i--){dailyMap[pktKey(new Date(now.getTime()-i*86400000))]=0;}
+  rows.forEach(r=>{const k=pktKey(r.ts);if(dailyMap[k]!==undefined)dailyMap[k]++;});
+  const dE=Object.entries(dailyMap).map(([k,v])=>[k.slice(8,10)+' '+mon[Number(k.slice(5,7))-1],v]);
   const maxD=Math.max(...dE.map(([,v])=>v),1);
   document.getElementById('chartDaily').innerHTML=dE.map(([date,n])=>`<div class="bar-row"><div class="bar-label">${date}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxD)*100)}%;background:var(--slate2)"></div></div><div class="bar-count">${n}</div></div>`).join('');
 
