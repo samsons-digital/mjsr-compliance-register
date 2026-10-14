@@ -466,6 +466,10 @@ const DAILY_ACTIVITIES = {
 const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL'];
 let resortClosedKeys = new Set();
 let resortCalendarOk = false;
+// Site-only closures (Resort_Status column G Scope). The site is closed, the rest of the resort is open.
+// GV = Green Valley Adventure Park, applies to GV-CHECKS only.
+let siteClosedKeys = {};
+const PORTAL_SITE = {'GV-CHECKS':'GV'};
 
 let allRows = [];
 let procKpiData = null;
@@ -530,6 +534,8 @@ async function loadData() {
     prBudgetData = prb;
     resortClosedKeys = new Set((cal && cal.ok && Array.isArray(cal.closed)) ? cal.closed : []);
     resortCalendarOk = !!(cal && cal.ok);
+    siteClosedKeys = {};
+    if (cal && cal.ok && cal.sites) Object.keys(cal.sites).forEach(sc => { siteClosedKeys[sc] = new Set(cal.sites[sc] || []); });
     if (!json) throw new Error('No response from the Compliance Register. Tap Refresh.');
     if (!json.ok) throw new Error(json.error || 'Unknown error');
     if (!Array.isArray(json.rows) || json.rows.length === 0) throw new Error('The Submission Log came back empty. Tap Refresh.');
@@ -628,6 +634,12 @@ function portalReg(code){return PORTAL_REGISTRY.find(p=>p.code===code);}
 
 // Closed days (PKT date keys) entered on the Resort_Status tab
 function buildClosedDays(rows){return new Set(resortClosedKeys);}
+// Closed days for one portal: resort closures plus that portal's own site closures
+function closedFor(code,closedDays){
+  const site=PORTAL_SITE[code];const sc=site&&siteClosedKeys[site];
+  if(!sc||!sc.size)return closedDays;
+  const out=new Set(closedDays);sc.forEach(k=>out.add(k));return out;
+}
 
 // Portal RAG status
 function portalRag(code,rows){
@@ -900,9 +912,10 @@ function calcScore(codes,rows,closedDays){
 
     if(sreg.scoring==='daily'||sreg.scoring==='daily-closed'||sreg.scoring==='daily-winter'){
       const dlm=code==='CL-CHECKS'?23*60+59:deadlineMins(sreg.deadline);
+      const cdp=closedFor(code,closedDays);
       dayKeys.forEach(k=>{
         if(sreg.scoring==='daily-winter'&&!isWinterKey(k))return;
-        if(sreg.scoring==='daily-closed'&&closedDays.has(k))return;
+        if(sreg.scoring==='daily-closed'&&cdp.has(k))return;
         const sc=dailyDayScore(code,k,rowsByDay);
         if(k===tk&&nowMins<dlm&&sc<1)return; // today not yet due
         exp++;ot+=sc;
@@ -1019,7 +1032,7 @@ function renderDepartments(procKpi, procRecon){
   const missedToday=PORTAL_REGISTRY.filter(p=>{
     if(!['daily','daily-closed','daily-winter','hm'].includes(p.scoring))return false;
     if((p.scoring==='daily-winter'||p.scoring==='hm')&&!isWinterKey(tk))return false;
-    if(p.scoring==='daily-closed'&&closedDays.has(tk))return false;
+    if(p.scoring==='daily-closed'&&closedFor(p.code,closedDays).has(tk))return false;
     const dlm=p.code==='CL-CHECKS'?deadlineMins('10:30'):deadlineMins(p.deadline);
     if(nowMins<dlm)return false;
     if(p.code==='CL-CHECKS')return !rows.some(r=>r.code==='CL-CHECKS'&&isToday(r.ts)&&String(r.notes||'').toLowerCase().includes('start of day'));
@@ -1059,7 +1072,10 @@ function renderDepartments(procKpi, procRecon){
     notes.push('Winter season active, SNOW-MK, PISTENBULL and HM-CHECKS included in daily scoring');
   }
   if(!resortCalendarOk)notes.push('<strong style="color:var(--warn)">Resort calendar did not load, every day treated as open. Tap Refresh.</strong>');
-  else notes.push('Closed days this FY (Resort_Status) '+[...closedDays].filter(k=>k>='2026-07-01').length);
+  else{
+    const gv=siteClosedKeys.GV?[...siteClosedKeys.GV].filter(k=>k>='2026-07-01').length:0;
+    notes.push('Closed days this FY (Resort_Status) '+[...closedDays].filter(k=>k>='2026-07-01').length+(gv?', Green Valley only '+gv:''));
+  }
   sn.innerHTML=`<div class="seasonal-note">${notes.join(' &middot; ')}</div>`;
 
   // Build dept cards
@@ -1414,7 +1430,8 @@ function fyTotalUnits(reg){
   const all=[];for(let k='2026-07-01';k<=FY_END_KEY;k=nextKey(k))all.push(k);
   const winterDays=all.filter(isWinterKey).length;
   switch(reg.scoring){
-    case 'daily':case 'daily-closed':return all.length-[...resortClosedKeys].filter(k=>k>='2026-07-01'&&k<=FY_END_KEY).length*(reg.scoring==='daily-closed'?1:0);
+    case 'daily':return all.length;
+    case 'daily-closed':return all.length-[...closedFor(reg.code,resortClosedKeys)].filter(k=>k>='2026-07-01'&&k<=FY_END_KEY).length;
     case 'daily-winter':return winterDays;
     case 'hm':return winterDays+1;
     case 'monthly-fire':return 12;
@@ -1436,9 +1453,10 @@ function kpiFindings(code,rows,closedDays){
     const winterOnly=reg.scoring==='daily-winter'||reg.scoring==='hm';
     const none=[],late=[],partial=[];const actMiss={};const clMiss={start:0,end:0};
     let days=0;
+    const cdp=closedFor(code,closedDays);let closedN=0;
     fyDayKeys().forEach(k=>{
       if(winterOnly&&!isWinterKey(k))return;
-      if(reg.scoring==='daily-closed'&&closedDays.has(k))return;
+      if(reg.scoring==='daily-closed'&&cdp.has(k)){closedN++;return;}
       const sc=dailyDayScore(code,k,rowsByDay);
       if(k===tk&&nowMins<dlm&&sc<1)return;
       days++;
@@ -1466,7 +1484,7 @@ function kpiFindings(code,rows,closedDays){
     }
     if(winterOnly&&!days){out.why.push('Winter KPI, scored 15 Dec to 15 Mar');return out;}
     const missedN=none.length+late.length+partial.length;
-    out.why.push(days+' days due, '+(days-missedN)+' fully on time');
+    out.why.push(days+' days due, '+(days-missedN)+' fully on time'+(closedN?', '+closedN+' closed day'+(closedN>1?'s':'')+' excused':''));
     if(none.length)out.why.push('<span class="miss">No submission on '+none.length+' day'+(none.length>1?'s':'')+'</span> ('+listDays(none,6)+')');
     if(late.length)out.why.push('<span class="miss">Submitted late on '+late.length+' day'+(late.length>1?'s':'')+'</span> ('+listDays(late,6)+')');
     if(code==='CL-CHECKS'){const cm=[];if(clMiss.start)cm.push('Start of Day check missing on '+clMiss.start+' day'+(clMiss.start>1?'s':''));if(clMiss.end)cm.push('End of Day check missing on '+clMiss.end+' day'+(clMiss.end>1?'s':''));if(cm.length)out.why.push('<span class="miss">'+cm.join(', ')+'</span>');}
