@@ -394,6 +394,7 @@ const PORTAL_REGISTRY = [
   { code:'STORE-CHK',  name:'Technical Stores Stock Take',     type:'Monthly',deadline:'1st 23:59',season:'all',     scoring:'store-monthly'},
   { code:'CERT-VALID', name:'Annual Certifications and Inspections', type:'Daily', deadline:'Continuous', season:'all', scoring:'cert-daily' },
   { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', season:'pending', scoring:'pending'      },
+  { code:'GUEST-FB',   name:'Guest Feedback and Complaints',   type:'Event',  deadline:'24h',      season:'all',     scoring:'guest-24h'    },
 ];
 
 // ── DEPARTMENT DEFINITIONS ───────────────────────────────────────────
@@ -442,6 +443,11 @@ const DEPARTMENTS = [
     id:'clinic', name:'Clinic', custodians:'Dr Rahim',
     portals:['CLINIC-DP'],
     split: null
+  },
+  {
+    id:'guest', name:'Guest Experience', custodians:'All department heads (complaint owners)',
+    portals:['GUEST-FB'],
+    split: null
   }
 ];
 
@@ -453,7 +459,8 @@ const DEPT_WEIGHTS = {
   'ADV-CHECKS':35,'GV-CHECKS':35,
   'SALES-CL':30,'LOYALTY':20,'TOUR-OPS':20,
   'INN-TRACK':35,'FB-STOCK':35,
-  'FIXED-AS':25,'VH-FLEET':20,'PR-FUND':25
+  'FIXED-AS':25,'VH-FLEET':20,'PR-FUND':25,
+  'GUEST-FB':100 // Guest Experience card only, not part of the signed department agreements
 };
 
 // Adventure daily checks. Every activity must be checked on time for a full day.
@@ -666,6 +673,10 @@ function portalRag(code,rows){
   if(code==='CERT-VALID'){
     const f=certDays(rows);if(!f.latest)return'grey';
     const r=f.latest.valid/f.latest.total;return r>=1?'green':r>=0.9?'yellow':'red';
+  }
+  if(code==='GUEST-FB'){
+    const f=guestComplaints(rows);
+    return f.overdue?'red':f.open?'yellow':'green';
   }
   if(code==='STORE-CHK'){
     const f=storeTakes(rows);const open=f.months.find(m=>!m.closed);const closed=f.months.filter(m=>m.closed);const last=closed[closed.length-1];
@@ -962,6 +973,43 @@ function certDetailHtml(f){
   return collapseBlock('Annual certifications',summary,allOk?(warn?'var(--warn)':'var(--green)'):'var(--red)',body);
 }
 
+// ── GUEST COMPLAINTS (agreed 9 Nov 2026) ─────────────────────────────
+// The Guest Feedback portal writes a "Complaint" row when a complaint arrives and a "Resolved" row
+// (deadline, on time, deviation) the first time it is resolved or closed. Notes start with the GF ID.
+// Score = complaints resolved within 24 hours / complaints due. A complaint is due once resolved,
+// or once 24 hours have passed without a resolution (counted as a miss). Complaints still inside
+// their 24 hours are not scored yet. Nothing scored until the first complaint is due.
+const GUEST_RESOLVE_MS=24*3600000;
+function guestComplaints(rows){
+  const comps={},resolved={};
+  rows.filter(r=>r.code==='GUEST-FB').forEach(r=>{
+    const id=String(r.notes||'').split(' | ')[0].trim();if(!id)return;
+    const parts=String(r.notes||'').split(' | ');
+    if(r.type==='Complaint'){if(!comps[id])comps[id]={id,ts:r.ts,dept:parts[1]||'',loc:parts[2]||''};}
+    else if(r.type==='Resolved'){if(!resolved[id])resolved[id]={ts:r.ts,ok:isOnTime(r),dept:parts[1]||''};}
+  });
+  const now=Date.now();
+  const list=Object.values(comps).filter(c=>inWin(c.ts)).map(c=>{
+    const res=resolved[c.id];const dueMs=new Date(c.ts).getTime()+GUEST_RESOLVE_MS;
+    const state=res?(res.ok?'ok':'late'):(now>dueMs?'overdue':'open');
+    return Object.assign({},c,{dept:(res&&res.dept)||c.dept,state});
+  });
+  const due=list.filter(c=>c.state!=='open');const ok=due.filter(c=>c.state==='ok').length;
+  const byDept={};
+  list.forEach(c=>{const d=byDept[c.dept]=byDept[c.dept]||{dept:c.dept,total:0,due:0,ok:0,open:0,overdue:0};
+    d.total++;if(c.state!=='open')d.due++;if(c.state==='ok')d.ok++;if(c.state==='open')d.open++;if(c.state==='overdue')d.overdue++;});
+  return{list,exp:due.length,ot:ok,pct:due.length?Math.round(ok/due.length*100):null,
+    open:list.filter(c=>c.state==='open').length,overdue:list.filter(c=>c.state==='overdue').length,
+    late:list.filter(c=>c.state==='late').length,byDept:Object.values(byDept).sort((a,b)=>a.dept.localeCompare(b.dept))};
+}
+function guestDetailHtml(f){
+  if(!f.list.length)return '<div style="padding:10px 14px;font-size:12px;color:var(--text3)">No guest complaints logged yet. Scored once the first complaint is due.</div>';
+  const body=f.byDept.map(d=>{const p=d.due?Math.round(d.ok/d.due*100):null;
+    return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:4px"><span>${d.dept||'Unassigned'}</span><span style="font-family:var(--mono);color:${p===null?'var(--text3)':p>=95?'var(--green)':p>=75?'var(--warn)':'var(--red)'}">${p===null?'–':p+'%'} &middot; ${d.ok}/${d.due} on time${d.overdue?', '+d.overdue+' overdue':''}${d.open?', '+d.open+' open':''}</span></div>`;}).join('');
+  const summary=f.list.length+' complaints'+(f.overdue?', '+f.overdue+' overdue':'');
+  return '<div style="padding:4px 0">'+collapseBlock('Complaints resolved within 24 h, by department',summary,f.overdue?'var(--red)':'var(--green)',body)+'</div>';
+}
+
 // ── FY SCORE CALCULATION ─────────────────────────────────────────────
 // Rules applied to every portal:
 //  1. Days and months are Pakistan time.
@@ -1077,6 +1125,11 @@ function calcScore(codes,rows,closedDays){
     else if(sreg.scoring==='loyalty-share'){
       const f=loyaltyShare();
       if(f&&f.exp){exp+=f.exp;ot+=f.ot;}
+    }
+
+    else if(sreg.scoring==='guest-24h'){
+      const f=guestComplaints(rows);
+      if(f.exp){exp+=f.exp;ot+=f.ot;}
     }
 
     else if(sreg.scoring==='prfund'){
@@ -1301,6 +1354,8 @@ function renderDepartments(procKpi, procRecon){
             ${breakdownHtml}
           </div>
         </div>`:'<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--green)">All approved PRFs reconciled</div>'}`;
+    }else if(dept.id==='guest'){
+      procBodyHtml=guestDetailHtml(guestComplaints(rows));
     }else if(dept.id==='technical'){
       procBodyHtml=storeDetailHtml(storeTakes(rows))+certDetailHtml(certDays(rows));
     }else if(dept.id==='procurement'){
@@ -1543,6 +1598,7 @@ function fyTotalUnits(reg){
     case 'prfund':return 36;
     case 'loyalty-share':return all.filter(k=>k>=LOYALTY_START).length;
     case 'weekly':return Math.ceil(all.length/7);
+    case 'guest-24h':return 0; // complaint volume is not known ahead, no year-end projection
   }
   return 0;
 }
@@ -1677,6 +1733,17 @@ function kpiFindings(code,rows,closedDays){
     if(gaps.length)out.action=gaps[0][1];
     return out;
   }
+  if(reg.scoring==='guest-24h'){
+    const f=guestComplaints(rows);
+    if(!f.list.length){out.why.push('No guest complaints in this period');return out;}
+    out.why.push(f.list.length+' complaints, '+f.exp+' due, '+f.ot+' resolved within 24 hours'+(f.open?', '+f.open+' still inside 24 hours':''));
+    if(f.late)out.why.push('<span class="miss">Resolved after 24 hours: '+f.late+'</span>');
+    if(f.overdue)out.why.push('<span class="miss">Open past 24 hours: '+f.overdue+'</span> ('+f.list.filter(c=>c.state==='overdue').slice(-6).map(c=>c.id).join(', ')+')');
+    const weak=f.byDept.filter(d=>d.due&&d.ok<d.due).sort((a,b)=>a.ok/a.due-b.ok/b.due)[0];
+    if(weak)out.why.push('Weakest department '+weak.dept+', '+weak.ok+' of '+weak.due+' on time');
+    if(f.late||f.overdue)out.action='Acknowledge every complaint within 2 hours and resolve it in the Guest Feedback portal within 24 hours, with a response note'+(weak?', focus on '+weak.dept:'');
+    return out;
+  }
   if(reg.scoring==='fa-coverage'){
     const f=faCoverage(rows);
     f.quarters.forEach(q=>out.why.push((q.closed&&q.pct<100?'<span class="miss">':'<span>')+q.label+' '+(q.closed?'final':'to date')+', '+q.count+' of '+q.total+' assets verified ('+(q.pct||0)+'%)</span>'));
@@ -1793,7 +1860,7 @@ function renderReview(){
       <div class="rv-section"><div class="rv-stitle">Why the score is ${pct===null?'not set':pct+'%'}</div>
         <table class="rv-table"><thead><tr><th>KPI</th><th class="num">Weight</th><th class="num">Score</th><th class="num hide-m">Points lost</th><th>What the register shows</th></tr></thead><tbody>${table}</tbody></table></div>
       <div class="rv-section"><div class="rv-stitle">Where to improve, biggest gain first</div>${actions.length||pending.length?`<ol class="rv-actions">${actions.join('')}${pending.join('')}</ol>`:'<div class="rv-why">No gaps in this period</div>'}</div>
-      <div class="rv-note">Points lost show how far each KPI pulls the department score below 100%, using the agreement weights. KPIs with nothing due yet are left out and the other weights rescaled. The final FY score also includes GRN closure on own PRFs (${grn}%) and the two Section 2 line manager ratings (20%), assessed at the quarterly review. A final score below 75% means no qualification for the end of FY bonus and/or increment.</div>
+      <div class="rv-note">${dept.id==='guest'?'Guest Experience is a resort-wide KPI on its own card. It is scored on complaints resolved within 24 hours and is not part of the signed department KPI agreements, so the bonus line shown above is for reference only.':`Points lost show how far each KPI pulls the department score below 100%, using the agreement weights. KPIs with nothing due yet are left out and the other weights rescaled. The final FY score also includes GRN closure on own PRFs (${grn}%) and the two Section 2 line manager ratings (20%), assessed at the quarterly review. A final score below 75% means no qualification for the end of FY bonus and/or increment.`}</div>
     </div>`;
   });
   body.innerHTML=html||'<div class="empty-state">No department selected</div>';
