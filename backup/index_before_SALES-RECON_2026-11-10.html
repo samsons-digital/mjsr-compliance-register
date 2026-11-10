@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MJSR Central Compliance Register</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f6f3;--surface:#ffffff;--surface2:#f0ede8;--surface3:#e8e4de;
+  --slate:#2d3748;--slate2:#3d4f66;--slate3:#edf0f4;
+  --amber:#d97706;--amber-dim:rgba(217,119,6,.12);
+  --teal:#0d9488;--teal-dim:rgba(13,148,136,.1);
+  --border:#e2ddd8;--border2:#d4cfc9;
+  --text:#1a202c;--text2:#4a5568;--text3:#a0aec0;
+  --green:#047857;--green-dim:#d1fae5;
+  --warn:#b45309;--warn-dim:#fef3c7;
+  --orange:#c2410c;--orange-dim:#ffedd5;
+  --red:#b91c1c;--red-dim:#fee2e2;
+  --sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --radius:8px;--radius-sm:5px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.5;min-height:100vh;}
+
+header{background:var(--slate);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.logo-group{display:flex;align-items:center;gap:12px;}
+.logo-chip{background:var(--amber);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;letter-spacing:.04em;border-radius:4px;}
+.logo-text{font-size:14px;font-weight:600;color:#fff;}
+.logo-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.fy-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.85);font-size:11px;font-weight:600;padding:4px 10px;font-family:var(--mono);border-radius:4px;}
+.live-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,.4);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.refresh-btn{background:var(--amber);color:#fff;border:none;font-size:11px;font-weight:600;padding:6px 14px;cursor:pointer;font-family:var(--sans);border-radius:var(--radius-sm);}
+.refresh-btn:hover{background:#c06800;}
+
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;position:sticky;top:56px;z-index:99;box-shadow:var(--shadow);}
+.nav-tab{padding:12px 16px;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;user-select:none;transition:color .12s;}
+.nav-tab:hover{color:var(--text2);}
+.nav-tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+
+main{padding:24px 28px;max-width:1700px;}
+.view{display:none;}.view.active{display:block;}
+
+.summary-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);}
+.stat-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.stat-value{font-size:28px;font-weight:700;color:var(--slate);line-height:1;font-family:var(--mono);}
+.stat-value.amber{color:var(--amber);}
+.stat-value.green{color:var(--green);}
+.stat-value.teal{color:var(--teal);}
+.stat-value.red{color:var(--red);}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+
+.section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;}
+
+.missed-strip{background:var(--red-dim);border:1px solid rgba(185,28,28,.25);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.missed-label{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;}
+.missed-items{font-size:12px;color:var(--red);flex:1;}
+
+.seasonal-note{background:var(--amber-dim);border:1px solid rgba(217,119,6,.25);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:16px;font-size:11px;color:var(--warn);font-weight:500;}
+
+/* Department grid */
+.dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin-bottom:28px;}
+.dept-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.dept-head{padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border);}
+.dept-name-group{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;}
+.dept-accent-bar{width:3px;align-self:stretch;min-height:38px;border-radius:2px;flex-shrink:0;}
+.dept-accent-bar.on-track{background:var(--green);}
+.dept-accent-bar.needs-att{background:var(--warn);}
+.dept-accent-bar.near-fail{background:var(--orange);}
+.dept-accent-bar.failed{background:var(--red);}
+.dept-accent-bar.event{background:var(--teal);}
+.dept-accent-bar.pending{background:var(--text3);}
+.dept-name{font-size:13px;font-weight:700;color:var(--slate);}
+.dept-custs{font-size:11px;color:var(--text3);margin-top:3px;}
+.score-side{text-align:right;flex-shrink:0;margin-left:12px;}
+.dept-score{font-size:30px;font-weight:700;line-height:1;font-family:var(--mono);}
+.dept-score.on-track{color:var(--green);}
+.dept-score.needs-att{color:var(--warn);}
+.dept-score.near-fail{color:var(--orange);}
+.dept-score.failed{color:var(--red);}
+.dept-score.event{color:var(--teal);}
+.dept-score.pending{color:var(--text3);}
+.grade-chip{font-size:10px;font-weight:600;padding:3px 9px;border-radius:999px;margin-top:5px;display:inline-block;}
+.grade-chip.on-track{background:var(--green-dim);color:var(--green);}
+.grade-chip.needs-att{background:var(--warn-dim);color:var(--warn);}
+.grade-chip.near-fail{background:var(--orange-dim);color:var(--orange);}
+.grade-chip.failed{background:var(--red-dim);color:var(--red);}
+.grade-chip.event{background:var(--teal-dim);color:var(--teal);}
+.grade-chip.pending{background:var(--slate3);color:var(--text3);}
+
+.dept-bar-row{padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.dept-bar{height:4px;background:var(--border2);border-radius:2px;overflow:hidden;}
+.dept-bar-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+.dept-missed{font-size:11px;color:var(--red);margin-top:4px;font-weight:500;}
+
+/* Sub-sections inside dept cards */
+.sub-sections{display:grid;border-bottom:1px solid var(--border);}
+.sub-sections.two-col{grid-template-columns:1fr 1fr;}
+.sub-sections.three-col{grid-template-columns:1fr 1fr 1fr;}
+.sub-section{padding:10px 14px;border-right:1px solid var(--border);}
+.sub-section:last-child{border-right:none;}
+.sub-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px;}
+.sub-score{font-size:22px;font-weight:700;font-family:var(--mono);line-height:1;}
+.sub-score.on-track{color:var(--green);}
+.sub-score.needs-att{color:var(--warn);}
+.sub-score.near-fail{color:var(--orange);}
+.sub-score.failed{color:var(--red);}
+.sub-score.event{color:var(--teal);}
+.sub-score.pending{color:var(--text3);}
+.sub-grade{font-size:9px;font-weight:600;padding:2px 7px;border-radius:999px;margin-top:4px;display:inline-block;}
+.sub-grade.on-track{background:var(--green-dim);color:var(--green);}
+.sub-grade.needs-att{background:var(--warn-dim);color:var(--warn);}
+.sub-grade.near-fail{background:var(--orange-dim);color:var(--orange);}
+.sub-grade.failed{background:var(--red-dim);color:var(--red);}
+.sub-grade.event{background:var(--teal-dim);color:var(--teal);}
+.sub-grade.pending{background:var(--slate3);color:var(--text3);}
+.sub-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;margin-top:6px;}
+.sub-bar-fill{height:100%;border-radius:2px;}
+.sub-missed{font-size:10px;color:var(--red);margin-top:4px;font-weight:500;}
+
+/* Portal rows inside dept cards */
+.dept-portals{padding:4px 0;}
+.portal-row{display:flex;align-items:center;gap:8px;padding:7px 16px;border-bottom:1px solid var(--surface2);}
+.portal-row:last-child{border-bottom:none;}
+.p-rag{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.p-rag.green{background:var(--green);}
+.p-rag.yellow{background:var(--warn);}
+.p-rag.red{background:var(--red);}
+.p-rag.grey{background:var(--text3);}
+.p-code{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--amber);width:90px;flex-shrink:0;}
+.p-name{font-size:12px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.p-last{font-size:11px;color:var(--text3);white-space:nowrap;}
+.p-status{font-size:9px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+.s-active{background:var(--green-dim);color:var(--green);}
+.s-due{background:var(--warn-dim);color:var(--warn);}
+.s-overdue{background:var(--red-dim);color:var(--red);}
+.s-nodata{background:var(--slate3);color:var(--text3);}
+.s-pending{background:var(--slate3);color:var(--text3);}
+.s-seasonal{background:var(--amber-dim);color:var(--warn);}
+.s-excluded{background:var(--slate3);color:var(--text3);}
+
+/* All portals grid */
+.portal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px;margin-bottom:28px;}
+.portal-tile{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--border2);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);transition:box-shadow .12s;}
+.portal-tile:hover{box-shadow:var(--shadow-md);}
+.portal-tile.t-green{border-top-color:var(--green);}
+.portal-tile.t-yellow{border-top-color:var(--warn);}
+.portal-tile.t-red{border-top-color:var(--red);}
+.portal-tile.t-grey{border-top-color:var(--text3);opacity:.7;}
+.tile-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.tile-code{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--amber);background:var(--amber-dim);padding:2px 8px;border-radius:4px;}
+.tile-code.placeholder{color:var(--text3);background:var(--slate3);}
+.tile-badge{font-size:9px;font-weight:600;padding:2px 8px;border-radius:999px;}
+.badge-green{background:var(--green-dim);color:var(--green);}
+.badge-yellow{background:var(--warn-dim);color:var(--warn);}
+.badge-red{background:var(--red-dim);color:var(--red);}
+.badge-grey{background:var(--slate3);color:var(--text3);}
+.badge-seasonal{background:var(--amber-dim);color:var(--warn);}
+.tile-name{font-size:14px;font-weight:700;color:var(--slate);margin-bottom:2px;line-height:1.25;}
+.tile-name.placeholder{color:var(--text3);}
+.tile-type{font-size:11px;color:var(--text3);margin-bottom:12px;}
+.tile-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tile-meta-item{background:var(--surface2);border-radius:var(--radius-sm);padding:7px 9px;}
+.tile-meta-label{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}
+.tile-meta-value{font-size:12px;font-weight:600;color:var(--slate);font-family:var(--mono);}
+.tile-meta-value.green{color:var(--green);}
+.tile-meta-value.warn{color:var(--warn);}
+.tile-meta-value.red{color:var(--red);}
+.tile-meta-value.grey{color:var(--text3);}
+.placeholder-note{grid-column:1/-1;text-align:center;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px;}
+
+/* Log */
+.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-bar input,.filter-bar select{font-family:var(--sans);font-size:13px;color:var(--text);background:var(--surface);border:1px solid var(--border);padding:7px 11px;border-radius:var(--radius-sm);outline:none;min-width:150px;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--amber);}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--surface2);border-bottom:1px solid var(--border);}
+thead th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:10px 14px;white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(226,221,216,.6);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--surface2);}
+tbody td{padding:9px 14px;color:var(--text);vertical-align:middle;}
+.td-code{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--amber);}
+.td-time{font-size:11px;color:var(--text3);white-space:nowrap;}
+.td-name{font-weight:600;color:var(--slate);}
+.td-notes{color:var(--text2);font-size:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dot-green{color:var(--green);}
+.dot-warn{color:var(--warn);}
+.dot-red{color:var(--red);}
+.dot-grey{color:var(--text3);}
+
+/* Analytics */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;}
+.analytics-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.analytics-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:16px;}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.bar-label{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--slate);width:108px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;background:var(--amber);transition:width .4s ease;}
+.bar-count{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text3);width:32px;text-align:right;}
+
+.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;gap:14px;}
+.spinner{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+.error-state{background:var(--red-dim);border:1px solid rgba(185,28,28,.25);border-radius:var(--radius-sm);padding:14px 18px;font-size:13px;color:var(--red);margin-bottom:20px;font-weight:500;}
+.empty-state{text-align:center;padding:48px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+#logPagination{margin-top:12px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);}
+
+@media(max-width:1100px){.summary-strip{grid-template-columns:repeat(3,1fr);}.analytics-grid{grid-template-columns:1fr;}main{padding:16px;}}
+@media(max-width:600px){.summary-strip{grid-template-columns:1fr 1fr;}.dept-grid,.portal-grid{grid-template-columns:1fr;}.sub-sections.two-col,.sub-sections.three-col{grid-template-columns:1fr;}}
+details.tile-collapse[open] .tc-arrow{transform:rotate(180deg)}
+details.tile-collapse summary::-webkit-details-marker{display:none}
+details.tile-collapse summary:hover{background:var(--bg2,rgba(0,0,0,.02))}
+
+/* ── PERFORMANCE REVIEW ── */
+.rv-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;box-shadow:var(--shadow);}
+.rv-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rv-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);}
+.rv-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.rv-chip{border:1px solid var(--border2);background:var(--surface);color:var(--text2);font-family:var(--sans);font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;cursor:pointer;}
+.rv-chip.active{background:var(--slate);color:#fff;border-color:var(--slate);}
+.rv-chip:disabled{opacity:.4;cursor:default;}
+#rvDept{font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);}
+.rv-print{margin-left:auto;background:var(--slate);color:#fff;border:none;font-family:var(--sans);font-size:11px;font-weight:600;padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;}
+.rv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;page-break-inside:avoid;}
+.rv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.rv-name{font-size:16px;font-weight:700;color:var(--slate);}
+.rv-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.rv-score{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1;text-align:right;}
+.rv-status{display:inline-block;margin-top:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:4px;}
+.rv-status.ok{background:var(--green-dim);color:var(--green);}
+.rv-status.watch{background:var(--warn-dim);color:var(--warn);}
+.rv-status.risk{background:var(--red-dim);color:var(--red);}
+.rv-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.rv-fact{font-size:11px;color:var(--text2);}
+.rv-fact b{display:block;font-family:var(--mono);font-size:15px;color:var(--slate);}
+.rv-section{padding:12px 16px;border-bottom:1px solid var(--border);}
+.rv-section:last-child{border-bottom:none;}
+.rv-stitle{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;}
+.rv-table{width:100%;border-collapse:collapse;font-size:12px;}
+.rv-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.rv-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
+.rv-table tr:last-child td{border-bottom:none;}
+.rv-table .num{font-family:var(--mono);text-align:right;white-space:nowrap;}
+.rv-why{font-size:11px;color:var(--text2);}
+.rv-why .miss{color:var(--red);}
+.rv-actions{margin:0;padding-left:18px;font-size:12px;color:var(--text);}
+.rv-actions li{margin-bottom:6px;}
+.rv-trend{display:flex;gap:8px;flex-wrap:wrap;}
+.rv-q{border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;min-width:90px;}
+.rv-q span{display:block;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.rv-q b{font-family:var(--mono);font-size:16px;}
+.rv-note{font-size:10px;color:var(--text3);padding:8px 16px 12px;}
+@media (max-width:700px){.rv-table .hide-m{display:none;}main{padding:16px;}}
+@media print{
+  header,nav,.no-print{display:none !important;}
+  body{background:#fff;}
+  main{padding:0;}
+  .view{display:none !important;}
+  #view-review{display:block !important;}
+  .rv-card{box-shadow:none;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-group">
+    <div class="logo-chip">CR</div>
+    <div>
+      <div class="logo-text">Central Compliance Register</div>
+      <div class="logo-sub">Samsons Group &middot; MJSR Operations Oversight</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-pill"><div class="live-dot"></div><span id="lastRefresh">Loading...</span></div>
+    <div class="fy-chip">FY 2026-27</div>
+    <button class="refresh-btn" onclick="loadData()">&#8635; Refresh</button>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-tab active" onclick="switchTab('departments')">Departments</div>
+  <div class="nav-tab" onclick="switchTab('portals')">All Portals</div>
+  <div class="nav-tab" onclick="switchTab('log')">Submission Log</div>
+  <div class="nav-tab" onclick="switchTab('analytics')">Analytics</div>
+  <div class="nav-tab" onclick="switchTab('review')">Performance Review</div>
+</nav>
+
+<main>
+
+  <div class="view active" id="view-departments">
+    <div id="dashError"></div>
+    <div class="summary-strip">
+      <div class="stat-card"><div class="stat-label">Portals Active</div><div class="stat-value teal" id="statPortals">–</div><div class="stat-sub">of 19 in programme</div></div>
+      <div class="stat-card"><div class="stat-label">Submissions Today</div><div class="stat-value" id="statToday">–</div><div class="stat-sub">across all portals</div></div>
+      <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="statWeek">–</div><div class="stat-sub">last 7 days</div></div>
+      <div class="stat-card"><div class="stat-label">On-Time Rate</div><div class="stat-value green" id="statOnTime">–</div><div class="stat-sub">scheduled submissions</div></div>
+      <div class="stat-card"><div class="stat-label">FY 2026-27 Score</div><div class="stat-value amber" id="statFyScore">–</div><div class="stat-sub">average of department scores</div></div>
+      <div class="stat-card"><div class="stat-label">Missed Today</div><div class="stat-value red" id="statMissed">–</div><div class="stat-sub">daily portals</div></div>
+    </div>
+    <div id="missedStrip"></div>
+    <div id="seasonalNote"></div>
+    <div class="section-row"><div class="section-title">Departmental Performance (FY 2026-27)</div></div>
+    <div class="dept-grid" id="deptGrid">
+      <div class="loading-state"><div class="spinner"></div><div class="loading-label">Loading compliance data...</div></div>
+    </div>
+  </div>
+
+  <div class="view" id="view-portals">
+    <div class="section-row"><div class="section-title">Portal Status (Live)</div></div>
+    <div class="portal-grid" id="portalGrid"></div>
+  </div>
+
+  <div class="view" id="view-log">
+    <div class="filter-bar">
+      <input type="text" id="filterSearch" placeholder="Search portal, submitter, notes..." oninput="renderLog()">
+      <select id="filterPortal" onchange="renderLog()"><option value="">All portals</option></select>
+      <select id="filterType" onchange="renderLog()"><option value="">All types</option><option value="Daily">Daily</option><option value="Event">Event</option></select>
+      <select id="filterStatus" onchange="renderLog()"><option value="">All statuses</option><option value="true">On Time</option><option value="false">Late</option></select>
+      <input type="date" id="filterDateFrom" onchange="renderLog()" title="From">
+      <input type="date" id="filterDateTo" onchange="renderLog()" title="To">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Timestamp</th><th>Portal</th><th>Code</th><th>Submitted By</th><th>Type</th><th>Deadline</th><th>On Time</th><th>Dev (min)</th><th>Notes</th></tr></thead>
+        <tbody id="logTableBody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
+      </table>
+    </div>
+    <div id="logPagination"></div>
+  </div>
+
+  <div class="view" id="view-analytics">
+    <div class="analytics-grid">
+      <div class="analytics-card"><div class="analytics-title">Submissions by Portal (All Time)</div><div id="chartByPortal"></div></div>
+      <div class="analytics-card"><div class="analytics-title">Submissions by Submitter (Last 30 Days)</div><div id="chartBySubmitter"></div></div>
+      <div class="analytics-card"><div class="analytics-title">Daily Volume, Last 14 Days</div><div id="chartDaily"></div></div>
+      <div class="analytics-card"><div class="analytics-title">On-Time Rate by Portal (FY 2026-27)</div><div id="chartOnTime"></div></div>
+    </div>
+  </div>
+
+  <div class="view" id="view-review">
+    <div class="rv-bar no-print">
+      <div class="rv-group"><span class="rv-lbl">Period</span><div id="rvPeriods" class="rv-chips"></div></div>
+      <div class="rv-group"><span class="rv-lbl">Department</span><select id="rvDept" onchange="renderReview()"></select></div>
+      <button class="rv-print" onclick="window.print()">Print</button>
+    </div>
+    <div id="rvBody"><div class="loading-state"><div class="spinner"></div><div class="loading-label">Loading...</div></div></div>
+  </div>
+
+</main>
+
+<script>
+const GAS_URL      = 'https://script.google.com/macros/s/AKfycbyP1rM-YRMsZyJiZzrnOKuIUNGa6M1tTYc_OxG3-XMRBIs19lnOtgfv_ri4eM4-eTLlnQ/exec';
+const PROCHUB_URL  = 'https://script.google.com/macros/s/AKfycby_M0NW85JpZBvJXCAoIM0p70V4YmD_ohwO1maXYjWme6_49rRKBp5JbSSPFiR0cQno/exec';
+const FY_START = new Date('2026-07-01T00:00:00+05:00');
+const PRFUND_URL   = 'https://script.google.com/macros/s/AKfycbxWqdyPxJ-mYOY3BZTPp2rur8JiqeyBhANuWeJJBxCYk6MBymNJfqpFJLynKRLXaJk/exec';
+const SALES_URL    = 'https://script.google.com/macros/s/AKfycbwyXOISC870jhSuP7xBlIu6iUiw9KleAcFYabXLPgbtgY-omSyWkt2TxbEG-zYELxeCUw/exec';
+const LOYALTY_URL  = 'https://script.google.com/macros/s/AKfycbzrMvFCmcJXcqRqqzZq6rOUirhEYUYr4KGdqgltmH5brAf9BRIecTIoaodfNfw_Z3x_/exec';
+const PR_MONTHLY_CAP = 233333;
+const PR_FY_CAP      = 2800000;
+
+// ── PORTAL REGISTRY ──────────────────────────────────────────────────
+const PORTAL_REGISTRY = [
+  { code:'CL-CHECKS',  name:'Chairlift Daily Checks',          type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'ADV-CHECKS', name:'MJSR Adventure Checks',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'GV-CHECKS',  name:'GV Adventure Park Daily Checks',  type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'HM-CHECKS',  name:'Heavy Machinery Daily Checks',    type:'Daily',  deadline:'10:30',    season:'hm',      scoring:'hm'           },
+  { code:'FIXED-AS',   name:'Fixed Asset Verification System',  type:'Event',  deadline:'Variable', season:'all',     scoring:'fa-coverage'  },
+  { code:'VH-FLEET',   name:'Vehicle and Machinery Fleet',     type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'FIRE-EX',    name:'Fire Extinguisher Management',    type:'Event',  deadline:'Monthly',  season:'all',     scoring:'monthly-fire' },
+  { code:'PR-FUND',    name:'PR Fund Tracker',                 type:'Event',  deadline:'Same day', season:'all',     scoring:'prfund'       },
+  { code:'SNOW-MK',    name:'Snowmaking Master Portal',        type:'Daily',  deadline:'07:00',    season:'winter',  scoring:'daily-winter' },
+  { code:'PISTENBULL', name:'PistenBully Master Portal',       type:'Daily',  deadline:'07:00',    season:'winter',  scoring:'daily-winter' },
+  { code:'GEN-MAINT',  name:'Generator Daily Checks',          type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily'        },
+  { code:'SALES-CL',   name:'Sales Daily Checklist',           type:'Daily',  deadline:'10:30',    season:'all',     scoring:'daily-closed' },
+  { code:'TVC-COUNT',  name:'Tourist Vehicle Count Portal',    type:'Daily',  deadline:'23:59',    season:'exclude', scoring:'exclude'      },
+  { code:'INN-TRACK',  name:'Samsons Inn Daily Tracker',       type:'Daily',  deadline:'23:59',    season:'all',     scoring:'inn-dual'     },
+  { code:'FB-STOCK',   name:'F&B Stock Control Portal',        type:'Daily',  deadline:'Same day', season:'all',     scoring:'fnb'          },
+  { code:'PROC-HUB',   name:'Samsons Group Procurement Hub',   type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'LEAVE-TRK',  name:'Annual Leave Tracker',            type:'Event',  deadline:'Variable', season:'exclude', scoring:'exclude'      },
+  { code:'TOUR-OPS',   name:'Tour Operator Engagement Portal', type:'Event',  deadline:'Variable', season:'all',     scoring:'weekly'       },
+  { code:'LOYALTY',    name:'MJSR Loyalty Programme',          type:'Daily',  deadline:'20% of customers', season:'all', scoring:'loyalty-share' },
+  { code:'GEN-CHECKS', name:'Generator Daily Checks (Legacy)', type:'Daily',  deadline:'10:30',    season:'exclude', scoring:'exclude'      },
+  { code:'STORE-CHK',  name:'Technical Stores Stock Take',     type:'Monthly',deadline:'1st 23:59',season:'all',     scoring:'store-monthly'},
+  { code:'CERT-VALID', name:'Annual Certifications and Inspections', type:'Daily', deadline:'Continuous', season:'all', scoring:'cert-daily' },
+  { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', season:'pending', scoring:'pending'      },
+  { code:'GUEST-FB',   name:'Guest Feedback and Complaints',   type:'Event',  deadline:'24h',      season:'all',     scoring:'guest-24h'    },
+];
+
+// ── DEPARTMENT DEFINITIONS ───────────────────────────────────────────
+const DEPARTMENTS = [
+  {
+    id:'technical', name:'Technical', custodians:'Bilal Tariq, Engr Ishtiaq, Engr Akram, Gohar, Engr Asif',
+    portals:['CL-CHECKS','GEN-MAINT','HM-CHECKS','FIRE-EX','SNOW-MK','PISTENBULL','STORE-CHK','CERT-VALID'],
+    split: null
+  },
+  {
+    id:'adventure', name:'Adventure', custodians:'Nasir Khan, Mutasim, Rahim Ullah',
+    portals:['ADV-CHECKS','GV-CHECKS'],
+    split:[
+      { label:'MJSR Adventure', portals:['ADV-CHECKS'] },
+      { label:'Green Valley',   portals:['GV-CHECKS']  }
+    ]
+  },
+  {
+    id:'commercial', name:'Commercial', custodians:'Shahzad Alam, Muhammad Saeed, Sales Team',
+    portals:['SALES-CL','LOYALTY','TOUR-OPS'],
+    split: null
+  },
+  {
+    id:'hospitality', name:'Hospitality', custodians:'Bawar Hussain, Abcar',
+    portals:['INN-TRACK','FB-STOCK'],
+    split:[
+      { label:'Samsons Inn', portals:['INN-TRACK'] },
+      { label:'F&B',         portals:['FB-STOCK']  }
+    ]
+  },
+  {
+    id:'admin', name:'Admin', custodians:'Ashfaq, Abid Nawaz',
+    portals:['FIXED-AS','VH-FLEET','PR-FUND'],
+    split:[
+      { label:'Fixed Assets',  portals:['FIXED-AS'] },
+      { label:'Vehicle Fleet', portals:['VH-FLEET'] },
+      { label:'PR Fund',       portals:['PR-FUND']  }
+    ]
+  },
+  {
+    id:'procurement', name:'Procurement', custodians:'Moiz (Procurement Manager)',
+    portals:['PROC-HUB'],
+    split: null
+  },
+  {
+    id:'clinic', name:'Clinic', custodians:'Dr Rahim',
+    portals:['CLINIC-DP'],
+    split: null
+  },
+  {
+    id:'guest', name:'Guest Experience', custodians:'All department heads (complaint owners)',
+    portals:['GUEST-FB'],
+    split: null
+  }
+];
+
+// Signed KPI agreement weights (FY2026-27). A department score is the weighted average
+// of its portal scores. Portals with nothing to score yet (off-season, before a deadline)
+// are left out and the remaining weights are rescaled. GRN follow-up is scored in the Procurement card.
+const DEPT_WEIGHTS = {
+  'CL-CHECKS':10,'GEN-MAINT':5,'FIRE-EX':10,'HM-CHECKS':10,'STORE-CHK':10,'CERT-VALID':10,'SNOW-MK':7.5,'PISTENBULL':7.5,
+  'ADV-CHECKS':35,'GV-CHECKS':35,
+  'SALES-CL':30,'LOYALTY':20,'TOUR-OPS':20,
+  'INN-TRACK':35,'FB-STOCK':35,
+  'FIXED-AS':25,'VH-FLEET':20,'PR-FUND':25,
+  'GUEST-FB':100 // Guest Experience card only, not part of the signed department agreements
+};
+
+// Adventure daily checks. Every activity must be checked on time for a full day.
+// Each activity is an equal share of the day.
+const DAILY_ACTIVITIES = {
+  'ADV-CHECKS':['Zipline','Giant Swing','Chairlift Rescue'],
+  'GV-CHECKS':['Ferris Wheel','Kids Zipline']
+};
+
+// Closed days come only from the Resort_Status tab (rows with the date and FALSE),
+// entered by Martin Schultz or Shahzad Alam. Every other day is an open day.
+const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL'];
+let resortClosedKeys = new Set();
+let resortCalendarOk = false;
+// Site-only closures (Resort_Status column G Scope). The site is closed, the rest of the resort is open.
+// GV = Green Valley Adventure Park, applies to GV-CHECKS only.
+let siteClosedKeys = {};
+const PORTAL_SITE = {'GV-CHECKS':'GV'};
+
+let allRows = [];
+let procKpiData = null;
+let procReconData = null;
+let prBudgetData = null;
+let prKpiData = null;
+let loyaltyData = null; // {customers:{date:n}, members:{date:n}, salesOk, visitsOk}
+let logPage = 1;
+const PAGE_SIZE = 100;
+
+document.addEventListener('DOMContentLoaded', loadData);
+
+// Fetch helper with retry. The GAS web apps occasionally return an empty or failed
+// response on a cold start, so each call is retried before the page gives up.
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function postJson(url, body, isGood, tries) {
+  let last = null;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const resp = await fetch(url, {method:'POST', cache:'no-store', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(body)});
+      const json = await resp.json();
+      last = json;
+      if (isGood(json)) return json;
+    } catch(e) { last = null; }
+    if (i < tries - 1) await sleep(1500 * (i + 1));
+  }
+  return last;
+}
+
+// PR Fund MJSR spend per FY month, read live from the PR Fund Tracker backend
+function fyMonthsToDate(){
+  return fyMonthKeys();
+}
+async function loadPrBudget(){
+  const months=fyMonthsToDate();
+  const res=await Promise.all(months.map(m=>postJson(PRFUND_URL,{action:'getBudget',month:m},j=>j&&typeof j.totalSpend==='number',2)));
+  if(res.some(r=>!r))return null;
+  return res.map((r,i)=>({month:months[i],spend:r.totalSpend}));
+}
+function prBudgetDetailHtml(b){
+  if(!b)return '<div style="margin-top:8px;font-size:11px;color:var(--warn)">Budget data did not load. Tap Refresh.</div>';
+  const fmt=n=>'PKR '+Math.round(n).toLocaleString('en-US');
+  const cur=b[b.length-1];
+  const fy=b.reduce((a,x)=>a+x.spend,0);
+  const curPct=Math.round(cur.spend/PR_MONTHLY_CAP*100);
+  const fyPct=Math.round(fy/PR_FY_CAP*100);
+  const over=b.filter(x=>x.spend>PR_MONTHLY_CAP);
+  const col=p=>p>100?'var(--red)':p>=90?'var(--warn)':'var(--text2)';
+  const line=(label,val,c)=>`<div style="display:flex;justify-content:space-between;gap:6px;font-size:11px;color:${c||'var(--text2)'};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono);text-align:right">${val}</span></div>`;
+  return `<div style="margin-top:8px">${line('This month',fmt(cur.spend)+' ('+curPct+'%)',col(curPct))}${line('FY to date',fmt(fy)+' ('+fyPct+'%)',col(fyPct))}${line('Months over cap',over.length?over.map(x=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(x.month.slice(5))-1]).join(', '):'None',over.length?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Caps ${fmt(PR_MONTHLY_CAP)} a month, ${fmt(PR_FY_CAP)} a year</div></div>`;
+}
+
+async function loadData() {
+  document.getElementById('lastRefresh').textContent = 'Loading...';
+  document.querySelector('.live-dot').style.background = '#f59e0b';
+  try {
+    const [json, pj, rj, prb, cal, prk, sales, lv] = await Promise.all([
+      postJson(GAS_URL, {action:'getComplianceData', limit:20000}, j => j && j.ok && Array.isArray(j.rows) && j.rows.length > 0, 4),
+      postJson(PROCHUB_URL, {action:'getKpiData'}, j => j && j.status === 'ok', 3),
+      postJson(PROCHUB_URL, {action:'getReconciliation'}, j => j && j.status === 'ok', 3),
+      loadPrBudget(),
+      postJson(GAS_URL, {action:'getResortCalendar'}, j => j && j.ok && Array.isArray(j.closed), 3),
+      postJson(PRFUND_URL, {action:'getComplianceKpis'}, j => j && j.status === 'ok' && Array.isArray(j.entries), 3),
+      postJson(SALES_URL, {action:'DASHBOARD', from:'2026-07-01', to:todayKey()}, j => j && j.ok && Array.isArray(j.summary), 3),
+      postJson(LOYALTY_URL, {action:'DAILY_VISITS'}, j => j && j.ok && Array.isArray(j.days), 3)
+    ]);
+    loyaltyData = null;
+    if (sales && sales.ok && lv && lv.ok) {
+      const customers = {}, members = {};
+      sales.summary.filter(x => x.Entity === 'Resort').forEach(x => { customers[String(x.Date).slice(0,10)] = Number(x.Customers) || 0; });
+      lv.days.filter(x => x.resort === 'MJSR').forEach(x => { members[x.date] = (members[x.date] || 0) + (Number(x.members) || 0); });
+      loyaltyData = { customers, members };
+    }
+    prBudgetData = prb;
+    prKpiData = (prk && prk.status === 'ok') ? prk : null;
+    resortClosedKeys = new Set((cal && cal.ok && Array.isArray(cal.closed)) ? cal.closed : []);
+    resortCalendarOk = !!(cal && cal.ok);
+    siteClosedKeys = {};
+    if (cal && cal.ok && cal.sites) Object.keys(cal.sites).forEach(sc => { siteClosedKeys[sc] = new Set(cal.sites[sc] || []); });
+    if (!json) throw new Error('No response from the Compliance Register. Tap Refresh.');
+    if (!json.ok) throw new Error(json.error || 'Unknown error');
+    if (!Array.isArray(json.rows) || json.rows.length === 0) throw new Error('The Submission Log came back empty. Tap Refresh.');
+    allRows = json.rows;
+    procKpiData = (pj && pj.status === 'ok') ? pj : null;
+    procReconData = (rj && rj.status === 'ok') ? rj : null;
+    document.getElementById('lastRefresh').textContent = 'Updated '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+    document.querySelector('.live-dot').style.background = '#0d9488';
+    document.getElementById('dashError').innerHTML = '';
+    renderDepartments(procKpiData, procReconData);
+    renderPortals();
+    renderLog();
+    renderAnalytics();
+    renderReview();
+  } catch(err) {
+    document.getElementById('lastRefresh').textContent = 'Error';
+    document.querySelector('.live-dot').style.background = '#b91c1c';
+    document.getElementById('dashError').innerHTML = '<div class="error-state">Failed to load data. '+err.message+'</div>';
+  }
+}
+
+function switchTab(tab) {
+  const tabs=['departments','portals','log','analytics','review'];
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+function parseRow(r){return{ts:r[0],portal:r[1],code:r[2],by:r[3],type:r[4],deadline:r[5],onTime:r[6],devMins:r[7],notes:r[10]||''};}
+// All day and month boundaries are Pakistan time (UTC+5), whatever the viewer's timezone.
+function pktParts(ts){const d=new Date(new Date(ts).getTime()+5*3600000);return{key:d.toISOString().slice(0,10),h:d.getUTCHours(),m:d.getUTCMinutes()};}
+function pktKey(ts){try{return pktParts(ts).key;}catch(e){return '';}}
+function pktMonthKey(ts){return pktKey(ts).slice(0,7);}
+function pktNowMins(){const p=pktParts(new Date());return p.h*60+p.m;}
+function todayKey(){return pktKey(new Date());}
+function nextKey(k){return new Date(new Date(k+'T12:00:00Z').getTime()+86400000).toISOString().slice(0,10);}
+function prevMonthKey(mk){let y=Number(mk.slice(0,4)),m=Number(mk.slice(5,7))-1;if(m===0){m=12;y--;}return y+'-'+String(m).padStart(2,'0');}
+function nextMonthKey(mk){let y=Number(mk.slice(0,4)),m=Number(mk.slice(5,7))+1;if(m===13){m=1;y++;}return y+'-'+String(m).padStart(2,'0');}
+// Scoring window. null means FY to date. The Performance Review tab sets a quarter
+// ({from,to} PKT date keys) while it calculates, then clears it again.
+let SCORE_WIN=null;
+const FY_END_KEY='2027-06-30';
+function winFrom(){return SCORE_WIN?SCORE_WIN.from:'2026-07-01';}
+function winEndNominal(){return SCORE_WIN?SCORE_WIN.to:FY_END_KEY;}
+function winTo(){const t=todayKey();return winEndNominal()<t?winEndNominal():t;}
+function inWin(ts){const k=pktKey(ts);return k>=winFrom()&&k<=winTo();}
+// Every PKT day in the scoring window, up to and including today
+function fyDayKeys(){const out=[];const t=winTo();for(let k=winFrom();k<=t;k=nextKey(k))out.push(k);return out;}
+function fyMonthKeys(){const out=[];const t=winTo().slice(0,7);for(let k=winFrom().slice(0,7);k<=t;k=nextMonthKey(k))out.push(k);return out;}
+function deadlineMins(dl){const m=String(dl||'').match(/^(\d{1,2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):23*60+59;}
+function isToday(ts){return pktKey(ts)===todayKey();}
+function isThisWeek(ts){try{return(new Date()-new Date(ts))<7*86400000;}catch(e){return false;}}
+function isLast30(ts){try{return(new Date()-new Date(ts))<30*86400000;}catch(e){return false;}}
+function isInFY(ts){try{return new Date(ts)>=FY_START;}catch(e){return false;}}
+function hoursAgo(ts){try{return(new Date()-new Date(ts))/3600000;}catch(e){return Infinity;}}
+function isWinterKey(k){const m=Number(k.slice(5,7)),day=Number(k.slice(8,10));return(m===12&&day>=15)||(m===1||m===2)||(m===3&&day<=15);}
+function isWinterDay(d){return isWinterKey(pktKey(d));}
+function isOnTime(r){return String(r.onTime)==='TRUE'||r.onTime===true;}
+// Readable deadline for the Submission Log (ISO timestamps shown in PKT)
+function fmtDeadline(dl){
+  const s=String(dl||'');
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s)){const d=new Date(s);if(!isNaN(d)){const p=pktParts(d);const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(p.key.slice(5,7))-1];return Number(p.key.slice(8,10))+' '+mon+' '+String(p.h).padStart(2,'0')+':'+String(p.m).padStart(2,'0');}}
+  return s||'–';
+}
+
+function fmtTs(ts){
+  if(!ts)return'–';
+  try{
+    const d=new Date(ts);if(isNaN(d))return'–';
+    const diff=(new Date()-d)/1000;
+    if(diff<60)return Math.round(diff)+'s ago';
+    if(diff<3600)return Math.round(diff/60)+'m ago';
+    if(diff<86400)return Math.round(diff/3600)+'h ago';
+    return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){return'–';}
+}
+
+function fmtTsFull(ts){
+  if(!ts)return'–';
+  try{const d=new Date(ts);if(isNaN(d))return'–';return d.toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});}catch(e){return'–';}
+}
+
+function kpiGrade(pct){
+  if(pct>=95)return{cls:'on-track',label:'On Track'};
+  if(pct>=85)return{cls:'needs-att',label:'Needs Attention'};
+  if(pct>=75)return{cls:'near-fail',label:'Near Failure'};
+  return{cls:'failed',label:'Failed'};
+}
+
+function barColor(cls){
+  return{'on-track':'var(--green)','needs-att':'var(--warn)','near-fail':'var(--orange)','failed':'var(--red)','event':'var(--teal)','pending':'var(--text3)'}[cls]||'var(--border2)';
+}
+
+function portalReg(code){return PORTAL_REGISTRY.find(p=>p.code===code);}
+
+// Closed days (PKT date keys) entered on the Resort_Status tab
+function buildClosedDays(rows){return new Set(resortClosedKeys);}
+// Closed days for one portal: resort closures plus that portal's own site closures
+function closedFor(code,closedDays){
+  const site=PORTAL_SITE[code];const sc=site&&siteClosedKeys[site];
+  if(!sc||!sc.size)return closedDays;
+  const out=new Set(closedDays);sc.forEach(k=>out.add(k));return out;
+}
+
+// Portal RAG status
+function portalRag(code,rows){
+  const reg=portalReg(code);
+  if(!reg||reg.season==='exclude'||reg.season==='pending')return'grey';
+  const sorted=rows.filter(r=>r.code===code&&isActivityRow(r)).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const last=sorted[0];
+  if(!last)return'grey';
+  if(code==='CERT-VALID'){
+    const f=certDays(rows);if(!f.latest)return'grey';
+    const r=f.latest.valid/f.latest.total;return r>=1?'green':r>=0.9?'yellow':'red';
+  }
+  if(code==='GUEST-FB'){
+    const f=guestComplaints(rows);
+    return f.overdue?'red':f.open?'yellow':'green';
+  }
+  if(code==='STORE-CHK'){
+    const f=storeTakes(rows);const open=f.months.find(m=>!m.closed);const closed=f.months.filter(m=>m.closed);const last=closed[closed.length-1];
+    const all=m=>m&&STORES.every(([s])=>f.done[s+'|'+m.key]);
+    return all(open)?'green':all(last)?'yellow':'red';
+  }
+  if(code==='FIRE-EX'){
+    const fr=rows.filter(r=>r.code==='FIRE-EX');const mk=todayKey().slice(0,7);
+    const cur=fireSitesForMonth(fr,mk);
+    if(FIRE_SITES.every(s=>cur.has(s)))return'green';
+    const prev=fireSitesForMonth(fr,prevMonthKey(mk));
+    return FIRE_SITES.every(s=>prev.has(s))?'yellow':'red';
+  }
+  const h=hoursAgo(last.ts);
+  if(code==='SNOW-MK'||code==='PISTENBULL'){if(!isWinterDay(new Date()))return'grey';}
+  if(code==='CL-CHECKS'){
+    const tr=rows.filter(r=>r.code==='CL-CHECKS'&&isToday(r.ts));
+    const hs=tr.some(r=>(r.notes||'').toLowerCase().includes('start of day'));
+    const hc=tr.some(r=>(r.notes||'').toLowerCase().includes('end of day'));
+    if(hs&&hc)return'green';if(hs||hc)return'yellow';return h<=26?'yellow':'red';
+  }
+  if(reg.type==='Daily')return h<=26?'green':h<=50?'yellow':'red';
+  return h<=72?'green':h<=168?'yellow':'red';
+}
+
+// ── F&B KPIs (agreed 27 Sep 2026) ──────────────────────────────────────
+// KPI 1  Receipts reconciled same day   (Stock In rows submitted on the filed date)
+// KPI 2  Date accuracy                  (all stock rows submitted on the filed date)
+// KPI 3  Daily activity                 (at least one stock entry every open day, closed days excused)
+// F&B score = average of the KPIs that have data. Scored from FY start; Jul to Sep recovered by backfill.
+const FNB_KPI_START = new Date('2026-07-01T00:00:00+05:00');
+function fnbKpis(rows, closedDays){
+  const now=new Date();
+  const fnbRows=rows.filter(r=>r.code==='FB-STOCK'&&new Date(r.ts)>=FNB_KPI_START&&inWin(r.ts));
+  const isOk=r=>String(r.onTime)==='TRUE'||r.onTime===true;
+  const receipts=fnbRows.filter(r=>r.type==='Stock In');
+  const entries=fnbRows.filter(r=>r.type==='Stock In'||r.type==='Stock Out');
+  const k1={ok:receipts.filter(isOk).length,tot:receipts.length};
+  const k2={ok:entries.filter(isOk).length,tot:entries.length};
+  const activeDays=new Set(fnbRows.map(r=>pktKey(r.ts)));
+  let open=0,active=0;
+  const tk=todayKey();
+  fyDayKeys().forEach(k=>{
+    if(k===tk){ if(activeDays.has(k)){open++;active++;} return; }
+    if(closedDays.has(k))return;
+    open++; if(activeDays.has(k))active++;
+  });
+  const k3={ok:active,tot:open};
+  const pcts=[k1,k2,k3].filter(k=>k.tot>0).map(k=>(k.ok/k.tot)*100);
+  const pct=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
+  return{k1,k2,k3,pct,weight:Math.max(open,1)};
+}
+function fnbDetailHtml(f){
+  const line=(label,k)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+'/'+k.tot+')':'–'}</span></div>`;
+  return `<div style="margin-top:8px">${line('Receipts same day',f.k1)}${line('Date accuracy',f.k2)}${line('Active open days',f.k3)}<div style="font-size:10px;color:var(--text3);margin-top:4px">Scored from 1 Jul 2026</div></div>`;
+}
+
+// ── PR FUND KPIs (agreed 14 Oct 2026) ──────────────────────────────────
+// KPI 1  Entries on time        each entry submitted on the same PKT day as the date recorded on it
+//                               (BACKFILLED and HISTORICAL rows are excluded, their timestamps are not real)
+// KPI 2  MJSR budget cap        MJSR spend at or under PKR 233,333 each month. A month over the cap fails at once,
+//                               a month under the cap counts once it has ended
+// KPI 3  Credit and IOU cleared every credit transaction and every Islamabad IOU bill for a month cleared by the
+//                               end of the following month. Scored once that deadline passes, or earlier if cleared.
+//                               A month with nothing to clear is not scored
+// PR Fund score = average of the KPIs that have something scored. Data read live from the PR Fund Tracker.
+function lastDayOfMonth(mk){const nm=nextMonthKey(mk);return new Date(new Date(nm+'-01T12:00:00Z').getTime()-86400000).toISOString().slice(0,10);}
+function prFundKpis(){
+  const d=prKpiData;if(!d)return null;
+  const cap=d.cap||PR_MONTHLY_CAP;const tk=todayKey();const curMonth=tk.slice(0,7);
+  const inW=k=>k&&k>=winFrom()&&k<=winTo();
+  const months=fyMonthKeys();
+  // KPI 1
+  const live=d.entries.filter(e=>!/BACKFILLED|HISTORICAL/i.test(e.billStatus)&&e.ts&&e.date);
+  const lateList=[];let k1ok=0,k1tot=0;
+  live.forEach(e=>{const sk=pktKey(e.ts);if(!inW(e.date))return;k1tot++;if(sk===e.date)k1ok++;else lateList.push({date:e.date,sub:sk,amount:e.amount,requester:e.requester});});
+  // KPI 2
+  const spend={},isbSpend={};
+  d.entries.forEach(e=>{if(e.office==='MJSR')spend[e.month]=(spend[e.month]||0)+e.amount;else if(e.office==='ISB')isbSpend[e.month]=(isbSpend[e.month]||0)+e.amount;});
+  const capMonths=[];let k2ok=0,k2tot=0;
+  months.forEach(mk=>{const sp=spend[mk]||0;const over=sp>cap;
+    if(mk===curMonth&&!over){capMonths.push({mk,sp,over,open:true});return;}
+    k2tot++;if(!over)k2ok++;capMonths.push({mk,sp,over,open:false});});
+  // KPI 3
+  const clearMonths=[];let k3ok=0,k3tot=0;
+  months.forEach(mk=>{
+    const due=lastDayOfMonth(nextMonthKey(mk));const passed=tk>due;const items=[];
+    d.credits.filter(c=>c.dateLogged.slice(0,7)===mk).forEach(c=>{
+      const ok=c.cleared&&(!c.clearedOn||c.clearedOn<=due);
+      items.push({label:'Credit '+c.requestNo+' ('+c.account+', PKR '+Math.round(c.value).toLocaleString('en-US')+')',ok,open:!ok&&!passed,late:c.cleared&&c.clearedOn>due});});
+    if((isbSpend[mk]||0)>0){
+      const b=d.isbBills.find(x=>x.month===mk);const paidOn=b&&b.paid?(b.paidOn||pktKey(b.ts)):'';
+      const ok=!!(b&&b.paid&&paidOn&&paidOn<=due);
+      items.push({label:'Islamabad IOU bill PKR '+Math.round(isbSpend[mk]).toLocaleString('en-US'),ok,open:!ok&&!passed,late:!!(b&&b.paid&&paidOn>due)});}
+    if(!items.length)return;
+    const allOk=items.every(i=>i.ok);
+    if(!passed&&!allOk){clearMonths.push({mk,due,items,status:'open'});return;}
+    k3tot++;if(allOk)k3ok++;clearMonths.push({mk,due,items,status:allOk?'ok':'fail'});
+  });
+  const k1={ok:k1ok,tot:k1tot},k2={ok:k2ok,tot:k2tot},k3={ok:k3ok,tot:k3tot};
+  const pcts=[k1,k2,k3].filter(k=>k.tot>0).map(k=>k.ok/k.tot*100);
+  const pct=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
+  return{k1,k2,k3,pct,weight:Math.max(months.length*3,1),lateList,capMonths,clearMonths,cap};
+}
+function prKpiDetailHtml(f){
+  if(!f)return '<div style="margin-top:8px;font-size:11px;color:var(--warn)">PR Fund KPI data did not load. Tap Refresh.</div>';
+  const line=(label,k)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${k.tot&&k.ok<k.tot?'var(--red)':'var(--text2)'};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+'/'+k.tot+')':'–'}</span></div>`;
+  return `<div style="margin-top:8px">${line('Entries on time',f.k1)}${line('Months within MJSR cap',f.k2)}${line('Credit and IOU cleared',f.k3)}</div>`;
+}
+
+// ── LOYALTY SHARE OF CUSTOMERS (agreed 14 Oct 2026) ────────────────────
+// Target: loyalty members checked in for at least 20% of the day's resort customers.
+// Customers come from the Daily Sales Reconciliation (Resort line), check-ins from the Loyalty Programme
+// (unique MJSR members per day). Partial credit, a day at 10% scores 50%, 20% or more scores 100%.
+// Scored from 1 Aug 2026 (first month with sales data). Today is not scored until its sales are uploaded
+// and the day has ended. Days with no sales upload cannot be scored and are listed separately.
+const LOYALTY_TARGET=0.20;
+const LOYALTY_START='2026-08-01';
+function loyaltyShare(){
+  const d=loyaltyData;if(!d)return null;
+  const tk=todayKey();const days=[];const noSales=[];
+  fyDayKeys().forEach(k=>{
+    if(k<LOYALTY_START||k>=tk)return;
+    const c=d.customers[k];
+    if(c===undefined){noSales.push(k);return;}
+    if(!c)return; // no customers, nothing to measure
+    const m=d.members[k]||0;const share=m/c;
+    days.push({k,c,m,share,score:Math.min(1,share/LOYALTY_TARGET)});
+  });
+  const ot=days.reduce((a,x)=>a+x.score,0);
+  const tc=days.reduce((a,x)=>a+x.c,0),tm=days.reduce((a,x)=>a+x.m,0);
+  return{days,noSales,exp:days.length,ot,pct:days.length?Math.round(ot/days.length*100):null,share:tc?tm/tc:0,tc,tm};
+}
+
+// ── FIXED ASSETS COVERAGE (agreed 27 Sep 2026) ────────────────────────
+// Every asset must be verified once per FY quarter. The watcher script writes
+// Coverage rows ("Coverage FY2026-27 Q1, 212 of 627 assets (33.8%), to date").
+// Closed quarters are scored on their final %. The current quarter shows progress only.
+const FA_QUARTERS = [
+  { label:'FY2026-27 Q1', end:new Date('2026-09-30T23:59:59+05:00') },
+  { label:'FY2026-27 Q2', end:new Date('2026-12-31T23:59:59+05:00') },
+  { label:'FY2026-27 Q3', end:new Date('2027-03-31T23:59:59+05:00') },
+  { label:'FY2026-27 Q4', end:new Date('2027-06-30T23:59:59+05:00') }
+];
+const FA_QUARTER_WEIGHT = 13; // a quarter weighs the same as 13 weekly windows
+function faCoverage(rows){
+  const now=new Date();
+  const latest={};
+  rows.filter(r=>r.code==='FIXED-AS'&&r.type==='Coverage').forEach(r=>{
+    const m=String(r.notes||'').match(/Coverage (FY\d{4}-\d{2} Q\d), (\d+) of (\d+)/);
+    if(!m)return;
+    const ts=new Date(r.ts);
+    if(!latest[m[1]]||ts>latest[m[1]].ts)latest[m[1]]={ts,count:Number(m[2]),total:Number(m[3])};
+  });
+  const quarters=FA_QUARTERS.map((q,i)=>{
+    const prevEnd=i===0?FY_START:FA_QUARTERS[i-1].end;
+    const started=now>prevEnd;
+    const closed=now>q.end;
+    const c=latest[q.label];
+    const pct=c&&c.total>0?Math.round(c.count/c.total*1000)/10:(closed?0:null);
+    const endKey=pktKey(q.end);
+    return{label:q.label.replace('FY2026-27 ',''),started,closed,count:c?c.count:0,total:c?c.total:627,pct,endKey};
+  }).filter(q=>q.started&&q.endKey>=winFrom()&&q.endKey<=winEndNominal());
+  const closedQ=quarters.filter(q=>q.closed);
+  const pct=closedQ.length?Math.round(closedQ.reduce((a,q)=>a+(q.pct||0),0)/closedQ.length):null;
+  return{quarters,closedCount:closedQ.length,pct};
+}
+function faDetailHtml(f){
+  const lines=f.quarters.map(q=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span>${q.label} ${q.closed?'final':'to date'}</span><span style="font-family:var(--mono)">${q.count} of ${q.total} (${q.pct!==null?q.pct:0}%)</span></div>`).join('');
+  return `<div style="margin-top:8px">${lines}<div style="font-size:10px;color:var(--text3);margin-top:4px">All assets verified once per quarter</div></div>`;
+}
+
+// ── FIRE-EX MONTHLY SITE COVERAGE ─────────────────────────────────────
+const FIRE_SITES=['MJSR','SI','GV','VM'];
+function fireSiteOf(r){const m=String(r.notes||'').match(/(MJSR|SI|GV|VM|MH|FG)\s*$/);return m?m[1]:null;}
+function fireSitesForMonth(fireRows,mk){
+  const s=new Set();
+  fireRows.forEach(r=>{if(pktMonthKey(r.ts)===mk){const site=fireSiteOf(r);if(site)s.add(site);}});
+  return s;
+}
+// Rows written by background watchers are not user activity
+function isActivityRow(r){return r.type!=='Coverage';}
+
+// ── SAMSONS INN DAILY RULE (revised 27 Sep 2026) ──────────────────────
+// Set to the Inn's actual working pattern. A day passes if the Inn submitted at any
+// time that calendar day, up to 23:59 PKT. A day with no submission fails.
+// All-year, no closed-day exclusion.
+function innDays(rows){
+  const today=todayKey();
+  const status={};
+  rows.filter(r=>r.code==='INN-TRACK'&&isActivityRow(r)).forEach(r=>{
+    const k=pktKey(r.ts);if(k)status[k]=true;
+  });
+  let exp=0,ot=0,late=0,missed=0;const missedKeys=[];
+  fyDayKeys().forEach(key=>{
+    if(key===today&&!status[key])return;
+    exp++;
+    if(status[key])ot++;else{missed++;missedKeys.push(key);}
+  });
+  return{exp,ot,late,missed,missedKeys};
+}
+function innDetailHtml(f){
+  const line=(label,n,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${n} of ${f.exp} days</span></div>`;
+  return `<div style="margin-top:8px">${line('Submitted by 23:59',f.ot,'var(--text2)')}${line('No submission',f.missed,f.missed?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Any time on the day counts. Scored from 1 Jul 2026, PKT</div></div>`;
+}
+
+// ── TECHNICAL STORES MONTHLY STOCK TAKE (agreed 27 Sep 2026) ──────────
+// Each of the 7 stores must finalise its stock take for a month by the 1st day
+// of the following month (23:59 PKT on the 1st). Scored per store per month from FY start.
+// A month is scored once its deadline has passed; the current month only counts stores already done.
+const STORES=[['chairlift','Chairlift'],['civil','Civil'],['pistenbully','PistenBully'],['electrical','Electrical'],['zipline','Zipline'],['giantswing','Giant Swing'],['snowmaking','Snowmaking']];
+// Collapsible block used on the Technical card (closed by default)
+function collapseBlock(title,summary,summaryColor,body){
+  return `<details class="tile-collapse" style="border-bottom:1px solid var(--border)"><summary style="list-style:none;cursor:pointer;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)">${title}</span><span style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;font-family:var(--mono);color:${summaryColor}">${summary}</span><span class="tc-arrow" style="font-size:10px;color:var(--text3);transition:transform .2s">&#9660;</span></span></summary><div style="padding:0 14px 8px">${body}</div></details>`;
+}
+function storeTakes(rows){
+  const done={};
+  rows.filter(r=>r.code==='STORE-CHK').forEach(r=>{
+    const m=String(r.notes||'').match(/Stock take (\w+) (\d{4}-\d{2})/);
+    if(!m)return;
+    // Credit goes by the PKT date the take was finalised. A take finalised on the 1st
+    // closes the previous month (deadline is 23:59 on the 1st), any other day counts for that month.
+    const k=pktKey(r.ts);if(!k)return;
+    const month=k.slice(8,10)==='01'?prevMonthKey(k.slice(0,7)):k.slice(0,7);
+    done[m[1]+'|'+month]=true;
+  });
+  const now=new Date();const months=[];
+  for(let y=2026,mo=7;;){
+    const key=y+'-'+String(mo).padStart(2,'0');
+    const ny=mo===12?y+1:y,nm=mo===12?1:mo+1;
+    const deadline=new Date(ny+'-'+String(nm).padStart(2,'0')+'-01T23:59:00+05:00');
+    const start=new Date(key+'-01T00:00:00+05:00');
+    if(start>now)break;
+    if(key>=winFrom().slice(0,7)&&key<=winEndNominal().slice(0,7))months.push({key,deadline,closed:now>deadline});
+    y=ny;mo=nm;
+  }
+  let exp=0,ot=0;
+  months.forEach(m=>STORES.forEach(([s])=>{
+    const ok=!!done[s+'|'+m.key];
+    if(m.closed||ok){exp++;if(ok)ot++;}
+  }));
+  return{exp,ot,months,done};
+}
+function storeDetailHtml(f){
+  const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const lbl=k=>names[Number(k.slice(5))-1]+' '+k.slice(0,4);
+  const closed=f.months.filter(m=>m.closed);
+  const last=closed[closed.length-1];
+  const open=f.months.find(m=>!m.closed);
+  const cnt=m=>STORES.filter(([s])=>f.done[s+'|'+m.key]).length;
+  const line=(label,val,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:3px"><span>${label}</span><span style="font-family:var(--mono)">${val}</span></div>`;
+  let body='',summary='',sc='var(--text2)';
+  if(last){const n=cnt(last);body+=line(lbl(last.key)+' (deadline passed)',n+' of 7 stores',n<7?'var(--red)':'var(--text2)');}
+  if(open){
+    const n=cnt(open);
+    const missing=STORES.filter(([s])=>!f.done[s+'|'+open.key]).map(([,l])=>l);
+    const dl=open.deadline.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    body+=line(lbl(open.key)+' (due '+dl+')',n+' of 7 stores','var(--text2)');
+    if(missing.length)body+=`<div style="font-size:10px;color:var(--warn);margin-top:3px">Outstanding: ${missing.join(', ')}</div>`;
+    summary=names[Number(open.key.slice(5))-1]+' '+n+'/7, due '+dl;
+    sc=n<7?'var(--warn)':'var(--green)';
+  }else if(last){const n=cnt(last);summary=names[Number(last.key.slice(5))-1]+' '+n+'/7';sc=n<7?'var(--red)':'var(--green)';}
+  return collapseBlock('Stores monthly stock take',summary,sc,body);
+}
+
+// ── ANNUAL CERTIFICATIONS (agreed 27 Sep 2026) ────────────────────────
+// Every required international vendor certificate must be valid at all times.
+// CertWatcher writes one CERT-VALID row a day ("Certificates 27 of 30 valid (90%) | Not valid: ... | Expiring within 60 days: ...").
+// Score = average of the daily % valid since the first check.
+function certDays(rows){
+  const byDay={};
+  rows.filter(r=>r.code==='CERT-VALID').forEach(r=>{
+    const m=String(r.notes||'').match(/Certificates (\d+) of (\d+) valid/);
+    if(!m||!inWin(r.ts))return;
+    const key=pktParts(r.ts).key;
+    if(!byDay[key]||new Date(r.ts)>new Date(byDay[key].ts))byDay[key]={ts:r.ts,valid:Number(m[1]),total:Number(m[2]),notes:String(r.notes)};
+  });
+  const days=Object.keys(byDay).sort().map(k=>byDay[k]);
+  const pcts=days.filter(d=>d.total>0).map(d=>d.valid/d.total*100);
+  const pct=pcts.length?Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length):null;
+  return{days,latest:days[days.length-1]||null,pct,count:pcts.length};
+}
+function certDetailHtml(f){
+  if(!f.latest)return '';
+  const parts=f.latest.notes.split(' | ');
+  const bad=(parts.find(p=>p.startsWith('Not valid:'))||'').replace('Not valid: ','');
+  const soon=(parts.find(p=>p.startsWith('Expiring within'))||'').replace(/Expiring within \d+ days: /,'');
+  let body='';
+  if(bad&&bad!=='none')body+=`<div style="font-size:10px;color:var(--red);margin-top:3px">Not valid: ${bad}</div>`;
+  body+=`<div style="font-size:10px;color:${soon&&soon!=='none'?'var(--warn)':'var(--text3)'};margin-top:3px">Expiring within 60 days: ${soon||'none'}</div>`;
+  const allOk=f.latest.valid>=f.latest.total;
+  const warn=soon&&soon!=='none';
+  const summary=f.latest.valid+'/'+f.latest.total+' valid'+(warn?', renewals due':'');
+  return collapseBlock('Annual certifications',summary,allOk?(warn?'var(--warn)':'var(--green)'):'var(--red)',body);
+}
+
+// ── GUEST COMPLAINTS (agreed 9 Nov 2026) ─────────────────────────────
+// The Guest Feedback portal writes a "Complaint" row when a complaint arrives and a "Resolved" row
+// (deadline, on time, deviation) the first time it is resolved or closed. Notes start with the GF ID.
+// Score = complaints resolved within 24 hours / complaints due. A complaint is due once resolved,
+// or once 24 hours have passed without a resolution (counted as a miss). Complaints still inside
+// their 24 hours are not scored yet. Nothing scored until the first complaint is due.
+const GUEST_RESOLVE_MS=24*3600000;
+function guestComplaints(rows){
+  const comps={},resolved={};
+  rows.filter(r=>r.code==='GUEST-FB').forEach(r=>{
+    const id=String(r.notes||'').split(' | ')[0].trim();if(!id)return;
+    const parts=String(r.notes||'').split(' | ');
+    if(r.type==='Complaint'){if(!comps[id])comps[id]={id,ts:r.ts,dept:parts[1]||'',loc:parts[2]||''};}
+    else if(r.type==='Resolved'){if(!resolved[id])resolved[id]={ts:r.ts,ok:isOnTime(r),dept:parts[1]||''};}
+  });
+  const now=Date.now();
+  const list=Object.values(comps).filter(c=>inWin(c.ts)).map(c=>{
+    const res=resolved[c.id];const dueMs=new Date(c.ts).getTime()+GUEST_RESOLVE_MS;
+    const state=res?(res.ok?'ok':'late'):(now>dueMs?'overdue':'open');
+    return Object.assign({},c,{dept:(res&&res.dept)||c.dept,state});
+  });
+  const due=list.filter(c=>c.state!=='open');const ok=due.filter(c=>c.state==='ok').length;
+  const byDept={};
+  list.forEach(c=>{const d=byDept[c.dept]=byDept[c.dept]||{dept:c.dept,total:0,due:0,ok:0,open:0,overdue:0};
+    d.total++;if(c.state!=='open')d.due++;if(c.state==='ok')d.ok++;if(c.state==='open')d.open++;if(c.state==='overdue')d.overdue++;});
+  return{list,exp:due.length,ot:ok,pct:due.length?Math.round(ok/due.length*100):null,
+    open:list.filter(c=>c.state==='open').length,overdue:list.filter(c=>c.state==='overdue').length,
+    late:list.filter(c=>c.state==='late').length,byDept:Object.values(byDept).sort((a,b)=>a.dept.localeCompare(b.dept))};
+}
+function guestDetailHtml(f){
+  if(!f.list.length)return '<div style="padding:10px 14px;font-size:12px;color:var(--text3)">No guest complaints logged yet. Scored once the first complaint is due.</div>';
+  const body=f.byDept.map(d=>{const p=d.due?Math.round(d.ok/d.due*100):null;
+    return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:4px"><span>${d.dept||'Unassigned'}</span><span style="font-family:var(--mono);color:${p===null?'var(--text3)':p>=95?'var(--green)':p>=75?'var(--warn)':'var(--red)'}">${p===null?'–':p+'%'} &middot; ${d.ok}/${d.due} on time${d.overdue?', '+d.overdue+' overdue':''}${d.open?', '+d.open+' open':''}</span></div>`;}).join('');
+  const summary=f.list.length+' complaints'+(f.overdue?', '+f.overdue+' overdue':'');
+  return '<div style="padding:4px 0">'+collapseBlock('Complaints resolved within 24 h, by department',summary,f.overdue?'var(--red)':'var(--green)',body)+'</div>';
+}
+
+// ── FY SCORE CALCULATION ─────────────────────────────────────────────
+// Rules applied to every portal:
+//  1. Days and months are Pakistan time.
+//  2. Nothing is scored before its deadline. Today counts once the deadline has passed
+//     (or earlier if already complete). The current week, month or pre-winter window
+//     only counts once it has closed, or earlier if already done.
+//  3. A missing submission scores zero for that day, week or month.
+function dailyDayScore(code,k,rowsByDay){
+  const dayRows=rowsByDay[code+'|'+k]||[];
+  if(code==='CL-CHECKS'){
+    const n=dayRows.map(r=>String(r.notes||'').toLowerCase());
+    return(n.some(x=>x.includes('start of day'))&&n.some(x=>x.includes('end of day')))?1:0;
+  }
+  const acts=DAILY_ACTIVITIES[code];
+  if(acts){
+    const okNotes=dayRows.filter(isOnTime).map(r=>String(r.notes||'').trim().toLowerCase());
+    const done=acts.filter(a=>okNotes.includes(a.toLowerCase())).length;
+    return done/acts.length;
+  }
+  return dayRows.some(isOnTime)?1:0;
+}
+function calcScore(codes,rows,closedDays){
+  const reg=codes.map(c=>portalReg(c)).filter(Boolean);
+  const scoredRegs=reg.filter(r=>r.scoring!=='exclude'&&r.scoring!=='pending');
+  if(!scoredRegs.length)return null;
+
+  const fyRows=rows.filter(r=>isInFY(r.ts));
+  const now=new Date();
+  const tk=todayKey();
+  const nowMins=pktNowMins();
+  const dayKeys=fyDayKeys();
+
+  let exp=0,ot=0;
+
+  const rowsByDay={};
+  fyRows.forEach(r=>{const key=r.code+'|'+pktKey(r.ts);(rowsByDay[key]=rowsByDay[key]||[]).push(r);});
+
+  for(const sreg of scoredRegs){
+    const code=sreg.code;
+
+    if(sreg.scoring==='daily'||sreg.scoring==='daily-closed'||sreg.scoring==='daily-winter'){
+      const dlm=code==='CL-CHECKS'?23*60+59:deadlineMins(sreg.deadline);
+      const cdp=closedFor(code,closedDays);
+      dayKeys.forEach(k=>{
+        if(sreg.scoring==='daily-winter'&&!isWinterKey(k))return;
+        if(sreg.scoring==='daily-closed'&&cdp.has(k))return;
+        const sc=dailyDayScore(code,k,rowsByDay);
+        if(k===tk&&nowMins<dlm&&sc<1)return; // today not yet due
+        exp++;ot+=sc;
+      });
+    }
+
+    else if(sreg.scoring==='hm'){
+      // Pre-winter service, due by 31 Oct. Scored once done, or as a fail once the deadline passes.
+      const preWinterDeadline=new Date('2026-10-31T23:59:59+05:00');
+      const preWinterDone=fyRows.some(r=>r.code==='HM-CHECKS'&&new Date(r.ts)<=preWinterDeadline);
+      const pwInWin=winFrom()<='2026-10-31'&&winEndNominal()>='2026-10-31';
+      if(pwInWin&&(preWinterDone||now>preWinterDeadline)){exp++;if(preWinterDone)ot++;}
+      // Winter daily checks
+      const dlm=deadlineMins(sreg.deadline);
+      dayKeys.forEach(k=>{
+        if(!isWinterKey(k))return;
+        const sc=dailyDayScore('HM-CHECKS',k,rowsByDay);
+        if(k===tk&&nowMins<dlm&&sc<1)return;
+        exp++;ot+=sc;
+      });
+    }
+
+    else if(sreg.scoring==='monthly-fire'){
+      // All 4 sites (MJSR, Samsons Inn, Green Valley, Vehicles) inspected each PKT calendar month.
+      // A month is scored once it has ended, or earlier if all 4 are already done.
+      const fireRows=fyRows.filter(r=>r.code==='FIRE-EX');
+      const curMonth=tk.slice(0,7);
+      fyMonthKeys().forEach(mk=>{
+        const sites=fireSitesForMonth(fireRows,mk);
+        const allDone=FIRE_SITES.every(s=>sites.has(s));
+        if(mk===curMonth&&!allDone)return;
+        exp++;if(allDone)ot++;
+      });
+    }
+
+    else if(sreg.scoring==='quarterly'){
+      for(let qStart=new Date(FY_START);qStart<=now;qStart=new Date(qStart.getTime()+90*86400000)){
+        const qEnd=new Date(qStart.getTime()+90*86400000);
+        const has=fyRows.some(r=>r.code===code&&new Date(r.ts)>=qStart&&new Date(r.ts)<qEnd);
+        if(qEnd>now&&!has)continue;
+        exp++;if(has)ot++;
+      }
+    }
+
+    else if(sreg.scoring==='cert-daily'){
+      const f=certDays(rows);if(f.pct!==null){exp+=f.count;ot+=f.count*f.pct/100;}
+    }
+
+    else if(sreg.scoring==='store-monthly'){
+      const f=storeTakes(rows);exp+=f.exp;ot+=f.ot;
+    }
+
+    else if(sreg.scoring==='inn-dual'){
+      const f=innDays(rows);exp+=f.exp;ot+=f.ot;
+    }
+
+    else if(sreg.scoring==='fa-coverage'){
+      const f=faCoverage(rows);
+      if(f.pct!==null){exp+=FA_QUARTER_WEIGHT*f.closedCount;ot+=FA_QUARTER_WEIGHT*f.closedCount*f.pct/100;}
+    }
+
+    else if(sreg.scoring==='fnb'){
+      const f=fnbKpis(rows,closedDays);
+      if(f.pct!==null){exp+=f.weight;ot+=f.weight*f.pct/100;}
+    }
+
+    else if(sreg.scoring==='loyalty-share'){
+      const f=loyaltyShare();
+      if(f&&f.exp){exp+=f.exp;ot+=f.ot;}
+    }
+
+    else if(sreg.scoring==='guest-24h'){
+      const f=guestComplaints(rows);
+      if(f.exp){exp+=f.exp;ot+=f.ot;}
+    }
+
+    else if(sreg.scoring==='prfund'){
+      const f=prFundKpis();
+      if(f&&f.pct!==null){exp+=f.weight;ot+=f.weight*f.pct/100;}
+    }
+
+    else if(sreg.scoring==='weekly'){
+      // At least one submission in each 7-day window from 1 Jul. The current window
+      // only counts once it closes, or earlier if a submission is already in.
+      for(let wStart=new Date(FY_START);wStart<=now;wStart=new Date(wStart.getTime()+7*86400000)){
+        const wEnd=new Date(wStart.getTime()+7*86400000);
+        const wk=pktKey(wStart);if(wk<winFrom()||wk>winTo())continue;
+        const has=fyRows.some(r=>r.code===code&&isActivityRow(r)&&new Date(r.ts)>=wStart&&new Date(r.ts)<wEnd);
+        if(wEnd>now&&!has)continue;
+        exp++;if(has)ot++;
+      }
+    }
+  }
+
+  if(exp===0)return null;
+  return{pct:Math.round((ot/exp)*100),ot:Math.round(ot*10)/10,exp};
+}
+
+// Department score, weighted by the signed KPI agreement.
+// Portals with nothing scored yet are left out and the other weights rescaled.
+function deptScore(codes,rows,closedDays){
+  let wSum=0,acc=0;const parts=[];
+  codes.forEach(code=>{
+    const w=DEPT_WEIGHTS[code];if(!w)return;
+    const sc=calcScore([code],rows,closedDays);
+    if(!sc)return;
+    wSum+=w;acc+=w*sc.pct;parts.push({code,w,pct:sc.pct});
+  });
+  if(!wSum)return null;
+  return{pct:Math.round(acc/wSum),parts,weightUsed:wSum};
+}
+
+// ── DEPARTMENTS ──────────────────────────────────────────────────────
+function renderDepartments(procKpi, procRecon){
+  const rows=allRows.map(parseRow);
+  const now=new Date();
+  const closedDays=buildClosedDays(rows);
+
+  // Summary strip
+  const todaySubs=rows.filter(r=>isToday(r.ts)).length;
+  const weekSubs=rows.filter(r=>isThisWeek(r.ts)).length;
+  const scheduled=rows.filter(r=>r.deadline&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day'&&r.onTime!=='');
+  const otCount=scheduled.filter(r=>String(r.onTime)==='TRUE'||r.onTime===true).length;
+  const otPct=scheduled.length?Math.round((otCount/scheduled.length)*100):100;
+  const activeCodes=new Set(rows.filter(r=>isThisWeek(r.ts)).map(r=>r.code)).size;
+
+  // Missed today: daily portals in season, on an open day, whose deadline has passed (PKT)
+  const tk=todayKey();const nowMins=pktNowMins();
+  const missedToday=PORTAL_REGISTRY.filter(p=>{
+    if(!['daily','daily-closed','daily-winter','hm'].includes(p.scoring))return false;
+    if((p.scoring==='daily-winter'||p.scoring==='hm')&&!isWinterKey(tk))return false;
+    if(p.scoring==='daily-closed'&&closedFor(p.code,closedDays).has(tk))return false;
+    const dlm=p.code==='CL-CHECKS'?deadlineMins('10:30'):deadlineMins(p.deadline);
+    if(nowMins<dlm)return false;
+    if(p.code==='CL-CHECKS')return !rows.some(r=>r.code==='CL-CHECKS'&&isToday(r.ts)&&String(r.notes||'').toLowerCase().includes('start of day'));
+    const acts=DAILY_ACTIVITIES[p.code];
+    const today=rows.filter(r=>r.code===p.code&&isToday(r.ts));
+    if(acts)return acts.some(a=>!today.some(r=>String(r.notes||'').trim().toLowerCase()===a.toLowerCase()));
+    return !today.length;
+  }).map(p=>p.code);
+  const deptPcts=[];
+
+  document.getElementById('statPortals').textContent=activeCodes;
+  document.getElementById('statToday').textContent=todaySubs;
+  document.getElementById('statWeek').textContent=weekSubs;
+  document.getElementById('statOnTime').textContent=otPct+'%';
+  document.getElementById('statMissed').textContent=missedToday.length;
+
+  // Missed strip
+  const ms=document.getElementById('missedStrip');
+  if(missedToday.length){
+    const names=missedToday.map(c=>{const r=portalReg(c);return r?r.name:c;});
+    ms.innerHTML=`<div class="missed-strip"><div class="missed-label">Missed Today (${missedToday.length})</div><div class="missed-items">${names.join(' &middot; ')}</div></div>`;
+  }else{ms.innerHTML='';}
+
+  // Seasonal note
+  const sn=document.getElementById('seasonalNote');
+  const winterNow=isWinterDay(now);
+  const preWinterDeadline=new Date('2026-10-31T23:59:59+05:00');
+  const daysToDeadline=Math.ceil((preWinterDeadline-now)/86400000);
+  const hmDone=rows.some(r=>r.code==='HM-CHECKS'&&isInFY(r.ts)&&new Date(r.ts)<=preWinterDeadline);
+  let notes=[];
+  if(!winterNow){
+    notes.push('SNOW-MK and PISTENBULL off-season (active 15 Dec &ndash; 15 Mar)');
+    if(!hmDone&&daysToDeadline>0)notes.push('<strong>HM-CHECKS pre-winter service due by 31 Oct, '+daysToDeadline+' day'+(daysToDeadline!==1?'s':'')+' remaining</strong>');
+    else if(!hmDone&&daysToDeadline<=0)notes.push('<strong style="color:var(--red)">HM-CHECKS pre-winter service OVERDUE, deadline was 31 Oct</strong>');
+    else notes.push('HM-CHECKS pre-winter service check complete');
+  }else{
+    notes.push('Winter season active, SNOW-MK, PISTENBULL and HM-CHECKS included in daily scoring');
+  }
+  if(!resortCalendarOk)notes.push('<strong style="color:var(--warn)">Resort calendar did not load, every day treated as open. Tap Refresh.</strong>');
+  else{
+    const gv=siteClosedKeys.GV?[...siteClosedKeys.GV].filter(k=>k>='2026-07-01').length:0;
+    notes.push('Closed days this FY (Resort_Status) '+[...closedDays].filter(k=>k>='2026-07-01').length+(gv?', Green Valley only '+gv:''));
+  }
+  sn.innerHTML=`<div class="seasonal-note">${notes.join(' &middot; ')}</div>`;
+
+  // Build dept cards
+  const grid=document.getElementById('deptGrid');
+  grid.innerHTML='';
+
+  DEPARTMENTS.forEach(dept=>{
+    const isPending=dept.id==='clinic';
+    const dScore=isPending?null:deptScore(dept.portals,rows,closedDays);
+    let scorePct=dScore?dScore.pct:null;
+    let grade=scorePct!==null?kpiGrade(scorePct):null;
+    let scoreDisplay=scorePct!==null?(scorePct+'%'):'–';
+    let scoreCls=grade?grade.cls:(isPending?'pending':'event');
+
+    // Missed today in this dept
+    const deptMissed=missedToday.filter(c=>dept.portals.includes(c));
+
+    // Sub-section HTML
+    let subHtml='';
+    if(dept.split){
+      const colClass=dept.split.length===3?'three-col':'two-col';
+      subHtml=`<div class="sub-sections ${colClass}">`;
+      dept.split.forEach(sub=>{
+        const subScore=deptScore(sub.portals,rows,closedDays);
+        let spct=subScore?subScore.pct:null;
+        let sg=spct!==null?kpiGrade(spct):null;
+        let scls=sg?sg.cls:'event';
+        const allExcluded=sub.portals.every(c=>{const r=portalReg(c);return r&&(r.scoring==='exclude'||r.scoring==='pending');});
+        if(allExcluded){spct=null;sg=null;scls='excluded';}
+        const subMissed=missedToday.filter(c=>sub.portals.includes(c));
+
+        // PROC-HUB sub-section: no longer used (Procurement is its own dept card)
+        let procDetail='';
+        if(sub.portals.includes('FB-STOCK'))procDetail=fnbDetailHtml(fnbKpis(rows,closedDays));
+        if(sub.portals.includes('INN-TRACK'))procDetail=innDetailHtml(innDays(rows));
+        if(sub.portals.includes('FIXED-AS'))procDetail=faDetailHtml(faCoverage(rows));
+        if(sub.portals.includes('PR-FUND'))procDetail=prKpiDetailHtml(prFundKpis())+prBudgetDetailHtml(prBudgetData);
+
+        subHtml+=`<div class="sub-section">
+          <div class="sub-label">${sub.label}</div>
+          <div class="sub-score ${allExcluded?'pending':scls}">${spct!==null?(spct+'%'):'–'}</div>
+          ${sg?`<div class="sub-grade ${scls}">${sg.label}</div>`:(allExcluded?'<div class="sub-grade pending">Pending</div>':'')}
+          <div class="sub-bar"><div class="sub-bar-fill" style="width:${spct||0}%;background:${barColor(scls)}"></div></div>
+          ${procDetail}
+          ${subMissed.length?`<div class="sub-missed">Missed: ${subMissed.join(', ')}</div>`:''}
+        </div>`;
+      });
+      subHtml+='</div>';
+    }
+
+    // Portal rows
+    const portalRowsHtml=dept.portals.map(code=>{
+      const reg=portalReg(code);if(!reg)return'';
+      const rag=portalRag(code,rows);
+      const last=rows.filter(r=>r.code===code&&isActivityRow(r)).sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0];
+      const isSeasonalOff=(code==='SNOW-MK'||code==='PISTENBULL')&&!isWinterDay(now);
+      const isExcluded=reg.scoring==='exclude';
+      const isPend=reg.scoring==='pending';
+      let statusLabel,statusCls;
+      if(isPend){statusLabel='Monitoring';statusCls='s-pending';}
+      else if(isExcluded){statusLabel='Excluded';statusCls='s-excluded';}
+      else if(isSeasonalOff){statusLabel='Off-Season';statusCls='s-seasonal';}
+      else{statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag];statusCls={green:'s-active',yellow:'s-due',red:'s-overdue',grey:'s-nodata'}[rag];}
+      const displayName=code==='GEN-MAINT'?'Generator Daily Checks':reg.name;
+      return`<div class="portal-row">
+        <div class="p-rag ${(isSeasonalOff||isExcluded||isPend)?'grey':rag}"></div>
+        <div class="p-code">${code}</div>
+        <div class="p-name">${displayName}</div>
+        <div class="p-last">${last?fmtTs(last.ts):'–'}</div>
+        <div class="p-status ${statusCls}">${statusLabel}</div>
+      </div>`;
+    }).join('');
+
+    // Build procurement body if this is the procurement dept
+    let procBodyHtml = '';
+    if(dept.id==='procurement'&&procRecon){
+      const noGrn=procRecon.noGrnSubmitted||0;
+      const awFin=procRecon.awaitingFinance||0;
+      const awGM=procRecon.awaitingGM||0;
+      const recon=procRecon.reconciled||0;
+      const breakdown=procRecon.requesterBreakdown||[];
+      scorePct=procRecon.healthScore;
+      grade=kpiGrade(scorePct);
+      scoreDisplay=scorePct+'%';
+      scoreCls=grade.cls;
+      const breakdownHtml=breakdown.map(p=>
+        `<div class="portal-row">
+          <div class="p-rag ${p.count>=5?'red':p.count>=2?'yellow':'green'}"></div>
+          <div class="p-name" style="font-weight:600">${p.name}</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap">${p.count} PRF${p.count!==1?'s':''} open</div>
+          <div style="font-family:var(--mono);font-size:11px;color:${p.oldest>=30?'var(--red)':p.oldest>=14?'var(--warn)':'var(--text3)'};margin-left:8px;white-space:nowrap">oldest ${p.oldest}d</div>
+        </div>`
+      ).join('');
+      procBodyHtml=`
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 14px;border-bottom:1px solid var(--border)">
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">No GRN</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${noGrn>0?'var(--red)':'var(--green)'}">${noGrn}</div>
+          </div>
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">Fin. Pending</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${awFin>0?'var(--warn)':'var(--green)'}">${awFin}</div>
+          </div>
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">GM Pending</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${awGM>0?'var(--warn)':'var(--green)'}">${awGM}</div>
+          </div>
+          <div style="background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px">Reconciled</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green)">${recon}</div>
+          </div>
+        </div>
+        ${noGrn>0?`
+        <div style="padding:8px 14px 4px;border-bottom:1px solid var(--border)">
+          <div onclick="var l=this.parentElement.querySelector('.proc-list');var a=this.querySelector('.proc-arrow');l.style.display=l.style.display==='block'?'none':'block';a.textContent=l.style.display==='block'?'▼':'▶';"
+            style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:2px 0">
+            <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">No GRN Submitted, Requester Accountability (${noGrn})</div>
+            <span class="proc-arrow" style="font-size:10px;color:var(--text3);margin-left:8px">▶</span>
+          </div>
+          <div class="proc-list" style="display:none">
+            ${breakdownHtml}
+          </div>
+        </div>`:'<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--green)">All approved PRFs reconciled</div>'}`;
+    }else if(dept.id==='guest'){
+      procBodyHtml=guestDetailHtml(guestComplaints(rows));
+    }else if(dept.id==='technical'){
+      procBodyHtml=storeDetailHtml(storeTakes(rows))+certDetailHtml(certDays(rows));
+    }else if(dept.id==='procurement'){
+      scorePct=null;grade=null;scoreDisplay='–';scoreCls='event';
+      procBodyHtml='<div style="padding:10px 14px;font-size:12px;font-weight:600;color:var(--warn)">Procurement Hub data did not load. Tap Refresh.</div>';
+    }
+
+    if(scorePct!==null&&!isPending)deptPcts.push(scorePct);
+    const card=document.createElement('div');
+    card.className='dept-card';
+    const accentCls=isPending?'pending':(scoreCls||'event');
+    card.innerHTML=`
+      <div class="dept-head">
+        <div class="dept-name-group">
+          <div class="dept-accent-bar ${accentCls}"></div>
+          <div><div class="dept-name">${dept.name}</div><div class="dept-custs">${dept.custodians}</div></div>
+        </div>
+        <div class="score-side">
+          <div class="dept-score ${accentCls}">${scoreDisplay}</div>
+          ${grade?`<div class="grade-chip ${grade.cls}">${grade.label}</div>`:(isPending?'<div class="grade-chip pending">Monitoring</div>':'')}
+        </div>
+      </div>
+      <div class="dept-bar-row">
+        <div class="dept-bar"><div class="dept-bar-fill" style="width:${scorePct||0}%;background:${barColor(accentCls)}"></div></div>
+        ${deptMissed.length?`<div class="dept-missed">Missed today: ${deptMissed.join(', ')}</div>`:''}
+      </div>
+      ${subHtml}
+      ${procBodyHtml}
+      <div class="dept-portals">${portalRowsHtml}</div>`;
+    grid.appendChild(card);
+  });
+  const fyPct=deptPcts.length?Math.round(deptPcts.reduce((a,b)=>a+b,0)/deptPcts.length):0;
+  document.getElementById('statFyScore').textContent=fyPct+'%';
+}
+
+// ── ALL PORTALS ──────────────────────────────────────────────────────
+function renderPortals(){
+  const rows=allRows.map(parseRow);
+  const grid=document.getElementById('portalGrid');
+  grid.innerHTML='';
+  const now=new Date();
+  const closedDays=buildClosedDays(rows);
+
+  const lastSub={},subCount={},otByCode={},totByCode={};
+  rows.forEach(r=>{
+    if(isActivityRow(r)&&(!lastSub[r.code]||new Date(r.ts)>new Date(lastSub[r.code].ts)))lastSub[r.code]=r;
+    subCount[r.code]=(subCount[r.code]||0)+1;
+    if(r.deadline&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day'&&r.onTime!==''){
+      totByCode[r.code]=(totByCode[r.code]||0)+1;
+      if(String(r.onTime)==='TRUE'||r.onTime===true)otByCode[r.code]=(otByCode[r.code]||0)+1;
+    }
+  });
+
+  PORTAL_REGISTRY.filter(p=>p.code!=='GEN-CHECKS').forEach(portal=>{
+    const tile=document.createElement('div');
+    tile.className='portal-tile';
+    if(portal.scoring==='pending'){
+      tile.classList.add('t-grey');
+      tile.innerHTML=`<div class="tile-header"><span class="tile-code placeholder">${portal.code}</span><span class="tile-badge badge-grey">Monitoring</span></div>
+        <div class="tile-name placeholder">${portal.name}</div>
+        <div class="tile-type">${portal.type} &middot; ${portal.deadline}</div>
+        <div class="tile-meta"><div class="tile-meta-item"><div class="tile-meta-label">Last Submission</div><div class="tile-meta-value">${lastSub[portal.code]?fmtTs(lastSub[portal.code].ts):'–'}</div></div><div class="placeholder-note">Monitor only, not scored. Review 24 Oct 2026</div></div>`;
+      grid.appendChild(tile);return;
+    }
+
+    const isSeasonalOff=(portal.code==='SNOW-MK'||portal.code==='PISTENBULL')&&!isWinterDay(now);
+    const isExcluded=portal.scoring==='exclude';
+    const rag=portalRag(portal.code,rows);
+    const last=lastSub[portal.code];
+    const count=subCount[portal.code]||0;
+    const fyS=(!isExcluded)?calcScore([portal.code],rows,closedDays):null;
+    const fyPct=fyS?fyS.pct:null;
+    const fyG=fyPct!==null?kpiGrade(fyPct):null;
+    let statusLabel,badgeCls;
+    if(isExcluded){statusLabel='Not Scored';badgeCls='badge-grey';}
+    else if(isSeasonalOff){statusLabel='Off-Season';badgeCls='badge-seasonal';}
+    else{statusLabel={green:'Active',yellow:'Due',red:'Overdue',grey:'No Data'}[rag];badgeCls='badge-'+rag;}
+    const fyStr=fyPct!==null?(fyPct+'%'):(isExcluded?'Excluded':'–');
+    const fyClass=fyG?(fyG.cls==='on-track'?'green':fyG.cls==='needs-att'||fyG.cls==='near-fail'?'warn':'red'):'grey';
+    const displayName=portal.code==='GEN-MAINT'?'Generator Daily Checks':portal.name;
+
+    tile.classList.add(isExcluded||isSeasonalOff?'t-grey':'t-'+rag);
+    tile.innerHTML=`
+      <div class="tile-header"><span class="tile-code">${portal.code}</span><span class="tile-badge ${badgeCls}">${statusLabel}</span></div>
+      <div class="tile-name">${displayName}</div>
+      <div class="tile-type">${portal.type} &middot; ${portal.deadline}</div>
+      <div class="tile-meta">
+        <div class="tile-meta-item"><div class="tile-meta-label">Last Submission</div><div class="tile-meta-value">${last?fmtTs(last.ts):'–'}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">Submitted By</div><div class="tile-meta-value">${last?(last.by||'–'):'–'}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">Total Logged</div><div class="tile-meta-value">${count.toLocaleString()}</div></div>
+        <div class="tile-meta-item"><div class="tile-meta-label">FY KPI Score</div><div class="tile-meta-value ${fyClass}">${fyStr}</div></div>
+      </div>`;
+    grid.appendChild(tile);
+  });
+}
+
+// ── LOG TABLE ────────────────────────────────────────────────────────
+function populatePortalFilter(){
+  const sel=document.getElementById('filterPortal');
+  if(sel.options.length>1)return;
+  [...new Set(allRows.map(r=>r[2]).filter(Boolean))].sort().forEach(c=>{
+    const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
+  });
+}
+
+function renderLog(){
+  populatePortalFilter();
+  const search=document.getElementById('filterSearch').value.toLowerCase();
+  const portal=document.getElementById('filterPortal').value;
+  const type=document.getElementById('filterType').value;
+  const status=document.getElementById('filterStatus').value;
+  const dateFrom=document.getElementById('filterDateFrom').value;
+  const dateTo=document.getElementById('filterDateTo').value;
+
+  let filtered=allRows.map(parseRow).filter(r=>{
+    if(portal&&r.code!==portal)return false;
+    if(type&&r.type!==type)return false;
+    if(status!==''){const ot=String(r.onTime)==='TRUE'||r.onTime===true;if(status==='true'&&!ot)return false;if(status==='false'&&ot)return false;}
+    if(dateFrom&&pktKey(r.ts)<dateFrom)return false;
+    if(dateTo&&pktKey(r.ts)>dateTo)return false;
+    if(search){if(![r.portal,r.code,r.by,r.notes,r.type].join(' ').toLowerCase().includes(search))return false;}
+    return true;
+  }).sort((a,b)=>(new Date(b.ts).getTime()||0)-(new Date(a.ts).getTime()||0));
+
+  const total=filtered.length;
+  const page=filtered.slice((logPage-1)*PAGE_SIZE,logPage*PAGE_SIZE);
+  const tbody=document.getElementById('logTableBody');
+
+  if(!page.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">No submissions match the current filters.</td></tr>';document.getElementById('logPagination').textContent='';return;}
+
+  tbody.innerHTML=page.map(r=>{
+    const onTime=String(r.onTime)==='TRUE'||r.onTime===true;
+    const otStr=(!r.deadline||r.deadline==='N/A'||r.deadline==='Variable'||r.deadline==='Monthly'||r.deadline==='Same day')?'<span class="dot-grey">–</span>':onTime?'<span class="dot-green">&#10003; On Time</span>':'<span class="dot-red">&#10007; Late</span>';
+    const devStr=(r.devMins&&r.devMins!==0&&r.deadline!=='N/A'&&r.deadline!=='Variable'&&r.deadline!=='Monthly'&&r.deadline!=='Same day')?`<span class="${Number(r.devMins)>0?'dot-red':'dot-green'}">${Number(r.devMins)>0?'+':''}${r.devMins}</span>`:'<span class="dot-grey">–</span>';
+    const displayPortal=r.code==='GEN-MAINT'?'Generator Daily Checks':(r.portal||'–');
+    return`<tr>
+      <td class="td-time">${fmtTsFull(r.ts)}</td>
+      <td class="td-name">${displayPortal}</td>
+      <td class="td-code">${r.code||'–'}</td>
+      <td>${r.by||'–'}</td>
+      <td style="font-size:11px;color:var(--text3)">${r.type||'–'}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:nowrap">${fmtDeadline(r.deadline)}</td>
+      <td style="font-size:12px">${otStr}</td>
+      <td style="font-size:12px">${devStr}</td>
+      <td class="td-notes" title="${(r.notes||'').replace(/"/g,'&quot;')}">${r.notes||'–'}</td>
+    </tr>`;
+  }).join('');
+
+  const pages=Math.ceil(total/PAGE_SIZE);
+  document.getElementById('logPagination').textContent=pages>1?`Page ${logPage} of ${pages} (${total.toLocaleString()} rows)`:`${total.toLocaleString()} rows`;
+}
+
+// ── ANALYTICS ────────────────────────────────────────────────────────
+function renderAnalytics(){
+  const rows=allRows.map(parseRow);
+  const closedDays=buildClosedDays(rows);
+  const now=new Date();
+
+  const byPortal={};
+  rows.forEach(r=>{if(r.code!=='GEN-CHECKS')byPortal[r.code]=(byPortal[r.code]||0)+1;});
+  const pE=Object.entries(byPortal).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const maxP=pE[0]?.[1]||1;
+  document.getElementById('chartByPortal').innerHTML=pE.map(([code,n])=>{
+    const displayCode=code==='GEN-MAINT'?'GEN-MAINT (Gen Daily)':code;
+    return`<div class="bar-row"><div class="bar-label">${displayCode}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxP)*100)}%"></div></div><div class="bar-count">${n}</div></div>`;
+  }).join('');
+
+  const bySub={};
+  rows.filter(r=>isLast30(r.ts)&&isActivityRow(r)&&!/(system|watcher|backfill)/i.test(String(r.by||''))).forEach(r=>{if(r.by)bySub[r.by]=(bySub[r.by]||0)+1;});
+  const sE=Object.entries(bySub).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const maxS=sE[0]?.[1]||1;
+  document.getElementById('chartBySubmitter').innerHTML=sE.length
+    ?sE.map(([name,n])=>`<div class="bar-row"><div class="bar-label">${name}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxS)*100)}%;background:var(--teal)"></div></div><div class="bar-count">${n}</div></div>`).join('')
+    :'<div class="empty-state">No data for last 30 days</div>';
+
+  const dailyMap={};
+  const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for(let i=13;i>=0;i--){dailyMap[pktKey(new Date(now.getTime()-i*86400000))]=0;}
+  rows.forEach(r=>{const k=pktKey(r.ts);if(dailyMap[k]!==undefined)dailyMap[k]++;});
+  const dE=Object.entries(dailyMap).map(([k,v])=>[k.slice(8,10)+' '+mon[Number(k.slice(5,7))-1],v]);
+  const maxD=Math.max(...dE.map(([,v])=>v),1);
+  document.getElementById('chartDaily').innerHTML=dE.map(([date,n])=>`<div class="bar-row"><div class="bar-label">${date}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((n/maxD)*100)}%;background:var(--slate2)"></div></div><div class="bar-count">${n}</div></div>`).join('');
+
+  const otByP={},totByP={};
+  rows.filter(r=>isInFY(r.ts)&&r.code!=='GEN-CHECKS').forEach(r=>{
+    const reg=portalReg(r.code);
+    if(!reg||reg.scoring==='exclude'||reg.scoring==='pending')return;
+    if(!r.deadline||r.deadline==='N/A'||r.deadline==='Variable'||r.deadline==='Monthly'||r.deadline==='Same day'||r.onTime==='')return;
+    const d=new Date(r.ts);
+    if((reg.scoring==='daily-winter'||reg.scoring==='hm')&&!isWinterDay(d))return;
+    totByP[r.code]=(totByP[r.code]||0)+1;
+    if(String(r.onTime)==='TRUE'||r.onTime===true)otByP[r.code]=(otByP[r.code]||0)+1;
+  });
+  const otE=Object.entries(totByP).map(([c,t])=>[c==='GEN-MAINT'?'GEN-MAINT':c,Math.round(((otByP[c]||0)/t)*100)]).sort((a,b)=>a[1]-b[1]);
+  document.getElementById('chartOnTime').innerHTML=otE.length
+    ?otE.map(([code,pct])=>`<div class="bar-row"><div class="bar-label">${code}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=95?'var(--green)':pct>=85?'var(--warn)':pct>=75?'var(--orange)':'var(--red)'}"></div></div><div class="bar-count">${pct}%</div></div>`).join('')
+    :'<div class="empty-state">No FY 2026-27 scored data yet</div>';
+}
+
+// ── PERFORMANCE REVIEW TAB ───────────────────────────────────────────
+// Explains each department score KPI by KPI for the quarterly reviews with
+// department leads. Uses the same scoring engine as the Departments tab.
+const BONUS_LINE=75;
+const RV_PERIODS=[
+  {id:'fy',label:'FY to date',from:'2026-07-01',to:FY_END_KEY},
+  {id:'q1',label:'Q1 Jul to Sep',from:'2026-07-01',to:'2026-09-30'},
+  {id:'q2',label:'Q2 Oct to Dec',from:'2026-10-01',to:'2026-12-31'},
+  {id:'q3',label:'Q3 Jan to Mar',from:'2027-01-01',to:'2027-03-31'},
+  {id:'q4',label:'Q4 Apr to Jun',from:'2027-04-01',to:'2027-06-30'}
+];
+let rvPeriod='fy';
+// Agreement weights outside the register (scored at the review from the Procurement Hub)
+const GRN_WEIGHT={technical:10,adventure:10,commercial:10,hospitality:10,admin:10,procurement:30,clinic:10};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtDay=k=>Number(k.slice(8,10))+' '+MON[Number(k.slice(5,7))-1];
+const fmtMon=k=>MON[Number(k.slice(5,7))-1]+' '+k.slice(0,4);
+function listDays(keys,max){
+  if(!keys.length)return '';
+  const shown=keys.slice(-max).map(fmtDay).join(', ');
+  return (keys.length>max?'latest '+max+' of '+keys.length+': ':'')+shown;
+}
+function withWin(period,fn){
+  const prev=SCORE_WIN;
+  SCORE_WIN=period&&period.id!=='fy'?{from:period.from,to:period.to}:null;
+  try{return fn();}finally{SCORE_WIN=prev;}
+}
+// Units a KPI is scored on across the whole FY, used for the year-end projection
+function fyTotalUnits(reg){
+  const all=[];for(let k='2026-07-01';k<=FY_END_KEY;k=nextKey(k))all.push(k);
+  const winterDays=all.filter(isWinterKey).length;
+  switch(reg.scoring){
+    case 'daily':return all.length;
+    case 'daily-closed':return all.length-[...closedFor(reg.code,resortClosedKeys)].filter(k=>k>='2026-07-01'&&k<=FY_END_KEY).length;
+    case 'daily-winter':return winterDays;
+    case 'hm':return winterDays+1;
+    case 'monthly-fire':return 12;
+    case 'store-monthly':return 12*STORES.length;
+    case 'fa-coverage':return 4*FA_QUARTER_WEIGHT;
+    case 'inn-dual':case 'cert-daily':case 'fnb':return all.length;
+    case 'prfund':return 36;
+    case 'loyalty-share':return all.filter(k=>k>=LOYALTY_START).length;
+    case 'weekly':return Math.ceil(all.length/7);
+    case 'guest-24h':return 0; // complaint volume is not known ahead, no year-end projection
+  }
+  return 0;
+}
+// Why a KPI scored what it did: plain-language findings for the review
+function kpiFindings(code,rows,closedDays){
+  const reg=portalReg(code);const out={why:[],action:''};
+  const tk=todayKey();const nowMins=pktNowMins();
+  if(['daily','daily-closed','daily-winter','hm'].includes(reg.scoring)){
+    const rowsByDay={};
+    rows.filter(r=>r.code===code&&isInFY(r.ts)).forEach(r=>{const k=pktKey(r.ts);(rowsByDay[code+'|'+k]=rowsByDay[code+'|'+k]||[]).push(r);});
+    const dlm=code==='CL-CHECKS'?23*60+59:deadlineMins(reg.deadline);
+    const winterOnly=reg.scoring==='daily-winter'||reg.scoring==='hm';
+    const none=[],late=[],partial=[];const actMiss={};const clMiss={start:0,end:0};
+    let days=0;
+    const cdp=closedFor(code,closedDays);let closedN=0;
+    fyDayKeys().forEach(k=>{
+      if(winterOnly&&!isWinterKey(k))return;
+      if(reg.scoring==='daily-closed'&&cdp.has(k)){closedN++;return;}
+      const sc=dailyDayScore(code,k,rowsByDay);
+      if(k===tk&&nowMins<dlm&&sc<1)return;
+      days++;
+      if(sc>=1)return;
+      const dr=rowsByDay[code+'|'+k]||[];
+      if(code==='CL-CHECKS'){
+        const n=dr.map(r=>String(r.notes||'').toLowerCase());
+        if(!n.some(x=>x.includes('start of day')))clMiss.start++;
+        if(!n.some(x=>x.includes('end of day')))clMiss.end++;
+        (dr.length?partial:none).push(k);return;
+      }
+      const acts=DAILY_ACTIVITIES[code];
+      if(acts){
+        const ok=dr.filter(isOnTime).map(r=>String(r.notes||'').trim().toLowerCase());
+        acts.forEach(a=>{if(!ok.includes(a.toLowerCase()))actMiss[a]=(actMiss[a]||0)+1;});
+        (dr.length?partial:none).push(k);return;
+      }
+      (dr.length?late:none).push(k);
+    });
+    if(reg.scoring==='hm'){
+      const pw=rows.some(r=>r.code==='HM-CHECKS'&&isInFY(r.ts)&&new Date(r.ts)<=new Date('2026-10-31T23:59:59+05:00'));
+      const pwIn=winFrom()<='2026-10-31'&&winEndNominal()>='2026-10-31';
+      if(pwIn)out.why.push(pw?'Pre-winter service check logged':(new Date()>new Date('2026-10-31T23:59:59+05:00')?'<span class="miss">Pre-winter service check not logged by 31 Oct</span>':'Pre-winter service check due by 31 Oct, not logged yet'));
+      if(!pw)out.action='Log the pre-winter service check for every machine before 31 Oct';
+    }
+    if(winterOnly&&!days){out.why.push('Winter KPI, scored 15 Dec to 15 Mar');return out;}
+    const missedN=none.length+late.length+partial.length;
+    out.why.push(days+' days due, '+(days-missedN)+' fully on time'+(closedN?', '+closedN+' closed day'+(closedN>1?'s':'')+' excused':''));
+    if(none.length)out.why.push('<span class="miss">No submission on '+none.length+' day'+(none.length>1?'s':'')+'</span> ('+listDays(none,6)+')');
+    if(late.length)out.why.push('<span class="miss">Submitted late on '+late.length+' day'+(late.length>1?'s':'')+'</span> ('+listDays(late,6)+')');
+    if(code==='CL-CHECKS'){const cm=[];if(clMiss.start)cm.push('Start of Day check missing on '+clMiss.start+' day'+(clMiss.start>1?'s':''));if(clMiss.end)cm.push('End of Day check missing on '+clMiss.end+' day'+(clMiss.end>1?'s':''));if(cm.length)out.why.push('<span class="miss">'+cm.join(', ')+'</span>');}
+    const am=Object.entries(actMiss).sort((a,b)=>b[1]-a[1]);
+    if(am.length)out.why.push('<span class="miss">Activities not checked on time</span> '+am.map(([a,n])=>a+' '+n+' day'+(n>1?'s':'')).join(', '));
+    if(!out.action&&missedN){
+      if(code==='CL-CHECKS')out.action='Log both the Start of Day (by 10:30) and End of Day check every open day';
+      else if(DAILY_ACTIVITIES[code])out.action='Check every activity ('+DAILY_ACTIVITIES[code].join(', ')+') by '+reg.deadline+' each open day'+(am.length?', weakest is '+am[0][0]:'');
+      else out.action='Submit by '+reg.deadline+' every '+(reg.scoring==='daily-closed'?'open ':'')+'day'+(late.length>none.length?', most misses are late submissions':'');
+    }
+    return out;
+  }
+  if(reg.scoring==='monthly-fire'){
+    const fr=rows.filter(r=>r.code==='FIRE-EX'&&isInFY(r.ts));const cur=tk.slice(0,7);const gaps=[];
+    const names={MJSR:'MJSR',SI:'Samsons Inn',GV:'Green Valley',VM:'Vehicles'};
+    fyMonthKeys().forEach(mk=>{const st=fireSitesForMonth(fr,mk);const miss=FIRE_SITES.filter(x=>!st.has(x));
+      if(mk===cur){out.why.push(fmtMon(mk)+' in progress, '+(miss.length?'still to inspect '+miss.map(x=>names[x]).join(', '):'all 4 done'));return;}
+      if(miss.length)gaps.push(fmtMon(mk)+' missing '+(miss.length===4?'all 4 sites':miss.map(x=>names[x]).join(', ')));});
+    out.why.push(gaps.length?'<span class="miss">'+gaps.join('; ')+'</span>':'Every closed month complete');
+    if(gaps.length)out.action='Inspect all 4 sites (MJSR, Samsons Inn, Green Valley, Vehicles) every calendar month';
+    return out;
+  }
+  if(reg.scoring==='store-monthly'){
+    const f=storeTakes(rows);const gaps=[];
+    f.months.forEach(m=>{const miss=STORES.filter(([x])=>!f.done[x+'|'+m.key]).map(([,l])=>l);
+      if(!m.closed){out.why.push(fmtMon(m.key)+' due '+m.deadline.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+', '+(STORES.length-miss.length)+' of 7 done');return;}
+      gaps.push(fmtMon(m.key)+' '+(STORES.length-miss.length)+' of 7'+(miss.length&&miss.length<7?' (missing '+miss.join(', ')+')':''));});
+    if(gaps.length)out.why.push(gaps.map(g=>/ 7 of 7/.test(g)?g:'<span class="miss">'+g+'</span>').join('; '));
+    if(gaps.some(g=>!/ 7 of 7/.test(g)))out.action='Finalise the stock take for all 7 stores by 23:59 on the 1st of each month';
+    return out;
+  }
+  if(reg.scoring==='cert-daily'){
+    const f=certDays(rows);if(!f.latest){out.why.push('No certificate checks in this period');return out;}
+    out.why.push(f.count+' daily checks, latest '+f.latest.valid+' of '+f.latest.total+' valid');
+    const bad=(f.latest.notes.split(' | ').find(p=>p.startsWith('Not valid:'))||'').replace('Not valid: ','');
+    if(bad&&bad!=='none'){out.why.push('<span class="miss">Not valid '+bad+'</span>');out.action='Record or renew the missing certificates in the Annual_Certifications tab';}
+    return out;
+  }
+  if(reg.scoring==='inn-dual'){
+    const f=innDays(rows);out.why.push(f.exp+' days due, '+f.ot+' submitted');
+    if(f.missed){out.why.push('<span class="miss">No submission on '+f.missed+' day'+(f.missed>1?'s':'')+'</span> ('+listDays(f.missedKeys,6)+')');out.action='Submit the Inn tracker every day by 23:59';}
+    return out;
+  }
+  if(reg.scoring==='fnb'){
+    const f=fnbKpis(rows,closedDays);const pc=k=>k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+' of '+k.tot+')':'no data';
+    out.why.push('Receipts entered same day '+pc(f.k1));out.why.push('Date accuracy '+pc(f.k2));out.why.push('Active open days '+pc(f.k3));
+    const ks=[['enter every receipt (Stock In) on the day it arrives',f.k1],['file every stock entry on the date it happened',f.k2],['make at least one stock entry every open day',f.k3]].filter(([,k])=>k.tot).sort((a,b)=>a[1].ok/a[1].tot-b[1].ok/b[1].tot);
+    if(ks.length&&ks[0][1].ok<ks[0][1].tot)out.action='Biggest gap, '+ks[0][0];
+    return out;
+  }
+  if(reg.scoring==='loyalty-share'){
+    const f=loyaltyShare();
+    if(!f){out.why.push('<span class="miss">Daily Sales or Loyalty data did not load. Tap Refresh.</span>');return out;}
+    if(!f.exp){out.why.push('No days with sales data in this period');}
+    else{
+      const pct=x=>(Math.round(x*1000)/10)+'%';
+      out.why.push(f.exp+' days scored, loyalty members were '+pct(f.share)+' of customers ('+f.tm.toLocaleString('en-US')+' of '+f.tc.toLocaleString('en-US')+'), target 20%');
+      const hit=f.days.filter(x=>x.share>=LOYALTY_TARGET).length;const zero=f.days.filter(x=>!x.m).length;
+      out.why.push((hit?hit+' day'+(hit>1?'s':'')+' at or above 20%':'<span class="miss">No day reached 20%</span>')+(zero?', <span class="miss">no loyalty check-ins on '+zero+' days</span>':''));
+      const best=f.days.slice().sort((a,b)=>b.share-a.share)[0];if(best&&best.m)out.why.push('Best day '+fmtDay(best.k)+', '+best.m+' of '+best.c+' customers ('+pct(best.share)+')');
+    }
+    if(f.noSales.length)out.why.push('<span class="miss">No Daily Sales upload for '+f.noSales.length+' day'+(f.noSales.length>1?'s':'')+', not scored</span> ('+listDays(f.noSales,6)+')');
+    if(f.exp&&f.pct<100)out.action='Check in loyalty members for at least 1 in 5 resort customers every day (enrol at the ticket booth and scan at each activity)';
+    else if(f.noSales.length)out.action='Upload the Daily Sales Reconciliation every day so loyalty can be scored';
+    return out;
+  }
+  if(reg.scoring==='prfund'){
+    const f=prFundKpis();
+    if(!f){out.why.push('<span class="miss">PR Fund KPI data did not load. Tap Refresh.</span>');return out;}
+    const pc=k=>k.tot?Math.round(k.ok/k.tot*100)+'% ('+k.ok+' of '+k.tot+')':'nothing due yet';
+    out.why.push('Entries on time '+pc(f.k1));
+    if(f.lateList.length)out.why.push('<span class="miss">Entered late</span> '+f.lateList.slice(-6).map(l=>fmtDay(l.date)+' entered '+fmtDay(l.sub)).join(', ')+(f.lateList.length>6?' (latest 6 of '+f.lateList.length+')':''));
+    out.why.push('Months within MJSR cap '+pc(f.k2));
+    const fmtP=n=>'PKR '+Math.round(n).toLocaleString('en-US');
+    f.capMonths.forEach(m=>{if(m.over)out.why.push('<span class="miss">'+fmtMon(m.mk)+' over the cap, '+fmtP(m.sp)+' (by '+fmtP(m.sp-f.cap)+')</span>');});
+    const cur=f.capMonths.find(m=>m.open);if(cur)out.why.push(fmtMon(cur.mk)+' to date '+fmtP(cur.sp)+' of '+fmtP(f.cap)+' ('+Math.round(cur.sp/f.cap*100)+'%)');
+    out.why.push('Credit and IOU cleared '+pc(f.k3));
+    f.clearMonths.forEach(m=>{const bad=m.items.filter(i=>!i.ok);if(!bad.length)return;
+      const txt=fmtMon(m.mk)+' '+bad.map(i=>i.label+(i.late?' cleared late':' not cleared')).join(', ')+', due '+fmtDay(m.due);
+      out.why.push(m.status==='open'?txt:'<span class="miss">'+txt+'</span>');});
+    const gaps=[];
+    if(f.clearMonths.some(m=>m.status==='fail'))gaps.push([f.k3,'Clear every credit transaction and pay each Islamabad IOU bill by the end of the following month, and mark it paid in the PR Fund Tracker']);
+    if(f.capMonths.some(m=>m.over))gaps.push([f.k2,'Keep MJSR PR spend at or under PKR 233,333 every month']);
+    if(f.lateList.length)gaps.push([f.k1,'Enter every PR entry on the same day it happens']);
+    gaps.sort((a,b)=>a[0].ok/(a[0].tot||1)-b[0].ok/(b[0].tot||1));
+    if(gaps.length)out.action=gaps[0][1];
+    return out;
+  }
+  if(reg.scoring==='guest-24h'){
+    const f=guestComplaints(rows);
+    if(!f.list.length){out.why.push('No guest complaints in this period');return out;}
+    out.why.push(f.list.length+' complaints, '+f.exp+' due, '+f.ot+' resolved within 24 hours'+(f.open?', '+f.open+' still inside 24 hours':''));
+    if(f.late)out.why.push('<span class="miss">Resolved after 24 hours: '+f.late+'</span>');
+    if(f.overdue)out.why.push('<span class="miss">Open past 24 hours: '+f.overdue+'</span> ('+f.list.filter(c=>c.state==='overdue').slice(-6).map(c=>c.id).join(', ')+')');
+    const weak=f.byDept.filter(d=>d.due&&d.ok<d.due).sort((a,b)=>a.ok/a.due-b.ok/b.due)[0];
+    if(weak)out.why.push('Weakest department '+weak.dept+', '+weak.ok+' of '+weak.due+' on time');
+    if(f.late||f.overdue)out.action='Acknowledge every complaint within 2 hours and resolve it in the Guest Feedback portal within 24 hours, with a response note'+(weak?', focus on '+weak.dept:'');
+    return out;
+  }
+  if(reg.scoring==='fa-coverage'){
+    const f=faCoverage(rows);
+    f.quarters.forEach(q=>out.why.push((q.closed&&q.pct<100?'<span class="miss">':'<span>')+q.label+' '+(q.closed?'final':'to date')+', '+q.count+' of '+q.total+' assets verified ('+(q.pct||0)+'%)</span>'));
+    if(!f.quarters.length)out.why.push('No quarter in this period');
+    if(f.quarters.some(q=>(q.pct||0)<100))out.action='Verify every asset once each quarter, about '+Math.ceil(627/13)+' assets a week';
+    return out;
+  }
+  if(reg.scoring==='weekly'){
+    const now=new Date();const miss=[];let due=0;
+    for(let w=new Date(FY_START);w<=now;w=new Date(w.getTime()+7*86400000)){
+      const we=new Date(w.getTime()+7*86400000);const wk=pktKey(w);if(wk<winFrom()||wk>winTo())continue;
+      const has=rows.some(r=>r.code===code&&isActivityRow(r)&&new Date(r.ts)>=w&&new Date(r.ts)<we);
+      if(we>now&&!has)continue;due++;if(!has)miss.push(wk);
+    }
+    out.why.push(due+' weeks due, '+(due-miss.length)+' with activity');
+    if(miss.length){out.why.push('<span class="miss">No activity in the week starting '+miss.slice(-6).map(fmtDay).join(', ')+(miss.length>6?' (latest 6 of '+miss.length+')':'')+'</span>');out.action='Log activity in the portal at least once every week';}
+    return out;
+  }
+  return out;
+}
+function rvStatus(pct){
+  if(pct===null)return{cls:'watch',label:'Not scored'};
+  if(pct<BONUS_LINE)return{cls:'risk',label:'Below bonus line'};
+  if(pct<85)return{cls:'watch',label:'Just above bonus line'};
+  return{cls:'ok',label:'Above bonus line'};
+}
+function renderReview(){
+  const body=document.getElementById('rvBody');if(!body)return;
+  const rows=allRows.map(parseRow);const closedDays=buildClosedDays(rows);
+  const tk=todayKey();
+  // Period chips
+  document.getElementById('rvPeriods').innerHTML=RV_PERIODS.map(p=>`<button class="rv-chip${p.id===rvPeriod?' active':''}" ${p.from>tk?'disabled':''} onclick="rvPeriod='${p.id}';renderReview()">${p.label}</button>`).join('');
+  const sel=document.getElementById('rvDept');
+  if(!sel.options.length){sel.innerHTML='<option value="">All departments</option>'+DEPARTMENTS.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');}
+  const period=RV_PERIODS.find(p=>p.id===rvPeriod)||RV_PERIODS[0];
+  const depts=DEPARTMENTS.filter(d=>!sel.value||d.id===sel.value);
+  const startedQ=RV_PERIODS.filter(p=>p.id!=='fy'&&p.from<=tk);
+  const periodText=period.id==='fy'?'1 Jul 2026 to '+fmtDay(tk)+' '+tk.slice(0,4):period.label+(period.to>tk?' (to '+fmtDay(tk)+')':'');
+  let html='';
+  depts.forEach(dept=>{
+    const custodians=`<div class="rv-sub">${dept.custodians}</div>`;
+    if(dept.id==='clinic'){
+      html+=`<div class="rv-card"><div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}</div><div><div class="rv-score" style="color:var(--text3)">–</div><span class="rv-status watch">Monitoring</span></div></div><div class="rv-section rv-why">Clinic Dispensary Portal is monitored, not scored, until the review on 24 Oct 2026.</div></div>`;
+      return;
+    }
+    if(dept.id==='procurement'){
+      const pr=procReconData;
+      if(!pr){html+=`<div class="rv-card"><div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}</div></div><div class="rv-section rv-why">Procurement Hub data did not load. Tap Refresh.</div></div>`;return;}
+      const st=rvStatus(pr.healthScore);const g=kpiGrade(pr.healthScore);
+      const top=(pr.requesterBreakdown||[]).slice().sort((a,b)=>b.count-a.count).slice(0,8);
+      html+=`<div class="rv-card"><div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}<div class="rv-sub">Live position today (period filter does not apply)</div></div><div style="text-align:right"><div class="rv-score" style="color:${barColor(g.cls)}">${pr.healthScore}%</div><span class="rv-status ${st.cls}">${st.label}</span></div></div>
+      <div class="rv-facts"><div class="rv-fact"><b>${pr.noGrnSubmitted||0}</b>approved PRFs with no GRN</div><div class="rv-fact"><b>${pr.awaitingFinance||0}</b>awaiting Finance</div><div class="rv-fact"><b>${pr.awaitingGM||0}</b>awaiting GM</div><div class="rv-fact"><b>${pr.reconciled||0}</b>reconciled</div></div>
+      <div class="rv-section"><div class="rv-stitle">Why the score is ${pr.healthScore}%</div><div class="rv-why">The Procurement Hub health score falls with every approved PRF that has no GRN logged. Requesters with the most open PRFs</div>
+      <table class="rv-table" style="margin-top:6px"><thead><tr><th>Requester</th><th class="num">Open PRFs</th><th class="num">Oldest</th></tr></thead><tbody>${top.map(t=>`<tr><td>${t.name}</td><td class="num">${t.count}</td><td class="num" style="color:${t.oldest>=30?'var(--red)':'inherit'}">${t.oldest} days</td></tr>`).join('')}</tbody></table></div>
+      <div class="rv-section"><div class="rv-stitle">What to improve</div><ol class="rv-actions"><li>Chase every requester above to log the GRN on delivery; none should stay open more than 30 days</li><li>Clear the Finance and GM approval queues weekly</li></ol></div></div>`;
+      return;
+    }
+    // Scored departments
+    const res=withWin(period,()=>{
+      const kpis=dept.portals.filter(c=>DEPT_WEIGHTS[c]).map(code=>{
+        const reg=portalReg(code);const sc=calcScore([code],rows,closedDays);
+        return{code,reg,w:DEPT_WEIGHTS[code],sc,f:kpiFindings(code,rows,closedDays)};
+      });
+      return{kpis,ds:deptScore(dept.portals,rows,closedDays)};
+    });
+    const kpis=res.kpis;const pct=res.ds?res.ds.pct:null;
+    const g=pct!==null?kpiGrade(pct):null;const st=rvStatus(pct);
+    const scored=kpis.filter(k=>k.sc);
+    // Points lost are on the same scale as the department score, so they add up to 100 minus the score
+    const wScored=scored.reduce((a,k)=>a+k.w,0)||1;
+    kpis.forEach(k=>{k.lost=k.sc?k.w/wScored*(100-k.sc.pct):0;});
+    const lostTotal=scored.reduce((a,k)=>a+k.lost,0);
+    const worst=scored.slice().sort((a,b)=>b.lost-a.lost)[0];
+    // Year-end projection (FY view only)
+    let proj='';
+    if(period.id==='fy'){
+      let W=0,base=0,slope=0,best=0;
+      kpis.forEach(k=>{
+        const exp=k.sc?k.sc.exp:0,ot=k.sc?k.sc.ot:0;
+        const rem=Math.max(0,fyTotalUnits(k.reg)-exp);const n=exp+rem;if(!n)return;
+        W+=k.w;base+=k.w*ot/n;slope+=k.w*rem/n;best+=k.w*(ot+rem)/n;
+      });
+      if(W&&slope){
+        const need=t=>(t/100*W-base)/slope*100;
+        const bestPct=Math.round(best/W*100);
+        const n75=need(BONUS_LINE),n95=need(95);
+        const txt=(n,label)=>n<=0?`${label} already secured`:n>100?`<span class="miss">${label} no longer reachable</span>`:`${label} needs ${Math.ceil(n)}% on time from today`;
+        proj=`<div class="rv-fact"><b>${bestPct}%</b>best possible FY result if every KPI is on time from today</div><div class="rv-fact">${txt(n75,'Bonus line (75%)')}</div><div class="rv-fact">${txt(n95,'On Track (95%)')}</div>`;
+      }
+    }
+    // Quarter trend
+    const trend=startedQ.map(q=>{const d=withWin(q,()=>deptScore(dept.portals,rows,closedDays));const v=d?d.pct:null;
+      return `<div class="rv-q"><span>${q.id.toUpperCase()}${q.to>tk?' to date':''}</span><b style="color:${v===null?'var(--text3)':barColor(kpiGrade(v).cls)}">${v===null?'–':v+'%'}</b></div>`;}).join('');
+    const table=kpis.map(k=>{
+      const v=k.sc?k.sc.pct:null;const gc=v===null?'var(--text3)':barColor(kpiGrade(v).cls);
+      return `<tr><td><div style="font-weight:600">${k.reg.name}</div><div style="font-family:var(--mono);font-size:10px;color:var(--text3)">${k.code}</div></td>
+      <td class="num">${k.w}%</td><td class="num" style="color:${gc};font-weight:700">${v===null?'–':v+'%'}</td>
+      <td class="num hide-m">${k.sc?(Math.round(k.lost*10)/10)+' pts':'–'}</td>
+      <td class="rv-why">${k.f.why.join('<br>')||'–'}</td></tr>`;}).join('');
+    const actions=kpis.filter(k=>k.sc&&k.lost>0.05&&k.f.action).sort((a,b)=>b.lost-a.lost).slice(0,4)
+      .map(k=>`<li><b>${k.reg.name}</b> (${k.code}, costs ${Math.round(k.lost*10)/10} pts). ${k.f.action}</li>`);
+    const pending=kpis.filter(k=>!k.sc&&k.f.action).map(k=>`<li><b>${k.reg.name}</b> (${k.code}, not scored yet). ${k.f.action}</li>`);
+    const grn=GRN_WEIGHT[dept.id]||0;
+    html+=`<div class="rv-card">
+      <div class="rv-head"><div><div class="rv-name">${dept.name}</div>${custodians}<div class="rv-sub">${periodText}</div></div>
+      <div style="text-align:right"><div class="rv-score" style="color:${g?barColor(g.cls):'var(--text3)'}">${pct===null?'–':pct+'%'}</div>${g?`<span class="rv-status ${st.cls}">${st.label}</span> <span class="grade-chip ${g.cls}" style="margin-left:4px">${g.label}</span>`:''}</div></div>
+      <div class="rv-facts">
+        <div class="rv-fact"><b>${pct===null?'–':pct+'%'}</b>register score, weighted by the signed agreement</div>
+        <div class="rv-fact"><b>${pct===null?'–':(pct>=BONUS_LINE?'+':'')+(pct-BONUS_LINE)+' pts'}</b>against the 75% bonus line</div>
+        <div class="rv-fact"><b>${Math.round(lostTotal*10)/10} pts</b>short of 100%${worst&&worst.lost>0.05?', most from '+worst.reg.name+' ('+Math.round(worst.lost*10)/10+' pts)':''}</div>
+        ${proj}
+      </div>
+      ${trend?`<div class="rv-section"><div class="rv-stitle">Quarter by quarter</div><div class="rv-trend">${trend}</div></div>`:''}
+      <div class="rv-section"><div class="rv-stitle">Why the score is ${pct===null?'not set':pct+'%'}</div>
+        <table class="rv-table"><thead><tr><th>KPI</th><th class="num">Weight</th><th class="num">Score</th><th class="num hide-m">Points lost</th><th>What the register shows</th></tr></thead><tbody>${table}</tbody></table></div>
+      <div class="rv-section"><div class="rv-stitle">Where to improve, biggest gain first</div>${actions.length||pending.length?`<ol class="rv-actions">${actions.join('')}${pending.join('')}</ol>`:'<div class="rv-why">No gaps in this period</div>'}</div>
+      <div class="rv-note">${dept.id==='guest'?'Guest Experience is a resort-wide KPI on its own card. It is scored on complaints resolved within 24 hours and is not part of the signed department KPI agreements, so the bonus line shown above is for reference only.':`Points lost show how far each KPI pulls the department score below 100%, using the agreement weights. KPIs with nothing due yet are left out and the other weights rescaled. The final FY score also includes GRN closure on own PRFs (${grn}%) and the two Section 2 line manager ratings (20%), assessed at the quarterly review. A final score below 75% means no qualification for the end of FY bonus and/or increment.`}</div>
+    </div>`;
+  });
+  body.innerHTML=html||'<div class="empty-state">No department selected</div>';
+}
+</script>
+</body>
+</html>
