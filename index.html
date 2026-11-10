@@ -395,6 +395,7 @@ const PORTAL_REGISTRY = [
   { code:'CERT-VALID', name:'Annual Certifications and Inspections', type:'Daily', deadline:'Continuous', season:'all', scoring:'cert-daily' },
   { code:'CLINIC-DP',  name:'MJSR Clinic Dispensary Portal',   type:'Event',  deadline:'Variable', season:'pending', scoring:'pending'      },
   { code:'GUEST-FB',   name:'Guest Feedback and Complaints',   type:'Event',  deadline:'24h',      season:'all',     scoring:'guest-24h'    },
+  { code:'SALES-RECON',name:'Daily Sales Reconciliation',      type:'Daily',  deadline:'20:00 next day', season:'all', scoring:'sales-recon' },
 ];
 
 // ── DEPARTMENT DEFINITIONS ───────────────────────────────────────────
@@ -414,7 +415,7 @@ const DEPARTMENTS = [
   },
   {
     id:'commercial', name:'Commercial', custodians:'Shahzad Alam, Muhammad Saeed, Sales Team',
-    portals:['SALES-CL','LOYALTY','TOUR-OPS'],
+    portals:['SALES-CL','LOYALTY','TOUR-OPS','SALES-RECON'],
     split: null
   },
   {
@@ -457,7 +458,7 @@ const DEPARTMENTS = [
 const DEPT_WEIGHTS = {
   'CL-CHECKS':10,'GEN-MAINT':5,'FIRE-EX':10,'HM-CHECKS':10,'STORE-CHK':10,'CERT-VALID':10,'SNOW-MK':7.5,'PISTENBULL':7.5,
   'ADV-CHECKS':35,'GV-CHECKS':35,
-  'SALES-CL':30,'LOYALTY':20,'TOUR-OPS':20,
+  'SALES-CL':20,'LOYALTY':15,'TOUR-OPS':15,'SALES-RECON':20, // revised 10 Nov 2026 when SALES-RECON was added, total stays 70
   'INN-TRACK':35,'FB-STOCK':35,
   'FIXED-AS':25,'VH-FLEET':20,'PR-FUND':25,
   'GUEST-FB':100 // Guest Experience card only, not part of the signed department agreements
@@ -472,7 +473,7 @@ const DAILY_ACTIVITIES = {
 
 // Closed days come only from the Resort_Status tab (rows with the date and FALSE),
 // entered by Martin Schultz or Shahzad Alam. Every other day is an open day.
-const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL'];
+const CLOSED_DAY_PORTALS = ['CL-CHECKS','ADV-CHECKS','GV-CHECKS','SALES-CL','SALES-RECON'];
 let resortClosedKeys = new Set();
 let resortCalendarOk = false;
 // Site-only closures (Resort_Status column G Scope). The site is closed, the rest of the resort is open.
@@ -878,6 +879,34 @@ function innDays(rows){
   });
   return{exp,ot,late,missed,missedKeys};
 }
+// ── DAILY SALES RECONCILIATION (agreed 10 Nov 2026) ───────────────────
+// Custodian Shahzad Alam. The report for day D must be saved in the Daily Sales portal
+// by 20:00 PKT on day D+1. Closed days in Resort_Status are excused. A day is scored
+// once its deadline has passed, or earlier if the report is already in on time.
+// The portal writes one row per save with Notes "Report yyyy-mm-dd saved"; the earliest save counts.
+// Scored from the report for 10 Nov 2026, the day the KPI was agreed.
+const SALES_RECON_START='2026-11-10';
+function salesReconDeadline(k){return new Date(nextKey(k)+'T20:00:00+05:00');}
+function salesRecon(rows,closedDays){
+  const first={};
+  rows.filter(r=>r.code==='SALES-RECON').forEach(r=>{
+    const m=String(r.notes||'').match(/Report (\d{4}-\d{2}-\d{2})/);if(!m)return;
+    const t=new Date(r.ts);if(isNaN(t))return;
+    if(!first[m[1]]||t<first[m[1]])first[m[1]]=t;
+  });
+  const cdp=closedFor('SALES-RECON',closedDays);const now=new Date();
+  let exp=0,ot=0;const missedKeys=[],lateKeys=[];let closedN=0;
+  fyDayKeys().forEach(k=>{
+    if(k<SALES_RECON_START)return;
+    if(cdp.has(k)){closedN++;return;}
+    const dl=salesReconDeadline(k);const s=first[k];
+    const onTime=!!s&&s<=dl;
+    if(now<dl&&!onTime)return;
+    exp++;
+    if(onTime)ot++;else if(s)lateKeys.push(k);else missedKeys.push(k);
+  });
+  return{exp,ot,missedKeys,lateKeys,closedN};
+}
 function innDetailHtml(f){
   const line=(label,n,c)=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:${c};margin-top:4px"><span>${label}</span><span style="font-family:var(--mono)">${n} of ${f.exp} days</span></div>`;
   return `<div style="margin-top:8px">${line('Submitted by 23:59',f.ot,'var(--text2)')}${line('No submission',f.missed,f.missed?'var(--red)':'var(--text2)')}<div style="font-size:10px;color:var(--text3);margin-top:4px">Any time on the day counts. Scored from 1 Jul 2026, PKT</div></div>`;
@@ -1110,6 +1139,10 @@ function calcScore(codes,rows,closedDays){
 
     else if(sreg.scoring==='inn-dual'){
       const f=innDays(rows);exp+=f.exp;ot+=f.ot;
+    }
+
+    else if(sreg.scoring==='sales-recon'){
+      const f=salesRecon(rows,closedDays);exp+=f.exp;ot+=f.ot;
     }
 
     else if(sreg.scoring==='fa-coverage'){
@@ -1595,6 +1628,7 @@ function fyTotalUnits(reg){
     case 'store-monthly':return 12*STORES.length;
     case 'fa-coverage':return 4*FA_QUARTER_WEIGHT;
     case 'inn-dual':case 'cert-daily':case 'fnb':return all.length;
+    case 'sales-recon':return all.filter(k=>k>=SALES_RECON_START).length-[...closedFor(reg.code,resortClosedKeys)].filter(k=>k>=SALES_RECON_START&&k<=FY_END_KEY).length;
     case 'prfund':return 36;
     case 'loyalty-share':return all.filter(k=>k>=LOYALTY_START).length;
     case 'weekly':return Math.ceil(all.length/7);
@@ -1686,6 +1720,14 @@ function kpiFindings(code,rows,closedDays){
   if(reg.scoring==='inn-dual'){
     const f=innDays(rows);out.why.push(f.exp+' days due, '+f.ot+' submitted');
     if(f.missed){out.why.push('<span class="miss">No submission on '+f.missed+' day'+(f.missed>1?'s':'')+'</span> ('+listDays(f.missedKeys,6)+')');out.action='Submit the Inn tracker every day by 23:59';}
+    return out;
+  }
+  if(reg.scoring==='sales-recon'){
+    const f=salesRecon(rows,closedDays);
+    out.why.push(f.exp+' reports due, '+f.ot+' saved by 20:00 the next day'+(f.closedN?', '+f.closedN+' closed day'+(f.closedN>1?'s':'')+' excused':''));
+    if(f.missedKeys.length)out.why.push('<span class="miss">No report for '+f.missedKeys.length+' day'+(f.missedKeys.length>1?'s':'')+'</span> ('+listDays(f.missedKeys,6)+')');
+    if(f.lateKeys.length)out.why.push('<span class="miss">Saved late for '+f.lateKeys.length+' day'+(f.lateKeys.length>1?'s':'')+'</span> ('+listDays(f.lateKeys,6)+')');
+    if(f.missedKeys.length||f.lateKeys.length)out.action='Upload and save each day\'s sales report in the Daily Sales portal by 20:00 the following day';
     return out;
   }
   if(reg.scoring==='fnb'){
